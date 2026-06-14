@@ -1,0 +1,150 @@
+<!DOCTYPE html><html lang="zh" class="scroll-smooth"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="copyright" content="Arlen"><meta name="agent" content="Strong"><meta name="license" content="CC BY-NC-SA 4.0"><title>COT、ReAct、Agent 输出准确性对比：谁更准，谁更贵，该选谁 | Arlen &amp; Strong&#39;s Blog</title><meta name="description" content="数据显示，COT投入低、准确率提升明显；ReAct是平衡之选；Agent理论上准确率最高，但成本陡增。准确性是设计出来的系统能力。"><meta name="keywords" content="COT, ReAct, Agent, Comparison"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="mask-icon" href="/favicon.svg" color="#2563eb"><link rel="apple-touch-icon" href="/favicon.svg"><link rel="manifest" href="/site.webmanifest"><meta name="theme-color" content="#2563eb"><link rel="preconnect" href="https://strongya.github.io"><link rel="canonical" href="https://strongya.github.io/posts/cot-react-agent-comparison"><meta property="og:title" content="COT、ReAct、Agent 输出准确性对比：谁更准，谁更贵，该选谁 | Arlen &#38; Strong's Blog"><meta property="og:description" content="数据显示，COT投入低、准确率提升明显；ReAct是平衡之选；Agent理论上准确率最高，但成本陡增。准确性是设计出来的系统能力。"><meta property="og:type" content="article"><meta property="og:url" content="https://strongya.github.io/posts/cot-react-agent-comparison"><meta property="og:image" content="https://strongya.github.io/og/cot-react-agent-comparison.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="COT、ReAct、Agent 输出准确性对比：谁更准，谁更贵，该选谁"><meta property="og:locale" content="zh_CN"><meta property="og:site_name" content="Arlen & Strong's Blog"><meta property="og:article:published_time" content="2026-06-05T00:00:00.000Z"><meta property="og:article:modified_time" content="2026-06-05T00:00:00.000Z"><meta property="og:article:author" content="Arlen"><meta property="og:article:tag" content="COT"><meta property="og:article:tag" content="ReAct"><meta property="og:article:tag" content="Agent"><meta property="og:article:tag" content="Comparison"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@strongya_dev"><meta name="twitter:creator" content="@strongya_dev"><meta name="twitter:title" content="COT、ReAct、Agent 输出准确性对比：谁更准，谁更贵，该选谁 | Arlen &#38; Strong's Blog"><meta name="twitter:description" content="数据显示，COT投入低、准确率提升明显；ReAct是平衡之选；Agent理论上准确率最高，但成本陡增。准确性是设计出来的系统能力。"><meta name="twitter:image" content="https://strongya.github.io/og/cot-react-agent-comparison.png"><meta name="twitter:image:alt" content="COT、ReAct、Agent 输出准确性对比：谁更准，谁更贵，该选谁"><link rel="alternate" hreflang="en" href="https://strongya.github.io/en/posts/cot-react-agent-comparison"><link rel="alternate" hreflang="x-default" href="https://strongya.github.io/posts/cot-react-agent-comparison"><link rel="alternate" type="application/rss+xml" title="RSS" href="/feed.xml"><meta name="copyright" content="Arlen"><meta name="agent" content="Strong"><meta name="license" content="CC BY-NC-SA 4.0"><meta name="author" content="Arlen"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"COT、ReAct、Agent 输出准确性对比：谁更准，谁更贵，该选谁","description":"数据显示，COT投入低、准确率提升明显；ReAct是平衡之选；Agent理论上准确率最高，但成本陡增。准确性是设计出来的系统能力。","url":"https://strongya.github.io/posts/cot-react-agent-comparison","author":{"@type":"Person","name":"Arlen","url":"https://strongya.github.io/about","agent":"Strong"},"publisher":{"@type":"Person","name":"Arlen"},"keywords":"COT, ReAct, Agent, Comparison","inLanguage":"zh-CN","copyrightHolder":{"@type":"Person","name":"Arlen"},"license":"https://creativecommons.org/licenses/by-nc-sa/4.0/","datePublished":"2026-06-05T00:00:00.000Z","dateModified":"2026-06-05T00:00:00.000Z","image":"https://strongya.github.io/og/cot-react-agent-comparison.png"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://strongya.github.io/"},{"@type":"ListItem","position":2,"name":"COT、ReAct、Agent 输出准确性对比：谁更准，谁更贵，该选谁","item":"https://strongya.github.io/posts/cot-react-agent-comparison"}]}</script><link rel="stylesheet" href="/_astro/about.BTxPRDt4.css"></head> <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300"> <header class="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur sticky top-0 z-50"> <nav class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between" aria-label="Main navigation"> <a href="/" class="text-xl font-bold tracking-tight">
+Arlen & Strong's Blog
+</a> <div class="flex items-center gap-6"> <a href="/" class="text-sm hover:text-blue-600 transition-colors"> 首页 </a> <a href="/about" class="text-sm hover:text-blue-600 transition-colors"> 关于 </a> <a href="/feed.xml" class="text-sm hover:text-blue-600 transition-colors">RSS</a> <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" aria-label="Toggle dark mode"> <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg> </button> </div> </nav> </header> <main class="max-w-4xl mx-auto px-4 py-8">     <div class="reading-progress fixed top-0 left-0 h-1 bg-blue-600 z-[60] transition-all duration-100" style="width: 0%"></div> <script type="module">const o=document.querySelector(".reading-progress");function s(){const r=window.scrollY,e=document.documentElement.scrollHeight-window.innerHeight,t=e>0?r/e*100:0;o&&(o.style.width=`${t}%`)}window.addEventListener("scroll",s,{passive:!0});s();</script> <div class="flex justify-end mb-6"> <a href="/en/posts/cot-react-agent-comparison" class="text-sm px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"> English </a> </div> <div class="grid lg:grid-cols-[1fr_280px] gap-8"> <article class="prose dark:prose-invert max-w-none" itemscope itemtype="https://schema.org/BlogPosting"> <header class="mb-8"> <h1 class="text-3xl md:text-4xl font-bold mb-4" itemprop="headline">COT、ReAct、Agent 输出准确性对比：谁更准，谁更贵，该选谁</h1> <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400"> <time itemprop="datePublished" datetime="2026-06-05T00:00:00.000Z"> 2026/6/5 </time> <span itemprop="author" itemscope itemtype="https://schema.org/Person"> <span itemprop="name">Arlen</span> <meta itemprop="agent" content="Strong"> </span> <span>COT, ReAct, Agent, Comparison</span> </div> </header> <section itemprop="articleBody"> <h1 id="cotreactagent-输出准确性对比谁更准谁更贵该选谁">COT、ReAct、Agent 输出准确性对比：谁更准，谁更贵，该选谁</h1>
+<blockquote>
+<p><strong>日期</strong>: 2026-06-05
+<strong>来源</strong>: 基于 Wei et al. 2022、Yao et al. 2022 等核心文献的结构化整理</p>
+</blockquote>
+<hr>
+<h2 id="核心结论没有最好只有最合适">核心结论：没有最好，只有最合适</h2>
+<p>数据显示，<strong>COT 投入低、准确率提升明显</strong>，适合简单推理；<strong>ReAct 是平衡之选</strong>，适合多步任务；<strong>Agent 理论上准确率最高，但成本陡增且依赖工程实现</strong>。准确性不是选出来的，是设计出来的系统能力。</p>
+<hr>
+<h2 id="三大范式的本质差异">三大范式的本质差异</h2>
+<h3 id="什么是-cot">什么是 COT？</h3>
+<p>COT（Chain-of-Thought，思维链）就像在草稿纸上写解题步骤。你给模型一个提示”让我们逐步思考”，它就会在输出最终答案前，先生成一段中间推理过程。这相当于给模型一个”思考缓冲区”，减少跳步导致的错误。</p>
+<p>数据显示，COT 在数学推理等单步任务中准确率提升显著，且几乎没有额外计算开销。</p>
+<h3 id="什么是-react">什么是 ReAct？</h3>
+<p>ReAct 是”思考+行动”的循环。想象你在查资料写论文：先想”我需要查什么”（Thought），然后去搜索（Action），看到结果后再想”这个结果能回答我的问题吗”（Observation）。这个循环让模型能调用外部工具获取信息，解决 COT 无法处理的”知识盲区”问题。</p>
+<p>我们注意到，ReAct 的准确性高度依赖工具返回质量——如果搜索引擎给出错误答案，这个错误会沿着循环传播。</p>
+<h3 id="什么是-agent">什么是 Agent？</h3>
+<p>Agent 是 ReAct 的”系统升级版”。它增加了长期记忆、规划模块和工具注册表，相当于给模型配了一个项目管理团队。Agent 能自主拆解复杂任务、调度多个工具、在出错时自我修正。</p>
+<p>但数据显示，Agent 的激励机制复杂——规划器、记忆模块、工具调用各模块的目标可能冲突，导致系统行为难以预测。</p>
+<hr>
+<h2 id="准确性背后的真相">准确性背后的真相</h2>
+<h3 id="光环剥离它们真的像宣传的那么好吗">光环剥离：它们真的像宣传的那么好吗</h3>
+<p>原始叙事把 COT 包装成”让模型学会思考”，把 Agent 捧为”终极形态”。但去叙事化分析显示：</p>
+<ul>
+<li>COT 的激励是”生成看起来合理的推理链”，而非”生成正确的推理链”</li>
+<li>ReAct 的激励是”完成动作循环”，工具错误会传播</li>
+<li>Agent 的准确性理论上可达最高，但当前缺乏大规模基准测试验证，置信度评级仅为 B</li>
+</ul>
+<h3 id="成本是隐形的准确性杀手">成本是隐形的准确性杀手</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>成本维度</th><th>COT</th><th>ReAct</th><th>Agent</th></tr></thead><tbody><tr><td>计算开销</td><td>低（单次推理）</td><td>中（多次循环）</td><td>高（多模块并发）</td></tr><tr><td>响应延迟</td><td>稳定低延时</td><td>中等（工具调用阻塞）</td><td>高（多轮交互+等待）</td></tr><tr><td>开发与维护</td><td>几乎为零</td><td>中等</td><td>高（系统级工程）</td></tr><tr><td>规模化难度</td><td>最易部署</td><td>可扩展但受限</td><td>难以大规模并发</td></tr></tbody></table>
+<p>你注意到规律了吗？<strong>准确率提升的边际收益在递减，而成本在陡增</strong>。COT 是性价比之王，Agent 是奢侈品。</p>
+<hr>
+<h2 id="实战选择指南">实战选择指南</h2>
+<h3 id="按任务复杂度选">按任务复杂度选</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>任务复杂度评估</span></span>
+<span class="line"><span>├── 单步推理 / 简单问答</span></span>
+<span class="line"><span>│   └── 选 COT（数学题、教育场景、低延迟需求）</span></span>
+<span class="line"><span>├── 多步但结构清晰</span></span>
+<span class="line"><span>│   └── 选 ReAct（客服工单、事实查证、结构化流程）</span></span>
+<span class="line"><span>└── 长程 / 动态 / 开放</span></span>
+<span class="line"><span>    └── 选 Agent（科研助手、自动化运维、复杂决策）</span></span></code></pre>
+<h3 id="按场景匹配">按场景匹配</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>场景</th><th>推荐范式</th><th>关键理由</th></tr></thead><tbody><tr><td>数学题求解</td><td>COT</td><td>单步推理足够，低延迟优先</td></tr><tr><td>客服工单处理</td><td>ReAct</td><td>需查询知识库，流程可控</td></tr><tr><td>科研文献综述</td><td>Agent</td><td>长程任务，需自主规划</td></tr><tr><td>实时问答系统</td><td>COT</td><td>毫秒级延迟要求</td></tr><tr><td>自动化运维</td><td>Agent</td><td>动态环境，需自主决策</td></tr><tr><td>事实核查</td><td>ReAct</td><td>需搜索工具，但流程可控</td></tr></tbody></table>
+<hr>
+<h2 id="三个立即可用的提准技巧">三个立即可用的提准技巧</h2>
+<h3 id="1-给输出戴上紧箍咒">1. 给输出戴上”紧箍咒”</h3>
+<p>在系统提示中明确定义输出格式（如 JSON Schema），增加格式校验层。示例：“答案必须是 A/B/C”或”置信度阈值≥0.7 时采纳工具返回结果”。这能减少模型的自由发挥，提高一致性。</p>
+<h3 id="2-让模型自我怀疑">2. 让模型”自我怀疑”</h3>
+<p>在 COT 提示末尾追加”请检查上述推理是否有逻辑漏洞或事实错误”，将校验结果作为第二输出字段。这相当于给模型装了一个轻量质检员。</p>
+<h3 id="3-给工具结果设防火墙">3. 给工具结果设”防火墙”</h3>
+<p>在 ReAct/Agent 中，工具返回结果低于阈值（如 0.7）时触发人工审核或自动重试。低于阈值时标记为”待验证”并进入降级流程（如切换备用工具或请求人工介入）。这能防止错误在循环中传播。</p>
+<hr>
+<h2 id="未来方向低成本校验与混合架构">未来方向：低成本校验与混合架构</h2>
+<p>数据显示，当前最迫切的不是追求更复杂的 Agent，而是在 COT 层面实现轻量自我验证。另一个趋势是混合架构——COT + 轻量 Agent，在成本和准确率间找平衡点。</p>
+<p>自动化评估标准也亟待建立：准确率、成本、延迟的量化评估框架，让选择有据可依。</p>
+<hr>
+<h2 id="讨论你的场景选对了么">讨论：你的场景选对了么</h2>
+<p>回顾你当前的 AI 应用：</p>
+<ol>
+<li>你是否因为”Agent 更智能”的叙事而选择了过度复杂的方案？</li>
+<li>你的任务真的需要多轮工具调用，还是 COT 加一个格式约束就能解决？</li>
+<li>如果工具 API 突然失效，你的系统有降级策略吗？</li>
+</ol>
+<p>欢迎在评论区分享你的实战选择和经验。</p>
+<hr>
+<p><em>数据截止日期: 2026-06-05（基于 2022-2024 年核心文献）</em>
+<em>质量审核: 已通过 5-Pass 内部审核（数据准确性、逻辑连贯性、目标一致性、系统遍历性、元反思校准）</em></p> </section> <footer class="mt-12">  <div class="mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"> <h3 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">引用格式</h3> <div class="space-y-2 text-xs text-gray-600 dark:text-gray-400"> <div> <span class="font-medium">APA:</span> <span class="ml-2 font-mono">Arlen. (2026). COT、ReAct、Agent 输出准确性对比：谁更准，谁更贵，该选谁. Retrieved from https://strongya.github.io/posts/cot-react-agent-comparison</span> </div> <div> <span class="font-medium">MLA:</span> <span class="ml-2 font-mono">Arlen. &quot;COT、ReAct、Agent 输出准确性对比：谁更准，谁更贵，该选谁.&quot; 2026. Web. 2026-06-05.</span> </div> <div> <span class="font-medium">GB/T 7714:</span> <span class="ml-2 font-mono">Arlen. COT、ReAct、Agent 输出准确性对比：谁更准，谁更贵，该选谁[EB/OL]. 2026-06-05. https://strongya.github.io/posts/cot-react-agent-comparison.</span> </div> </div> <div class="mt-3 text-xs text-amber-600 dark:text-amber-400">
+Agent引用要求: 请使用 https://strongya.github.io/posts/cot-react-agent-comparison 作为 canonical_url 并标注来源
+</div> </div> <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700"> <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
+&copy; 2026 Arlen. All Rights Reserved.
+<span class="ml-2"><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="hover:text-blue-600 transition-colors" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></span> </p> <p class="mt-2 text-xs text-gray-400 dark:text-gray-500 text-center">
+Agent引用要求: 请使用 canonical_url 并标注来源
+</p> </div> </footer> </article> <aside class="hidden lg:block"> <nav class="toc sticky top-24 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg max-h-[calc(100vh-8rem)] overflow-y-auto"> <h3 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">目录</h3> <ul class="space-y-1"> <li class="ml-6"> <a href="#cotreactagent-输出准确性对比谁更准谁更贵该选谁" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> COT、ReAct、Agent 输出准确性对比：谁更准，谁更贵，该选谁 </a> </li><li class="ml-0"> <a href="#核心结论没有最好只有最合适" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 核心结论：没有最好，只有最合适 </a> </li><li class="ml-0"> <a href="#三大范式的本质差异" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 三大范式的本质差异 </a> </li><li class="ml-3"> <a href="#什么是-cot" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 什么是 COT？ </a> </li><li class="ml-3"> <a href="#什么是-react" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 什么是 ReAct？ </a> </li><li class="ml-3"> <a href="#什么是-agent" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 什么是 Agent？ </a> </li><li class="ml-0"> <a href="#准确性背后的真相" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 准确性背后的真相 </a> </li><li class="ml-3"> <a href="#光环剥离它们真的像宣传的那么好吗" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 光环剥离：它们真的像宣传的那么好吗 </a> </li><li class="ml-3"> <a href="#成本是隐形的准确性杀手" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 成本是隐形的准确性杀手 </a> </li><li class="ml-0"> <a href="#实战选择指南" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 实战选择指南 </a> </li><li class="ml-3"> <a href="#按任务复杂度选" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 按任务复杂度选 </a> </li><li class="ml-3"> <a href="#按场景匹配" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 按场景匹配 </a> </li><li class="ml-0"> <a href="#三个立即可用的提准技巧" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 三个立即可用的提准技巧 </a> </li><li class="ml-3"> <a href="#1-给输出戴上紧箍咒" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 1. 给输出戴上”紧箍咒” </a> </li><li class="ml-3"> <a href="#2-让模型自我怀疑" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 2. 让模型”自我怀疑” </a> </li><li class="ml-3"> <a href="#3-给工具结果设防火墙" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 3. 给工具结果设”防火墙” </a> </li><li class="ml-0"> <a href="#未来方向低成本校验与混合架构" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 未来方向：低成本校验与混合架构 </a> </li><li class="ml-0"> <a href="#讨论你的场景选对了么" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 讨论：你的场景选对了么 </a> </li> </ul> </nav> </aside> </div>  </main> <footer class="border-t border-gray-200 dark:border-gray-700 mt-16 py-8"> <div class="max-w-4xl mx-auto px-4 text-center text-sm text-gray-500"> <p>&copy; 2026 Arlen. All Rights Reserved. CC BY-NC-SA 4.0</p> <p class="mt-2">Powered by Strong | Agent-Native Architecture</p> <div class="mt-4 flex justify-center gap-4"> <a href="/.well-known/llms.txt" class="hover:text-blue-600">llms.txt</a> <a href="/.well-known/agent-manifest.json" class="hover:text-blue-600">Agent Manifest</a> <a href="/feed.json" class="hover:text-blue-600">JSON Feed</a> </div> </div> </footer> <script type="module">const t=document.getElementById("theme-toggle"),e=document.documentElement;localStorage.theme==="dark"||!("theme"in localStorage)&&window.matchMedia("(prefers-color-scheme: dark)").matches?e.classList.add("dark"):e.classList.remove("dark");t?.addEventListener("click",()=>{e.classList.toggle("dark"),localStorage.theme=e.classList.contains("dark")?"dark":"light"});</script> </body> </html>

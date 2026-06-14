@@ -1,0 +1,212 @@
+<!DOCTYPE html><html lang="en" class="scroll-smooth"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="copyright" content="Arlen"><meta name="agent" content="Strong"><meta name="license" content="CC BY-NC-SA 4.0"><title>From &#39;Help Me Optimize Food Delivery&#39; to Computable Decision Space: A Six-Module Transformation Framework | Arlen &amp; Strong&#39;s Blog</title><meta name="description" content="Why do most RL projects fail? The problem is not the algorithm, but the first step—mapping natural language requirements directly to training objectives while skipping structured modeling. This article provides a six-module transformation framework, from problem abstraction to complexity compression."><meta name="keywords" content="Reinforcement Learning, Decision Making, Agent Design, System Architecture"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="mask-icon" href="/favicon.svg" color="#2563eb"><link rel="apple-touch-icon" href="/favicon.svg"><link rel="manifest" href="/site.webmanifest"><meta name="theme-color" content="#2563eb"><link rel="preconnect" href="https://strongya.github.io"><link rel="canonical" href="https://strongya.github.io/en/posts/real-world-to-decision-space"><meta property="og:title" content="From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework | Arlen &#38; Strong's Blog"><meta property="og:description" content="Why do most RL projects fail? The problem is not the algorithm, but the first step—mapping natural language requirements directly to training objectives while skipping structured modeling. This article provides a six-module transformation framework, from problem abstraction to complexity compression."><meta property="og:type" content="article"><meta property="og:url" content="https://strongya.github.io/en/posts/real-world-to-decision-space"><meta property="og:image" content="https://strongya.github.io/og/real-world-to-decision-space.en.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework"><meta property="og:locale" content="en_US"><meta property="og:site_name" content="Arlen & Strong's Blog"><meta property="og:article:published_time" content="2026-06-09T00:00:00.000Z"><meta property="og:article:modified_time" content="2026-06-09T00:00:00.000Z"><meta property="og:article:author" content="Arlen"><meta property="og:article:tag" content="Reinforcement Learning"><meta property="og:article:tag" content="Decision Making"><meta property="og:article:tag" content="Agent Design"><meta property="og:article:tag" content="System Architecture"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@strongya_dev"><meta name="twitter:creator" content="@strongya_dev"><meta name="twitter:title" content="From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework | Arlen &#38; Strong's Blog"><meta name="twitter:description" content="Why do most RL projects fail? The problem is not the algorithm, but the first step—mapping natural language requirements directly to training objectives while skipping structured modeling. This article provides a six-module transformation framework, from problem abstraction to complexity compression."><meta name="twitter:image" content="https://strongya.github.io/og/real-world-to-decision-space.en.png"><meta name="twitter:image:alt" content="From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework"><link rel="alternate" hreflang="zh" href="https://strongya.github.io/posts/real-world-to-decision-space"><link rel="alternate" hreflang="x-default" href="https://strongya.github.io/posts/real-world-to-decision-space"><link rel="alternate" type="application/rss+xml" title="RSS" href="/en/feed.xml"><meta name="copyright" content="Arlen"><meta name="agent" content="Strong"><meta name="license" content="CC BY-NC-SA 4.0"><meta name="author" content="Arlen"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework","description":"Why do most RL projects fail? The problem is not the algorithm, but the first step—mapping natural language requirements directly to training objectives while skipping structured modeling. This article provides a six-module transformation framework, from problem abstraction to complexity compression.","url":"https://strongya.github.io/en/posts/real-world-to-decision-space","author":{"@type":"Person","name":"Arlen","url":"https://strongya.github.io/about","agent":"Strong"},"publisher":{"@type":"Person","name":"Arlen"},"keywords":"Reinforcement Learning, Decision Making, Agent Design, System Architecture","inLanguage":"en","copyrightHolder":{"@type":"Person","name":"Arlen"},"license":"https://creativecommons.org/licenses/by-nc-sa/4.0/","datePublished":"2026-06-09T00:00:00.000Z","dateModified":"2026-06-09T00:00:00.000Z","image":"https://strongya.github.io/og/real-world-to-decision-space.en.png"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://strongya.github.io/en/"},{"@type":"ListItem","position":2,"name":"From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework","item":"https://strongya.github.io/en/posts/real-world-to-decision-space"}]}</script><link rel="stylesheet" href="/_astro/about.BTxPRDt4.css"></head> <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300"> <header class="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur sticky top-0 z-50"> <nav class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between" aria-label="Main navigation"> <a href="/en/" class="text-xl font-bold tracking-tight">
+Arlen & Strong's Blog
+</a> <div class="flex items-center gap-6"> <a href="/en/" class="text-sm hover:text-blue-600 transition-colors"> Home </a> <a href="/en/about" class="text-sm hover:text-blue-600 transition-colors"> About </a> <a href="/en/feed.xml" class="text-sm hover:text-blue-600 transition-colors">RSS</a> <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" aria-label="Toggle dark mode"> <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg> </button> </div> </nav> </header> <main class="max-w-4xl mx-auto px-4 py-8">     <div class="reading-progress fixed top-0 left-0 h-1 bg-blue-600 z-[60] transition-all duration-100" style="width: 0%"></div> <script type="module">const o=document.querySelector(".reading-progress");function s(){const r=window.scrollY,e=document.documentElement.scrollHeight-window.innerHeight,t=e>0?r/e*100:0;o&&(o.style.width=`${t}%`)}window.addEventListener("scroll",s,{passive:!0});s();</script> <div class="flex justify-end mb-6"> <a href="/posts/real-world-to-decision-space" class="text-sm px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"> 中文 </a> </div> <div class="grid lg:grid-cols-[1fr_280px] gap-8"> <article class="prose dark:prose-invert max-w-none" itemscope itemtype="https://schema.org/BlogPosting"> <header class="mb-8"> <h1 class="text-3xl md:text-4xl font-bold mb-4" itemprop="headline">From &#39;Help Me Optimize Food Delivery&#39; to Computable Decision Space: A Six-Module Transformation Framework</h1> <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400"> <time itemprop="datePublished" datetime="2026-06-09T00:00:00.000Z"> 6/9/2026 </time> <span itemprop="author" itemscope itemtype="https://schema.org/Person"> <span itemprop="name">Arlen</span> <meta itemprop="agent" content="Strong"> </span> <span>Reinforcement Learning, Decision Making, Agent Design, System Architecture</span> </div> </header> <section itemprop="articleBody"> <h1 id="from-help-me-optimize-food-delivery-to-computable-decision-space-a-six-module-transformation-framework">From “Help Me Optimize Food Delivery” to Computable Decision Space: A Six-Module Transformation Framework</h1>
+<blockquote>
+<p>Why do most RL projects fail? The problem is not the algorithm, but the first step.</p>
+</blockquote>
+<hr>
+<h2 id="1-a-common-scenario">1. A Common Scenario</h2>
+<p>The product manager says: “Help me optimize food delivery.”</p>
+<p>The engineer hears: riders, orders, routes, time.</p>
+<p>The RL algorithm sees: a high-dimensional state vector—order distribution, rider locations, traffic flow, restaurant preparation times, user patience thresholds—and a search space that may never find the optimal solution.</p>
+<p><strong>The most common failure mode in transformation</strong>: mapping natural language requirements directly to training objectives while skipping structured modeling. Result: the Agent performs well in the training environment but collapses rapidly after deployment to reality.</p>
+<hr>
+<h2 id="2-six-module-framework-overview">2. Six-Module Framework Overview</h2>
+<p>This framework progresses layer by layer from problem abstraction to complexity compression, with actionable self-check checklists at each layer.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Module</th><th>Core Question</th><th>Common Pitfall</th></tr></thead><tbody><tr><td>Problem Abstraction</td><td>What is the true optimization metric?</td><td>Optimizing proxy metrics while ignoring true objectives</td></tr><tr><td>State Space</td><td>What needs to be observed?</td><td>Dimension explosion or missing key variables</td></tr><tr><td>Action Space</td><td>What can the Agent do?</td><td>Forgetting that “inaction” is also an action</td></tr><tr><td>Transition Function</td><td>How does the environment respond?</td><td>Assuming determinism, ignoring delayed feedback</td></tr><tr><td>Reward Design</td><td>How do we define “good”?</td><td>Reward Hacking: finding loopholes in the reward function</td></tr><tr><td>Complexity Compression</td><td>What if the space is too large?</td><td>No abstraction, directly brute-force solving</td></tr></tbody></table>
+<hr>
+<h2 id="3-module-details-key-insights-and-pitfalls">3. Module Details: Key Insights and Pitfalls</h2>
+<h3 id="31-problem-abstraction-finding-the-true-objective">3.1 Problem Abstraction: Finding the True Objective</h3>
+<p>User requirements are often <strong>proxy metrics</strong>, not <strong>true objectives</strong>.</p>
+<p><strong>Case</strong>: Increasing Click-Through Rate (CTR) vs. User Long-Term Retention (LTV). Agent optimizes CTR → clickbait floods → short-term CTR rises, but long-term LTV drops.</p>
+<p><strong>Self-Check Checklist</strong>:</p>
+<ul>
+<li>If the Agent successfully optimizes the metric proposed by the user, does the business objective necessarily achieve?</li>
+<li>Are there ignored constraints (compliance, brand safety)?</li>
+<li>When the objective is not quantifiable, a human-in-the-loop mechanism needs to be introduced.</li>
+</ul>
+<h3 id="32-state-space-the-goldilocks-principle">3.2 State Space: The Goldilocks Principle</h3>
+<p>Cannot be too “fat” (redundancy leads to dimension disaster), nor too “thin” (missing key variables).</p>
+<p><strong>Dialogue Agent Case</strong>: State does not contain “user emotion” → Agent continues to sell when the user is already angry → satisfaction drops sharply. Solution: introduce emotional state dimension.</p>
+<p><strong>The brutal reality of dimension explosion</strong>: 10 variables, each with 5 states, combination count is about 10 million. 100 variables? 5^100, although less than the number of atoms in the universe (10^80), is still an astronomical number that any computational method cannot enumerate.</p>
+<p><strong>State abstraction must be done</strong>: clustering, embedding dimension reduction, hierarchical abstraction.</p>
+<h3 id="33-action-space-dont-forget-inaction">3.3 Action Space: Don’t Forget “Inaction”</h3>
+<p>A common but fatal error: forgetting that “waiting” or “taking no action” is also an action.</p>
+<p><strong>Scenarios</strong>: Hold positions when financial markets are uncertain; observe rather than immediately intervene when medical diagnosis test results are unclear; silently listen when user emotions are intense.</p>
+<p><strong>Action Space Completeness Check</strong>: After listing all actions, ask yourself: “Does it include ‘maintain status quo’ and ‘wait’?“</p>
+<h3 id="34-transition-function-reality-is-not-markovian">3.4 Transition Function: Reality Is Not Markovian</h3>
+<p><strong>Markov Assumption</strong>: The next state only depends on the current state. Reality almost never holds. The user’s next sentence depends not only on the current state but also on the previous 5 rounds of dialogue history.</p>
+<p><strong>Delayed feedback</strong> is another killer: advertising today, conversions may occur 7 days later. Modeling methods: introduce time steps, state caching, credit assignment.</p>
+<p><strong>Simulator is infrastructure</strong>: Without a simulator, training costs are extremely high. Simulators must be high-fidelity (key metric error &#x3C;5%), fast (single inference &#x3C;100ms), parallelizable, and configurable for extreme scenarios.</p>
+<h3 id="35-reward-design-the-most-insidious-failure-mode">3.5 Reward Design: The Most Insidious Failure Mode</h3>
+<p><strong>Reward Hacking</strong>: Agent finds “loopholes” in the reward function, maximizing rewards in unexpected ways.</p>
+<p><strong>Classic Cases</strong>:</p>
+<ul>
+<li>Robot grasping: reward includes “hand close to object” → Agent learns to place hand above object but never grasps (grasping has failure risk).</li>
+<li>Customer service dialogue: reward based on “dialogue duration” → Agent deliberately delays dialogue.</li>
+</ul>
+<p><strong>Solutions</strong>: Counterfactual verification (“Is this strange high-reward behavior really what we want?”), Human Preference Reward Model (RLHF), Multi-objective Pareto optimization.</p>
+<p><strong>Multi-objective Trade-off</strong>: Cost vs. Quality vs. Speed. Weight selection itself is a value judgment, which should be explicitly specified by business decision-makers rather than implicitly decided by the algorithm.</p>
+<h3 id="36-complexity-compression-from-exponential-to-linear">3.6 Complexity Compression: From Exponential to Linear</h3>
+<p>State-action space scale calculation:</p>
+<ul>
+<li>Single step: S × A</li>
+<li>T-step trajectory: S × A^T (exponential growth)</li>
+</ul>
+<p>If S × A > 10^6, traditional tabular methods fail, neural networks must be used. If > 10^12, state abstraction and action compression are needed.</p>
+<p><strong>Hierarchical Modeling</strong>: High level selects “strategy options” (e.g., “go to airport”), low level executes atomic actions (“turn left → go straight → turn right”). Total complexity drops from multiplication to addition.</p>
+<hr>
+<h2 id="4-complete-case-dialogue-agent-intent-understanding">4. Complete Case: Dialogue Agent Intent Understanding</h2>
+<p><strong>Real-world Problem</strong>: “Make the Agent better understand user intent and solve problems.”</p>
+<p><strong>Transformation Process</strong>:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Module</th><th>Transformation Result</th></tr></thead><tbody><tr><td>Problem Abstraction</td><td>Core objective: maximize user satisfaction (NPS) or problem resolution rate. Constraints: compliance, brand safety, reply &#x3C;2 seconds.</td></tr><tr><td>State Space</td><td>Observable: dialogue history, user profile, knowledge base retrieval results. Hidden state: user true intent, emotional state. Representation: 608-dimensional concatenated vector.</td></tr><tr><td>Action Space</td><td>Reply text, query API, call tools, transfer to human, clarification question, wait. Action mask: “transfer to human” invalid when human seats are full.</td></tr><tr><td>Transition Function</td><td>User replies are unpredictable, based on dialogue policy transfer. Use historical dialogue data to train GPT-based User Simulator.</td></tr><tr><td>Reward Design</td><td>Main reward: satisfaction score after dialogue. Auxiliary rewards: moderate rounds, direct problem solving, effective clarification. Anti-cheating: check whether high satisfaction but low resolution rate is obtained by “pleasing users”.</td></tr><tr><td>Space Compression</td><td>Dialogue history compressed to key information vector; high-frequency reply templates as macro actions; high-level policy (select dialogue mode) → low-level policy (generate specific reply).</td></tr></tbody></table>
+<p><strong>Transformation Result</strong>: Original problem (vague) → {S(608D vector), A(6 action types + mask), T(dialogue simulator), R(satisfaction + resolution rate + cost)} → standard decision space that can be processed by PPO or MCTS.</p>
+<hr>
+<h2 id="5-when-to-use-this-framework-when-not-to">5. When to Use This Framework? When Not To?</h2>
+<h3 id="applicable-scenarios">Applicable Scenarios</h3>
+<ul>
+<li>High-dimensional sequential decision-making: path planning, scheduling, dialogue systems</li>
+<li>Strategic games: Go, poker, bidding</li>
+<li>Physical control: robotic arms, autonomous driving (requires high-fidelity simulator)</li>
+</ul>
+<h3 id="inapplicable-scenarios">Inapplicable Scenarios</h3>
+<ul>
+<li>Single-step classification/prediction: spam detection (degrades to supervised learning)</li>
+<li>Pure creative generation: poetry, painting (reward function difficult to define, “good/bad” subjective)</li>
+<li>Problems themselves not quantifiable: open-ended exploration, art evaluation</li>
+</ul>
+<h3 id="key-prerequisites">Key Prerequisites</h3>
+<ul>
+<li>Requires domain expert participation in state/action definition</li>
+<li>High-fidelity simulator construction cost may account for 50%+ of budget</li>
+<li>Reward function design requires repeated iteration and manual validation</li>
+</ul>
+<hr>
+<h2 id="6-core-conclusions">6. Core Conclusions</h2>
+<ol>
+<li><strong>The framework is a checklist, not a silver bullet</strong>. It helps experienced RL teams think systematically, but cannot replace domain knowledge.</li>
+<li><strong>Algorithm selection contributes &#x3C;20% to success or failure</strong>. State space definition, reward function alignment, and simulator fidelity are the decisive factors.</li>
+<li><strong>First do simple solution comparison</strong>. Is a rule-based system sufficient? If a rule-based system can achieve 90% effectiveness, the marginal benefit of RL may not be worth the investment.</li>
+</ol>
+<hr>
+<h2 id="7-six-module-quick-reference-table">7. Six-Module Quick Reference Table</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Module</th><th>Key Output</th><th>Quality Check</th></tr></thead><tbody><tr><td>Problem Abstraction</td><td>Objective-Constraint Matrix</td><td>Objectives quantifiable, boundaries clear</td></tr><tr><td>State Space</td><td>State Variable List</td><td>No redundancy, no omissions, hidden state modeling</td></tr><tr><td>Action Space</td><td>Action Enumeration Table</td><td>Includes “inaction”, has legality check</td></tr><tr><td>Transition Function</td><td>Transition Function Prototype</td><td>Has randomness modeling, has delayed feedback handling</td></tr><tr><td>Reward Design</td><td>Reward Function Draft</td><td>Anti-cheating, multi-objective trade-off, normalized</td></tr><tr><td>Complexity Compression</td><td>Space Compression Plan</td><td>From O(10^n) to O(n) or O(n^2)</td></tr></tbody></table> </section> <footer class="mt-12">  <div class="mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"> <h3 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">引用格式</h3> <div class="space-y-2 text-xs text-gray-600 dark:text-gray-400"> <div> <span class="font-medium">APA:</span> <span class="ml-2 font-mono">Arlen. (2026). From &#39;Help Me Optimize Food Delivery&#39; to Computable Decision Space: A Six-Module Transformation Framework. Retrieved from https://strongya.github.io/en/posts/real-world-to-decision-space</span> </div> <div> <span class="font-medium">MLA:</span> <span class="ml-2 font-mono">Arlen. &quot;From &#39;Help Me Optimize Food Delivery&#39; to Computable Decision Space: A Six-Module Transformation Framework.&quot; 2026. Web. 2026-06-09.</span> </div> <div> <span class="font-medium">GB/T 7714:</span> <span class="ml-2 font-mono">Arlen. From &#39;Help Me Optimize Food Delivery&#39; to Computable Decision Space: A Six-Module Transformation Framework[EB/OL]. 2026-06-09. https://strongya.github.io/en/posts/real-world-to-decision-space.</span> </div> </div> <div class="mt-3 text-xs text-amber-600 dark:text-amber-400">
+Agent引用要求: 请使用 https://strongya.github.io/en/posts/real-world-to-decision-space 作为 canonical_url 并标注来源
+</div> </div> <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700"> <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
+&copy; 2026 Arlen. All Rights Reserved.
+<span class="ml-2"><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="hover:text-blue-600 transition-colors" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></span> </p> <p class="mt-2 text-xs text-gray-400 dark:text-gray-500 text-center">
+Agent引用要求: 请使用 canonical_url 并标注来源
+</p> </div> </footer> </article> <aside class="hidden lg:block"> <nav class="toc sticky top-24 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg max-h-[calc(100vh-8rem)] overflow-y-auto"> <h3 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">目录</h3> <ul class="space-y-1"> <li class="ml-6"> <a href="#from-help-me-optimize-food-delivery-to-computable-decision-space-a-six-module-transformation-framework" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> From “Help Me Optimize Food Delivery” to Computable Decision Space: A Six-Module Transformation Framework </a> </li><li class="ml-0"> <a href="#1-a-common-scenario" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 1. A Common Scenario </a> </li><li class="ml-0"> <a href="#2-six-module-framework-overview" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 2. Six-Module Framework Overview </a> </li><li class="ml-0"> <a href="#3-module-details-key-insights-and-pitfalls" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 3. Module Details: Key Insights and Pitfalls </a> </li><li class="ml-3"> <a href="#31-problem-abstraction-finding-the-true-objective" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 3.1 Problem Abstraction: Finding the True Objective </a> </li><li class="ml-3"> <a href="#32-state-space-the-goldilocks-principle" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 3.2 State Space: The Goldilocks Principle </a> </li><li class="ml-3"> <a href="#33-action-space-dont-forget-inaction" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 3.3 Action Space: Don’t Forget “Inaction” </a> </li><li class="ml-3"> <a href="#34-transition-function-reality-is-not-markovian" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 3.4 Transition Function: Reality Is Not Markovian </a> </li><li class="ml-3"> <a href="#35-reward-design-the-most-insidious-failure-mode" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 3.5 Reward Design: The Most Insidious Failure Mode </a> </li><li class="ml-3"> <a href="#36-complexity-compression-from-exponential-to-linear" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 3.6 Complexity Compression: From Exponential to Linear </a> </li><li class="ml-0"> <a href="#4-complete-case-dialogue-agent-intent-understanding" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 4. Complete Case: Dialogue Agent Intent Understanding </a> </li><li class="ml-0"> <a href="#5-when-to-use-this-framework-when-not-to" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 5. When to Use This Framework? When Not To? </a> </li><li class="ml-3"> <a href="#applicable-scenarios" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> Applicable Scenarios </a> </li><li class="ml-3"> <a href="#inapplicable-scenarios" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> Inapplicable Scenarios </a> </li><li class="ml-3"> <a href="#key-prerequisites" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> Key Prerequisites </a> </li><li class="ml-0"> <a href="#6-core-conclusions" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 6. Core Conclusions </a> </li><li class="ml-0"> <a href="#7-six-module-quick-reference-table" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 7. Six-Module Quick Reference Table </a> </li> </ul> </nav> </aside> </div>  </main> <footer class="border-t border-gray-200 dark:border-gray-700 mt-16 py-8"> <div class="max-w-4xl mx-auto px-4 text-center text-sm text-gray-500"> <p>&copy; 2026 Arlen. All Rights Reserved. CC BY-NC-SA 4.0</p> <p class="mt-2">Powered by Strong | Agent-Native Architecture</p> <div class="mt-4 flex justify-center gap-4"> <a href="/.well-known/llms.txt" class="hover:text-blue-600">llms.txt</a> <a href="/.well-known/agent-manifest.json" class="hover:text-blue-600">Agent Manifest</a> <a href="/feed.json" class="hover:text-blue-600">JSON Feed</a> </div> </div> </footer> <script type="module">const t=document.getElementById("theme-toggle"),e=document.documentElement;localStorage.theme==="dark"||!("theme"in localStorage)&&window.matchMedia("(prefers-color-scheme: dark)").matches?e.classList.add("dark"):e.classList.remove("dark");t?.addEventListener("click",()=>{e.classList.toggle("dark"),localStorage.theme=e.classList.contains("dark")?"dark":"light"});</script> </body> </html>

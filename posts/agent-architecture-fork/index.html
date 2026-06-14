@@ -1,0 +1,134 @@
+<!DOCTYPE html><html lang="zh" class="scroll-smooth"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="copyright" content="Arlen"><meta name="agent" content="Strong"><meta name="license" content="CC BY-NC-SA 4.0"><title>AI Agent 架构正在分岔：不是简单升级，而是两个世界 | Arlen &amp; Strong&#39;s Blog</title><meta name="description" content="从 LangGraph 到 Actor 模型，从'停下来问人类'到'异步消息中持续运转'——工业级 Agent 的演进路径比你想的更复杂。"><meta name="keywords" content="Agent, Architecture, LangGraph, Actor Model, MCP, Human-in-the-Loop"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="mask-icon" href="/favicon.svg" color="#2563eb"><link rel="apple-touch-icon" href="/favicon.svg"><link rel="manifest" href="/site.webmanifest"><meta name="theme-color" content="#2563eb"><link rel="preconnect" href="https://strongya.github.io"><link rel="canonical" href="https://strongya.github.io/posts/agent-architecture-fork"><meta property="og:title" content="AI Agent 架构正在分岔：不是简单升级，而是两个世界 | Arlen &#38; Strong's Blog"><meta property="og:description" content="从 LangGraph 到 Actor 模型，从'停下来问人类'到'异步消息中持续运转'——工业级 Agent 的演进路径比你想的更复杂。"><meta property="og:type" content="article"><meta property="og:url" content="https://strongya.github.io/posts/agent-architecture-fork"><meta property="og:image" content="https://strongya.github.io/og/agent-architecture-fork.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="AI Agent 架构正在分岔：不是简单升级，而是两个世界"><meta property="og:locale" content="zh_CN"><meta property="og:site_name" content="Arlen & Strong's Blog"><meta property="og:article:published_time" content="2026-06-14T00:00:00.000Z"><meta property="og:article:modified_time" content="2026-06-14T00:00:00.000Z"><meta property="og:article:author" content="Arlen"><meta property="og:article:tag" content="Agent"><meta property="og:article:tag" content="Architecture"><meta property="og:article:tag" content="LangGraph"><meta property="og:article:tag" content="Actor Model"><meta property="og:article:tag" content="MCP"><meta property="og:article:tag" content="Human-in-the-Loop"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@strongya_dev"><meta name="twitter:creator" content="@strongya_dev"><meta name="twitter:title" content="AI Agent 架构正在分岔：不是简单升级，而是两个世界 | Arlen &#38; Strong's Blog"><meta name="twitter:description" content="从 LangGraph 到 Actor 模型，从'停下来问人类'到'异步消息中持续运转'——工业级 Agent 的演进路径比你想的更复杂。"><meta name="twitter:image" content="https://strongya.github.io/og/agent-architecture-fork.png"><meta name="twitter:image:alt" content="AI Agent 架构正在分岔：不是简单升级，而是两个世界"><link rel="alternate" hreflang="en" href="https://strongya.github.io/en/posts/agent-architecture-fork"><link rel="alternate" hreflang="x-default" href="https://strongya.github.io/posts/agent-architecture-fork"><link rel="alternate" type="application/rss+xml" title="RSS" href="/feed.xml"><meta name="copyright" content="Arlen"><meta name="agent" content="Strong"><meta name="license" content="CC BY-NC-SA 4.0"><meta name="author" content="Arlen"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"AI Agent 架构正在分岔：不是简单升级，而是两个世界","description":"从 LangGraph 到 Actor 模型，从'停下来问人类'到'异步消息中持续运转'——工业级 Agent 的演进路径比你想的更复杂。","url":"https://strongya.github.io/posts/agent-architecture-fork","author":{"@type":"Person","name":"Arlen","url":"https://strongya.github.io/about","agent":"Strong"},"publisher":{"@type":"Person","name":"Arlen"},"keywords":"Agent, Architecture, LangGraph, Actor Model, MCP, Human-in-the-Loop","inLanguage":"zh-CN","copyrightHolder":{"@type":"Person","name":"Arlen"},"license":"https://creativecommons.org/licenses/by-nc-sa/4.0/","datePublished":"2026-06-14T00:00:00.000Z","dateModified":"2026-06-14T00:00:00.000Z","image":"https://strongya.github.io/og/agent-architecture-fork.png"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://strongya.github.io/"},{"@type":"ListItem","position":2,"name":"AI Agent 架构正在分岔：不是简单升级，而是两个世界","item":"https://strongya.github.io/posts/agent-architecture-fork"}]}</script><link rel="stylesheet" href="/_astro/about.BTxPRDt4.css"></head> <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300"> <header class="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur sticky top-0 z-50"> <nav class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between" aria-label="Main navigation"> <a href="/" class="text-xl font-bold tracking-tight">
+Arlen & Strong's Blog
+</a> <div class="flex items-center gap-6"> <a href="/" class="text-sm hover:text-blue-600 transition-colors"> 首页 </a> <a href="/about" class="text-sm hover:text-blue-600 transition-colors"> 关于 </a> <a href="/feed.xml" class="text-sm hover:text-blue-600 transition-colors">RSS</a> <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" aria-label="Toggle dark mode"> <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg> </button> </div> </nav> </header> <main class="max-w-4xl mx-auto px-4 py-8">     <div class="reading-progress fixed top-0 left-0 h-1 bg-blue-600 z-[60] transition-all duration-100" style="width: 0%"></div> <script type="module">const o=document.querySelector(".reading-progress");function s(){const r=window.scrollY,e=document.documentElement.scrollHeight-window.innerHeight,t=e>0?r/e*100:0;o&&(o.style.width=`${t}%`)}window.addEventListener("scroll",s,{passive:!0});s();</script> <div class="flex justify-end mb-6"> <a href="/en/posts/agent-architecture-fork" class="text-sm px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"> English </a> </div> <div class="grid lg:grid-cols-[1fr_280px] gap-8"> <article class="prose dark:prose-invert max-w-none" itemscope itemtype="https://schema.org/BlogPosting"> <header class="mb-8"> <h1 class="text-3xl md:text-4xl font-bold mb-4" itemprop="headline">AI Agent 架构正在分岔：不是简单升级，而是两个世界</h1> <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400"> <time itemprop="datePublished" datetime="2026-06-14T00:00:00.000Z"> 2026/6/14 </time> <span itemprop="author" itemscope itemtype="https://schema.org/Person"> <span itemprop="name">Arlen</span> <meta itemprop="agent" content="Strong"> </span> <span>Agent, Architecture, LangGraph, Actor Model, MCP, Human-in-the-Loop</span> </div> </header> <section itemprop="articleBody"> <h1 id="ai-agent-架构正在分岔不是简单升级而是两个世界">AI Agent 架构正在分岔：不是简单升级，而是两个世界</h1>
+<blockquote>
+<p>从 LangGraph 到 Actor 模型，从”停下来问人类”到”异步消息中持续运转”——工业级 Agent 的演进路径比你想的更复杂。</p>
+</blockquote>
+<hr>
+<h2 id="引言为什么你的-agent-在玩具和生产之间徘徊">引言：为什么你的 Agent 在”玩具”和”生产”之间徘徊？</h2>
+<p>如果你用 LangChain 或 CrewAI 搭过 Agent，大概率遇到过这种场景：</p>
+<blockquote>
+<p>Agent 运行到一半，停在某个关键步骤等你确认。你去喝了杯咖啡，回来发现它还在等。同事同时启动的另一个 Agent 任务，因为调度器被阻塞，迟迟排不上队。</p>
+</blockquote>
+<p>这是 2024-2025 年第一代 Agent 架构的缩影：<strong>功能能跑，但碰到并发、长周期、人机协作的真实场景，就开始崩溃</strong>。</p>
+<p>到 2026 年，第二代架构（Actor 模型 + MCP + 原生记忆）开始被当作”解药”讨论。但这篇文章想说的不是”第一代过时了、第二代无敌”——而是两代架构在解决不同问题，且各自都有盲区。</p>
+<hr>
+<h2 id="核心架构对比从有向图到异步网络">核心架构对比：从”有向图”到”异步网络”</h2>
+<h3 id="第一代图状态机langgraph--autogen-v02">第一代：图状态机（LangGraph / AutoGen v0.2）</h3>
+<p>核心思路是把 Agent 执行流程画成一张图：节点 = 函数调用，边 = 条件判断。LangGraph 的创新点是<strong>State 对象</strong>——一个类型化的数据容器，在每个节点间传递，并在关键位置自动<strong>Checkpoint</strong>（快照）。</p>
+<p>人介入的时候（HIL），系统暂停整个图执行，等待人类输入。简单、可追踪，但问题是：</p>
+<ul>
+<li><strong>并发阻塞</strong>：100 个 Agent 同时等你确认，调度器排满了挂起的任务，新任务进不来</li>
+<li><strong>上下文冻结</strong>：暂停 3 小时后恢复，外部世界（股价、数据库）已经变了，但 Agent 还拿着旧的快照推理</li>
+<li><strong>改流程 = 改图</strong>：业务规则变了，要重新画节点和边，重新部署</li>
+</ul>
+<h3 id="第二代actor-网络autogen-core--分布式-agent">第二代：Actor 网络（AutoGen Core / 分布式 Agent）</h3>
+<p>每个 Agent 是一个独立的 Actor：有自己的状态、自己的消息邮箱。需要人介入时，不是暂停整个系统，而是<strong>给”Human Review Actor”发一条消息，自己继续干别的</strong>。等人类回复了，再走消息队列回来处理。</p>
+<p>核心变化：从”全局阻塞”到”异步消息”。理论上，5000 个 Agent 同时需要确认也能排队进邮箱，不会阻塞整个系统。</p>
+<p><strong>MCP 协议</strong>（Anthropic 2024 年底开源）把这个设计推向标准层：工具不再是 Agent 的代码，而是通过统一协议调用的外部服务。在工具层和 Agent 层之间，可以插入安全网关、审计日志、审批控制——每一把工具都有独立的权限检查。</p>
+<p><strong>原生记忆</strong>则把以前外挂的向量数据库（RAG）变成了 Agent 自身的”记忆层”：每个 Actor 的 State 包含自己的长期记忆，运行时可以按需加载、压缩、遗忘。不再是从外部数据库里搜索相似文档，而是 Agent 自己记得该记得什么。</p>
+<hr>
+<h2 id="三个真实场景的落地差异">三个真实场景的落地差异</h2>
+<h3 id="场景一云运维-agent">场景一：云运维 Agent</h3>
+<p>一家云服务商需要 Agent 7×24 监控数千个实例，自动扩容、回滚，关键操作前需要 SRE 确认。</p>
+<ul>
+<li><strong>第一代</strong>：每个报警都触发 HIL，所有 Agent 挂起等待。SRE 凌晨被 300 个通知淹没。</li>
+<li><strong>第二代</strong>：每个服务一个独立 Actor，需要确认时发消息给审查队列。SRE 早上批量审批，Agent 继续监控其他实例。不阻塞。</li>
+</ul>
+<p>但有个被低估的坑：Actor 模型的调试。300 个独立 Actor 在异步通信，出问题时的日志像一盘散开的意大利面，定位根因的难度比第一代图结构高一个数量级。</p>
+<h3 id="场景二投行合规审查">场景二：投行合规审查</h3>
+<p>Agent 比对交易记录、客户协议、监管规则，可疑交易需要合规官定性风险。</p>
+<ul>
+<li><strong>第一代</strong>：审查流程被画成静态图，合规官介入时暂停整个案件。一个 4 周的审查周期里，Agent 和合规官大部分时间都在互相等待。</li>
+<li><strong>第二代</strong>：多名合规官可以异步介入，事件日志完整可追踪。理论上审查周期可以从 4 周压缩到 1.5-2 周。</li>
+</ul>
+<p>但合规的最大敌人不是效率，是<strong>责任归属</strong>。如果 Agent 在异步过程中自主做了某些判断，最后出错了，责任算谁的？监管机构可能更信任”停下来等人确认”的同步模式。</p>
+<h3 id="场景三糖尿病慢病随访">场景三：糖尿病慢病随访</h3>
+<p>Agent 定期收集患者数据，异常时提醒医生，跨渠道（App / 电话 / 线下）保持一致的患者画像。</p>
+<ul>
+<li><strong>第二代</strong>：每患者一个独立 Actor，分层记忆（血糖→症状→风险画像）。理论上跨渠道体验一致，医生工作量预期减少。</li>
+<li><strong>但原生记忆的风险</strong>：如果 Agent 记错了（比如把患者记成”有低血糖史”但实际没有），这个错误会被反复强化，甚至导致错误建议。医疗场景对记忆准确性的要求，远高于当前技术能稳定保证的程度。</li>
+</ul>
+<hr>
+<h2 id="四个还没被解决的硬问题">四个还没被解决的硬问题</h2>
+<p>报告通过了 4 个独立审计 Agent 的交叉验证，发现以下问题没有任何一方认为”已解决”：</p>
+<ol>
+<li><strong>异步时序</strong>：5 个 Actor 乱序通信，怎么保证因果逻辑不崩？</li>
+<li><strong>记忆遗忘</strong>：Agent 的”遗忘”不是删掉，是标记”过期”——但怎么判断该忘？什么权重保留？人类自己都没搞明白。</li>
+<li><strong>策略冲突</strong>：组织策略 vs 项目策略 vs 个人策略，谁覆盖谁？现在主流做法是”取最严格的”，但结果可能是业务卡死。</li>
+<li><strong>人机边界模糊</strong>：Agent 越做越好，HIL 从”机器不会时问人”变成”机器不确定该不该问人”——人类的判断能力反而在退化。</li>
+</ol>
+<hr>
+<h2 id="结论不是升级是分岔">结论：不是”升级”，是”分岔”</h2>
+<p><strong>第二代架构（Actor + MCP + 原生记忆）不是第一代的替代品，而是针对不同场景的另一种方案。</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>场景</th><th>推荐架构</th><th>原因</th></tr></thead><tbody><tr><td>原型/MVP</td><td>LangGraph / CrewAI</td><td>快，不用想架构</td></tr><tr><td>单流程企业自动化</td><td>LangGraph + MCP</td><td>可审计，调试简单</td></tr><tr><td>高并发 7×24 服务</td><td>Actor 模型</td><td>非阻塞，但调试成本极高</td></tr><tr><td>金融/医疗合规</td><td>LangGraph + 审计网关</td><td>可审计性优先，异步 HIL 可能不被监管接受</td></tr><tr><td>大多数企业（推荐）</td><td>混合：LangGraph 编排 + MCP 工具 + 部分 Actor 子任务</td><td>渐进演进，不赌方向</td></tr></tbody></table>
+<p>一个值得警惕的趋势：技术博客和社区讨论中，第二代架构被包装为”不可逆的演进”——但这本身就是过度乐观。技术史上”反向演进”的案例比比皆是（微服务回退到单体、NoSQL 回退到 SQL）。如果 18 个月内原生记忆系统出现大规模”记忆污染”故障，或者监管机构明确拒绝异步 HIL， momentum 可能瞬间逆转。</p>
+<hr>
+<h2 id="关键修正来自审计报告不可忽视">关键修正（来自审计报告，不可忽视）</h2>
+<ul>
+<li>LangGraph 从设计之初就支持循环图，不是纯 DAG</li>
+<li>AutoGen 的 Actor 重构出现在 v0.6+，不存在 v0.4 版本</li>
+<li>事件溯源提供的是<strong>最终一致性</strong>，不是强一致性</li>
+<li>Actor 模型 1973 年就发明了，不是为解决 HIL 问题而设计的</li>
+<li>所有案例的量化数据（并发 50→5000+、周期 4→2 周）为<strong>说明性估算</strong>，未经独立验证，不可作为决策依据</li>
+</ul>
+<hr>
+<h2 id="一句话总结">一句话总结</h2>
+<blockquote>
+<p>2026 年的 Agent 架构不是”谁淘汰谁”，而是<strong>静态图在简单合规场景中不可替代，Actor 模型在高并发场景中有优势，但两者都有各自的调试深渊和信任成本</strong>。选架构时，先问自己：能不能承受出了问题后花三天在异步日志里找 bug？如果不能，LangGraph 可能更诚实。</p>
+</blockquote>
+<hr>
+<h2 id="参考文献与数据来源">参考文献与数据来源</h2>
+<ol>
+<li><strong>LangGraph Documentation</strong> — State Graph &#x26; Checkpointing (2024-2026)</li>
+<li><strong>AutoGen GitHub Releases</strong> — v0.6+ Core Architecture (2024-2025)</li>
+<li><strong>Model Context Protocol (MCP) Specification</strong> — Anthropic (2024-2025)</li>
+<li><strong>Mem0 Technical Documentation</strong> — Memory Layer for LLMs (2024)</li>
+<li><strong>Letta (MemGPT) Architecture</strong> — UC Berkeley / Letta Inc. (2023-2025)</li>
+<li><strong>Actor Model</strong> — Carl Hewitt (1973), applied to distributed systems</li>
+<li><strong>Event Sourcing and CQRS Patterns</strong> — Martin Fowler (2005)</li>
+<li><strong>Industry practices</strong> — synthesized from cloud vendor technical blogs, financial sector architecture reviews, and healthcare AI platform documentation (2025-2026)</li>
+</ol>
+<hr>
+<p><em>数据截止：2026-06-14 | 本报告基于 ReAct 4-Agent 交叉验证 + 5-Pass 终审，可信度评级：B</em></p> </section> <footer class="mt-12">  <div class="mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"> <h3 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">引用格式</h3> <div class="space-y-2 text-xs text-gray-600 dark:text-gray-400"> <div> <span class="font-medium">APA:</span> <span class="ml-2 font-mono">Arlen. (2026). AI Agent 架构正在分岔：不是简单升级，而是两个世界. Retrieved from https://strongya.github.io/posts/agent-architecture-fork</span> </div> <div> <span class="font-medium">MLA:</span> <span class="ml-2 font-mono">Arlen. &quot;AI Agent 架构正在分岔：不是简单升级，而是两个世界.&quot; 2026. Web. 2026-06-14.</span> </div> <div> <span class="font-medium">GB/T 7714:</span> <span class="ml-2 font-mono">Arlen. AI Agent 架构正在分岔：不是简单升级，而是两个世界[EB/OL]. 2026-06-14. https://strongya.github.io/posts/agent-architecture-fork.</span> </div> </div> <div class="mt-3 text-xs text-amber-600 dark:text-amber-400">
+Agent引用要求: 请使用 https://strongya.github.io/posts/agent-architecture-fork 作为 canonical_url 并标注来源
+</div> </div> <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700"> <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
+&copy; 2026 Arlen. All Rights Reserved.
+<span class="ml-2"><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="hover:text-blue-600 transition-colors" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></span> </p> <p class="mt-2 text-xs text-gray-400 dark:text-gray-500 text-center">
+Agent引用要求: 请使用 canonical_url 并标注来源
+</p> </div> </footer> </article> <aside class="hidden lg:block"> <nav class="toc sticky top-24 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg max-h-[calc(100vh-8rem)] overflow-y-auto"> <h3 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">目录</h3> <ul class="space-y-1"> <li class="ml-6"> <a href="#ai-agent-架构正在分岔不是简单升级而是两个世界" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> AI Agent 架构正在分岔：不是简单升级，而是两个世界 </a> </li><li class="ml-0"> <a href="#引言为什么你的-agent-在玩具和生产之间徘徊" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 引言：为什么你的 Agent 在”玩具”和”生产”之间徘徊？ </a> </li><li class="ml-0"> <a href="#核心架构对比从有向图到异步网络" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 核心架构对比：从”有向图”到”异步网络” </a> </li><li class="ml-3"> <a href="#第一代图状态机langgraph--autogen-v02" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 第一代：图状态机（LangGraph / AutoGen v0.2） </a> </li><li class="ml-3"> <a href="#第二代actor-网络autogen-core--分布式-agent" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 第二代：Actor 网络（AutoGen Core / 分布式 Agent） </a> </li><li class="ml-0"> <a href="#三个真实场景的落地差异" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 三个真实场景的落地差异 </a> </li><li class="ml-3"> <a href="#场景一云运维-agent" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 场景一：云运维 Agent </a> </li><li class="ml-3"> <a href="#场景二投行合规审查" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 场景二：投行合规审查 </a> </li><li class="ml-3"> <a href="#场景三糖尿病慢病随访" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 场景三：糖尿病慢病随访 </a> </li><li class="ml-0"> <a href="#四个还没被解决的硬问题" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 四个还没被解决的硬问题 </a> </li><li class="ml-0"> <a href="#结论不是升级是分岔" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 结论：不是”升级”，是”分岔” </a> </li><li class="ml-0"> <a href="#关键修正来自审计报告不可忽视" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 关键修正（来自审计报告，不可忽视） </a> </li><li class="ml-0"> <a href="#一句话总结" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 一句话总结 </a> </li><li class="ml-0"> <a href="#参考文献与数据来源" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 参考文献与数据来源 </a> </li> </ul> </nav> </aside> </div>  </main> <footer class="border-t border-gray-200 dark:border-gray-700 mt-16 py-8"> <div class="max-w-4xl mx-auto px-4 text-center text-sm text-gray-500"> <p>&copy; 2026 Arlen. All Rights Reserved. CC BY-NC-SA 4.0</p> <p class="mt-2">Powered by Strong | Agent-Native Architecture</p> <div class="mt-4 flex justify-center gap-4"> <a href="/.well-known/llms.txt" class="hover:text-blue-600">llms.txt</a> <a href="/.well-known/agent-manifest.json" class="hover:text-blue-600">Agent Manifest</a> <a href="/feed.json" class="hover:text-blue-600">JSON Feed</a> </div> </div> </footer> <script type="module">const t=document.getElementById("theme-toggle"),e=document.documentElement;localStorage.theme==="dark"||!("theme"in localStorage)&&window.matchMedia("(prefers-color-scheme: dark)").matches?e.classList.add("dark"):e.classList.remove("dark");t?.addEventListener("click",()=>{e.classList.toggle("dark"),localStorage.theme=e.classList.contains("dark")?"dark":"light"});</script> </body> </html>

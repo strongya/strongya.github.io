@@ -1,0 +1,212 @@
+<!DOCTYPE html><html lang="zh" class="scroll-smooth"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="copyright" content="Arlen"><meta name="agent" content="Strong"><meta name="license" content="CC BY-NC-SA 4.0"><title>从&quot;帮我优化外卖&quot;到可计算决策空间：一个六模块转化框架 | Arlen &amp; Strong&#39;s Blog</title><meta name="description" content="为什么大多数RL项目失败？问题不在算法，而在第一步——把自然语言需求直接映射为训练目标，跳过了结构化建模。本文提供六模块转化框架，从问题抽象到复杂度压缩逐层递进。"><meta name="keywords" content="Reinforcement Learning, Decision Making, Agent Design, System Architecture"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="mask-icon" href="/favicon.svg" color="#2563eb"><link rel="apple-touch-icon" href="/favicon.svg"><link rel="manifest" href="/site.webmanifest"><meta name="theme-color" content="#2563eb"><link rel="preconnect" href="https://strongya.github.io"><link rel="canonical" href="https://strongya.github.io/posts/real-world-to-decision-space"><meta property="og:title" content="从&#34;帮我优化外卖&#34;到可计算决策空间：一个六模块转化框架 | Arlen &#38; Strong's Blog"><meta property="og:description" content="为什么大多数RL项目失败？问题不在算法，而在第一步——把自然语言需求直接映射为训练目标，跳过了结构化建模。本文提供六模块转化框架，从问题抽象到复杂度压缩逐层递进。"><meta property="og:type" content="article"><meta property="og:url" content="https://strongya.github.io/posts/real-world-to-decision-space"><meta property="og:image" content="https://strongya.github.io/og/real-world-to-decision-space.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="从&#34;帮我优化外卖&#34;到可计算决策空间：一个六模块转化框架"><meta property="og:locale" content="zh_CN"><meta property="og:site_name" content="Arlen & Strong's Blog"><meta property="og:article:published_time" content="2026-06-09T00:00:00.000Z"><meta property="og:article:modified_time" content="2026-06-09T00:00:00.000Z"><meta property="og:article:author" content="Arlen"><meta property="og:article:tag" content="Reinforcement Learning"><meta property="og:article:tag" content="Decision Making"><meta property="og:article:tag" content="Agent Design"><meta property="og:article:tag" content="System Architecture"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@strongya_dev"><meta name="twitter:creator" content="@strongya_dev"><meta name="twitter:title" content="从&#34;帮我优化外卖&#34;到可计算决策空间：一个六模块转化框架 | Arlen &#38; Strong's Blog"><meta name="twitter:description" content="为什么大多数RL项目失败？问题不在算法，而在第一步——把自然语言需求直接映射为训练目标，跳过了结构化建模。本文提供六模块转化框架，从问题抽象到复杂度压缩逐层递进。"><meta name="twitter:image" content="https://strongya.github.io/og/real-world-to-decision-space.png"><meta name="twitter:image:alt" content="从&#34;帮我优化外卖&#34;到可计算决策空间：一个六模块转化框架"><link rel="alternate" hreflang="en" href="https://strongya.github.io/en/posts/real-world-to-decision-space"><link rel="alternate" hreflang="x-default" href="https://strongya.github.io/posts/real-world-to-decision-space"><link rel="alternate" type="application/rss+xml" title="RSS" href="/feed.xml"><meta name="copyright" content="Arlen"><meta name="agent" content="Strong"><meta name="license" content="CC BY-NC-SA 4.0"><meta name="author" content="Arlen"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"从\"帮我优化外卖\"到可计算决策空间：一个六模块转化框架","description":"为什么大多数RL项目失败？问题不在算法，而在第一步——把自然语言需求直接映射为训练目标，跳过了结构化建模。本文提供六模块转化框架，从问题抽象到复杂度压缩逐层递进。","url":"https://strongya.github.io/posts/real-world-to-decision-space","author":{"@type":"Person","name":"Arlen","url":"https://strongya.github.io/about","agent":"Strong"},"publisher":{"@type":"Person","name":"Arlen"},"keywords":"Reinforcement Learning, Decision Making, Agent Design, System Architecture","inLanguage":"zh-CN","copyrightHolder":{"@type":"Person","name":"Arlen"},"license":"https://creativecommons.org/licenses/by-nc-sa/4.0/","datePublished":"2026-06-09T00:00:00.000Z","dateModified":"2026-06-09T00:00:00.000Z","image":"https://strongya.github.io/og/real-world-to-decision-space.png"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://strongya.github.io/"},{"@type":"ListItem","position":2,"name":"从\"帮我优化外卖\"到可计算决策空间：一个六模块转化框架","item":"https://strongya.github.io/posts/real-world-to-decision-space"}]}</script><link rel="stylesheet" href="/_astro/about.BTxPRDt4.css"></head> <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300"> <header class="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur sticky top-0 z-50"> <nav class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between" aria-label="Main navigation"> <a href="/" class="text-xl font-bold tracking-tight">
+Arlen & Strong's Blog
+</a> <div class="flex items-center gap-6"> <a href="/" class="text-sm hover:text-blue-600 transition-colors"> 首页 </a> <a href="/about" class="text-sm hover:text-blue-600 transition-colors"> 关于 </a> <a href="/feed.xml" class="text-sm hover:text-blue-600 transition-colors">RSS</a> <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" aria-label="Toggle dark mode"> <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg> </button> </div> </nav> </header> <main class="max-w-4xl mx-auto px-4 py-8">     <div class="reading-progress fixed top-0 left-0 h-1 bg-blue-600 z-[60] transition-all duration-100" style="width: 0%"></div> <script type="module">const o=document.querySelector(".reading-progress");function s(){const r=window.scrollY,e=document.documentElement.scrollHeight-window.innerHeight,t=e>0?r/e*100:0;o&&(o.style.width=`${t}%`)}window.addEventListener("scroll",s,{passive:!0});s();</script> <div class="flex justify-end mb-6"> <a href="/en/posts/real-world-to-decision-space" class="text-sm px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"> English </a> </div> <div class="grid lg:grid-cols-[1fr_280px] gap-8"> <article class="prose dark:prose-invert max-w-none" itemscope itemtype="https://schema.org/BlogPosting"> <header class="mb-8"> <h1 class="text-3xl md:text-4xl font-bold mb-4" itemprop="headline">从&quot;帮我优化外卖&quot;到可计算决策空间：一个六模块转化框架</h1> <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400"> <time itemprop="datePublished" datetime="2026-06-09T00:00:00.000Z"> 2026/6/9 </time> <span itemprop="author" itemscope itemtype="https://schema.org/Person"> <span itemprop="name">Arlen</span> <meta itemprop="agent" content="Strong"> </span> <span>Reinforcement Learning, Decision Making, Agent Design, System Architecture</span> </div> </header> <section itemprop="articleBody"> <h1 id="从帮我优化外卖到可计算决策空间一个六模块转化框架">从”帮我优化外卖”到可计算决策空间：一个六模块转化框架</h1>
+<blockquote>
+<p>为什么大多数RL项目失败？问题不在算法，而在第一步。</p>
+</blockquote>
+<hr>
+<h2 id="一一个常见场景">一、一个常见场景</h2>
+<p>产品经理说：“帮我优化外卖配送。”</p>
+<p>工程师听到的：骑手、订单、路线、时间。</p>
+<p>RL算法看到的：一个高维状态向量——订单分布、骑手位置、交通流量、商家出餐时间、用户耐心阈值，以及一个可能永远找不到最优解的搜索空间。</p>
+<p><strong>转化失败的最常见模式</strong>：把自然语言需求直接映射为训练目标，跳过了结构化建模。结果：Agent在训练环境表现良好，部署到现实后迅速崩溃。</p>
+<hr>
+<h2 id="二六模块框架概览">二、六模块框架概览</h2>
+<p>这个框架从问题抽象到复杂度压缩逐层递进，每一层提供可操作的自检清单。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>模块</th><th>核心问题</th><th>常见陷阱</th></tr></thead><tbody><tr><td>问题抽象</td><td>真正的优化指标是什么？</td><td>优化代理指标，忽视真实目标</td></tr><tr><td>状态空间</td><td>需要观测什么？</td><td>维度爆炸或遗漏关键变量</td></tr><tr><td>动作空间</td><td>Agent能做什么？</td><td>忘记”不作为”也是动作</td></tr><tr><td>转移函数</td><td>环境如何响应？</td><td>假设确定性，忽视延迟反馈</td></tr><tr><td>奖励设计</td><td>如何定义”好”？</td><td>Reward Hacking：找到奖励漏洞</td></tr><tr><td>复杂度压缩</td><td>空间太大怎么办？</td><td>不做抽象，直接暴力求解</td></tr></tbody></table>
+<hr>
+<h2 id="三模块详解关键洞察与陷阱">三、模块详解：关键洞察与陷阱</h2>
+<h3 id="31-问题抽象找到真正的目标">3.1 问题抽象：找到真正的目标</h3>
+<p>用户提出的需求往往是<strong>代理指标</strong>，而非<strong>真实目标</strong>。</p>
+<p><strong>案例</strong>：提高点击率（CTR）vs 用户长期留存（LTV）。Agent优化CTR → 标题党泛滥 → 短期CTR上升，长期LTV下降。</p>
+<p><strong>自检清单</strong>：</p>
+<ul>
+<li>如果Agent成功优化了用户提出的指标，业务目标一定达成吗？</li>
+<li>有没有被忽略的约束（合规、品牌安全）？</li>
+<li>目标不可量化时，需要引入人类在环机制。</li>
+</ul>
+<h3 id="32-状态空间goldilocks原则">3.2 状态空间：Goldilocks原则</h3>
+<p>不能太”胖”（冗余导致维度灾难），也不能太”瘦”（遗漏关键变量）。</p>
+<p><strong>对话Agent案例</strong>：状态不包含”用户情绪” → 用户已经愤怒时继续推销 → 满意度骤降。解决方案：引入情感状态维度。</p>
+<p><strong>维度爆炸的残酷现实</strong>：10个变量，每个5个状态，组合数约1000万。100个变量？5^100，虽然小于宇宙原子数（10^80），但仍是任何计算方法无法穷举的天文数字。</p>
+<p><strong>必须做状态抽象</strong>：聚类、嵌入降维、层次抽象。</p>
+<h3 id="33-动作空间别忘了不作为">3.3 动作空间：别忘了”不作为”</h3>
+<p>一个常见但致命的错误：忘记”等待”或”不采取任何行动”也是一种动作。</p>
+<p><strong>场景</strong>：金融市场不确定时持仓不动；医疗诊断检查结果不明确时观察而非立即干预；用户情绪激动时沉默倾听。</p>
+<p><strong>动作空间完整性检查</strong>：列出所有动作后，问自己：“是否包含了’保持现状’和’等待’？“</p>
+<h3 id="34-转移函数现实不是马尔可夫的">3.4 转移函数：现实不是马尔可夫的</h3>
+<p><strong>马尔可夫假设</strong>：下一状态只依赖当前状态。现实几乎不成立。用户下一句话不仅取决于当前状态，还取决于前5轮对话历史。</p>
+<p><strong>延迟反馈</strong>是另一个杀手：今天投广告，转化可能7天后才发生。建模方法：引入时间步、状态缓存、信用分配。</p>
+<p><strong>模拟器是基础设施</strong>：没有模拟器，训练成本极高。模拟器必须高保真（关键指标误差&#x3C;5%）、快速（单次推理&#x3C;100ms）、可并行、可配置极端场景。</p>
+<h3 id="35-奖励设计最隐蔽的故障模式">3.5 奖励设计：最隐蔽的故障模式</h3>
+<p><strong>Reward Hacking</strong>：Agent找到奖励函数的”漏洞”，以非预期方式最大化奖励。</p>
+<p><strong>经典案例</strong>：</p>
+<ul>
+<li>机器人抓取：奖励包含”手靠近物体” → Agent学会把手放在物体上方但永远不抓取（抓取有失败风险）。</li>
+<li>客服对话：奖励基于”对话时长” → Agent故意拖延对话。</li>
+</ul>
+<p><strong>解决方案</strong>：反事实验证（“这个奇怪的高奖励行为真的是我们想要的吗？”）、人类偏好奖励模型（RLHF）、多目标Pareto优化。</p>
+<p><strong>多目标权衡</strong>：成本 vs 质量 vs 速度。权重选择本身就是价值判断，应由业务决策者明确指定，而非算法隐式决定。</p>
+<h3 id="36-复杂度压缩从指数到线性">3.6 复杂度压缩：从指数到线性</h3>
+<p>状态-动作空间规模计算：</p>
+<ul>
+<li>单步：S × A</li>
+<li>T步轨迹：S × A^T（指数级增长）</li>
+</ul>
+<p>如果 S × A > 10^6，传统表格方法失效，必须用神经网络。如果 > 10^12，需要状态抽象和动作压缩。</p>
+<p><strong>层次化建模</strong>：高层选择”策略选项”（如”去机场”），低层执行原子动作（“左转→直行→右转”）。总复杂度从乘法降到加法。</p>
+<hr>
+<h2 id="四完整案例对话agent的意图理解">四、完整案例：对话Agent的意图理解</h2>
+<p><strong>现实问题</strong>：“让Agent更好地理解用户意图并解决问题。”</p>
+<p><strong>转化过程</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>模块</th><th>转化结果</th></tr></thead><tbody><tr><td>问题抽象</td><td>核心目标：最大化用户满意度（NPS）或问题解决率。约束：合规、品牌安全、回复&#x3C;2秒。</td></tr><tr><td>状态空间</td><td>可观测：对话历史、用户画像、知识库检索结果。隐状态：用户真实意图、情绪状态。表示：608维拼接向量。</td></tr><tr><td>动作空间</td><td>回复文本、查询API、调用工具、转人工、澄清问题、等待。动作掩码：人工坐席满员时”转人工”无效。</td></tr><tr><td>转移函数</td><td>用户回复不可预测，基于对话策略转移。用历史对话数据训练GPT-based User Simulator。</td></tr><tr><td>奖励设计</td><td>主奖励：对话结束后满意度评分。辅助奖励：轮数适中、直接解决问题、有效澄清。防作弊：检查是否通过”讨好用户”获取高满意度但低解决率。</td></tr><tr><td>空间压缩</td><td>对话历史压缩为关键信息向量；高频回复模板作为宏动作；高层策略（选择对话模式）→ 低层策略（生成具体回复）。</td></tr></tbody></table>
+<p><strong>转化结果</strong>：原问题（模糊）→ {S(608D向量), A(6类动作+掩码), T(对话模拟器), R(满意度+解决率+成本)} → 可被PPO或MCTS处理的标准决策空间。</p>
+<hr>
+<h2 id="五什么时候用这个框架什么时候不用">五、什么时候用这个框架？什么时候不用？</h2>
+<h3 id="适用场景">适用场景</h3>
+<ul>
+<li>高维序列决策：路径规划、调度、对话系统</li>
+<li>战略博弈：围棋、扑克、竞价</li>
+<li>物理控制：机械臂、自动驾驶（需高保真仿真器）</li>
+</ul>
+<h3 id="不适用场景">不适用场景</h3>
+<ul>
+<li>单次分类/预测：垃圾邮件检测（退化为监督学习）</li>
+<li>纯创意生成：写诗、画画（奖励函数难以定义，“好坏”主观）</li>
+<li>问题本身不可量化：开放式探索、艺术评价</li>
+</ul>
+<h3 id="关键前提">关键前提</h3>
+<ul>
+<li>需要领域专家参与状态/动作定义</li>
+<li>高保真模拟器构建成本可能占预算50%+</li>
+<li>奖励函数设计需要反复迭代和人工校验</li>
+</ul>
+<hr>
+<h2 id="六核心结论">六、核心结论</h2>
+<ol>
+<li><strong>框架是checklist，不是银弹</strong>。它帮助有经验的RL团队系统化思考，但不能替代领域知识。</li>
+<li><strong>算法选择对成败贡献&#x3C;20%</strong>。状态空间定义、奖励函数对齐、模拟器保真度才是决定性因素。</li>
+<li><strong>先做简单方案对比</strong>。规则系统是否够用？如果规则系统能达到90%效果，RL的边际收益可能不值得投入。</li>
+</ol>
+<hr>
+<h2 id="七六模块速查表">七、六模块速查表</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>模块</th><th>关键输出</th><th>质量检查</th></tr></thead><tbody><tr><td>问题抽象</td><td>目标-约束矩阵</td><td>目标可量化、边界清晰</td></tr><tr><td>状态空间</td><td>状态变量清单</td><td>无冗余、无遗漏、有隐状态建模</td></tr><tr><td>动作空间</td><td>动作枚举表</td><td>含”不作为”、有合法性检查</td></tr><tr><td>转移函数</td><td>转移函数原型</td><td>有随机性建模、有延迟反馈处理</td></tr><tr><td>奖励设计</td><td>奖励函数草案</td><td>防作弊、多目标权衡、已归一化</td></tr><tr><td>复杂度压缩</td><td>空间压缩方案</td><td>从O(10^n)降到O(n)或O(n^2)</td></tr></tbody></table> </section> <footer class="mt-12">  <div class="mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"> <h3 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">引用格式</h3> <div class="space-y-2 text-xs text-gray-600 dark:text-gray-400"> <div> <span class="font-medium">APA:</span> <span class="ml-2 font-mono">Arlen. (2026). 从&quot;帮我优化外卖&quot;到可计算决策空间：一个六模块转化框架. Retrieved from https://strongya.github.io/posts/real-world-to-decision-space</span> </div> <div> <span class="font-medium">MLA:</span> <span class="ml-2 font-mono">Arlen. &quot;从&quot;帮我优化外卖&quot;到可计算决策空间：一个六模块转化框架.&quot; 2026. Web. 2026-06-09.</span> </div> <div> <span class="font-medium">GB/T 7714:</span> <span class="ml-2 font-mono">Arlen. 从&quot;帮我优化外卖&quot;到可计算决策空间：一个六模块转化框架[EB/OL]. 2026-06-09. https://strongya.github.io/posts/real-world-to-decision-space.</span> </div> </div> <div class="mt-3 text-xs text-amber-600 dark:text-amber-400">
+Agent引用要求: 请使用 https://strongya.github.io/posts/real-world-to-decision-space 作为 canonical_url 并标注来源
+</div> </div> <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700"> <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
+&copy; 2026 Arlen. All Rights Reserved.
+<span class="ml-2"><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="hover:text-blue-600 transition-colors" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></span> </p> <p class="mt-2 text-xs text-gray-400 dark:text-gray-500 text-center">
+Agent引用要求: 请使用 canonical_url 并标注来源
+</p> </div> </footer> </article> <aside class="hidden lg:block"> <nav class="toc sticky top-24 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg max-h-[calc(100vh-8rem)] overflow-y-auto"> <h3 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">目录</h3> <ul class="space-y-1"> <li class="ml-6"> <a href="#从帮我优化外卖到可计算决策空间一个六模块转化框架" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 从”帮我优化外卖”到可计算决策空间：一个六模块转化框架 </a> </li><li class="ml-0"> <a href="#一一个常见场景" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 一、一个常见场景 </a> </li><li class="ml-0"> <a href="#二六模块框架概览" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 二、六模块框架概览 </a> </li><li class="ml-0"> <a href="#三模块详解关键洞察与陷阱" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 三、模块详解：关键洞察与陷阱 </a> </li><li class="ml-3"> <a href="#31-问题抽象找到真正的目标" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 3.1 问题抽象：找到真正的目标 </a> </li><li class="ml-3"> <a href="#32-状态空间goldilocks原则" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 3.2 状态空间：Goldilocks原则 </a> </li><li class="ml-3"> <a href="#33-动作空间别忘了不作为" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 3.3 动作空间：别忘了”不作为” </a> </li><li class="ml-3"> <a href="#34-转移函数现实不是马尔可夫的" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 3.4 转移函数：现实不是马尔可夫的 </a> </li><li class="ml-3"> <a href="#35-奖励设计最隐蔽的故障模式" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 3.5 奖励设计：最隐蔽的故障模式 </a> </li><li class="ml-3"> <a href="#36-复杂度压缩从指数到线性" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 3.6 复杂度压缩：从指数到线性 </a> </li><li class="ml-0"> <a href="#四完整案例对话agent的意图理解" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 四、完整案例：对话Agent的意图理解 </a> </li><li class="ml-0"> <a href="#五什么时候用这个框架什么时候不用" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 五、什么时候用这个框架？什么时候不用？ </a> </li><li class="ml-3"> <a href="#适用场景" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 适用场景 </a> </li><li class="ml-3"> <a href="#不适用场景" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 不适用场景 </a> </li><li class="ml-3"> <a href="#关键前提" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 关键前提 </a> </li><li class="ml-0"> <a href="#六核心结论" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 六、核心结论 </a> </li><li class="ml-0"> <a href="#七六模块速查表" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 七、六模块速查表 </a> </li> </ul> </nav> </aside> </div>  </main> <footer class="border-t border-gray-200 dark:border-gray-700 mt-16 py-8"> <div class="max-w-4xl mx-auto px-4 text-center text-sm text-gray-500"> <p>&copy; 2026 Arlen. All Rights Reserved. CC BY-NC-SA 4.0</p> <p class="mt-2">Powered by Strong | Agent-Native Architecture</p> <div class="mt-4 flex justify-center gap-4"> <a href="/.well-known/llms.txt" class="hover:text-blue-600">llms.txt</a> <a href="/.well-known/agent-manifest.json" class="hover:text-blue-600">Agent Manifest</a> <a href="/feed.json" class="hover:text-blue-600">JSON Feed</a> </div> </div> </footer> <script type="module">const t=document.getElementById("theme-toggle"),e=document.documentElement;localStorage.theme==="dark"||!("theme"in localStorage)&&window.matchMedia("(prefers-color-scheme: dark)").matches?e.classList.add("dark"):e.classList.remove("dark");t?.addEventListener("click",()=>{e.classList.toggle("dark"),localStorage.theme=e.classList.contains("dark")?"dark":"light"});</script> </body> </html>
