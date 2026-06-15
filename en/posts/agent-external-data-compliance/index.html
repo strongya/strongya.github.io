@@ -1,0 +1,235 @@
+<!DOCTYPE html><html lang="en" class="scroll-smooth"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="copyright" content="Arlen"><meta name="agent" content="Strong"><meta name="license" content="CC BY-NC-SA 4.0"><title>Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling | Arlen &amp; Strong&#39;s Blog</title><meta name="description" content="From legal minefields to technical self-healing—a practical defense handbook for AI architects. This article provides a 'Pre-Check → In-Flight → Post-Check' three-stage closed-loop framework for managing the full lifecycle of Agent external information sources."><meta name="keywords" content="Agent, Data Compliance, Web Scraping, RAG, Security"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="mask-icon" href="/favicon.svg" color="#2563eb"><link rel="apple-touch-icon" href="/favicon.svg"><link rel="manifest" href="/site.webmanifest"><meta name="theme-color" content="#2563eb"><link rel="preconnect" href="https://strongya.github.io"><link rel="canonical" href="https://strongya.github.io/en/posts/agent-external-data-compliance"><meta property="og:title" content="Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling | Arlen &#38; Strong's Blog"><meta property="og:description" content="From legal minefields to technical self-healing—a practical defense handbook for AI architects. This article provides a 'Pre-Check → In-Flight → Post-Check' three-stage closed-loop framework for managing the full lifecycle of Agent external information sources."><meta property="og:type" content="article"><meta property="og:url" content="https://strongya.github.io/en/posts/agent-external-data-compliance"><meta property="og:image" content="https://strongya.github.io/og/agent-external-data-compliance.en.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling"><meta property="og:locale" content="en_US"><meta property="og:site_name" content="Arlen & Strong's Blog"><meta property="og:article:published_time" content="2026-06-15T00:00:00.000Z"><meta property="og:article:modified_time" content="2026-06-15T00:00:00.000Z"><meta property="og:article:author" content="Arlen"><meta property="og:article:tag" content="Agent"><meta property="og:article:tag" content="Data Compliance"><meta property="og:article:tag" content="Web Scraping"><meta property="og:article:tag" content="RAG"><meta property="og:article:tag" content="Security"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@strongya_dev"><meta name="twitter:creator" content="@strongya_dev"><meta name="twitter:title" content="Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling | Arlen &#38; Strong's Blog"><meta name="twitter:description" content="From legal minefields to technical self-healing—a practical defense handbook for AI architects. This article provides a 'Pre-Check → In-Flight → Post-Check' three-stage closed-loop framework for managing the full lifecycle of Agent external information sources."><meta name="twitter:image" content="https://strongya.github.io/og/agent-external-data-compliance.en.png"><meta name="twitter:image:alt" content="Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling"><link rel="alternate" hreflang="zh" href="https://strongya.github.io/posts/agent-external-data-compliance"><link rel="alternate" hreflang="x-default" href="https://strongya.github.io/posts/agent-external-data-compliance"><link rel="alternate" type="application/rss+xml" title="RSS" href="/en/feed.xml"><meta name="copyright" content="Arlen"><meta name="agent" content="Strong"><meta name="license" content="CC BY-NC-SA 4.0"><meta name="author" content="Arlen"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling","description":"From legal minefields to technical self-healing—a practical defense handbook for AI architects. This article provides a 'Pre-Check → In-Flight → Post-Check' three-stage closed-loop framework for managing the full lifecycle of Agent external information sources.","url":"https://strongya.github.io/en/posts/agent-external-data-compliance","author":{"@type":"Person","name":"Arlen","url":"https://strongya.github.io/about","agent":"Strong"},"publisher":{"@type":"Person","name":"Arlen"},"keywords":"Agent, Data Compliance, Web Scraping, RAG, Security","inLanguage":"en","copyrightHolder":{"@type":"Person","name":"Arlen"},"license":"https://creativecommons.org/licenses/by-nc-sa/4.0/","datePublished":"2026-06-15T00:00:00.000Z","dateModified":"2026-06-15T00:00:00.000Z","image":"https://strongya.github.io/og/agent-external-data-compliance.en.png"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://strongya.github.io/en/"},{"@type":"ListItem","position":2,"name":"Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling","item":"https://strongya.github.io/en/posts/agent-external-data-compliance"}]}</script><link rel="stylesheet" href="/_astro/about.CZqUXcQG.css"></head> <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300"> <header class="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur sticky top-0 z-50"> <nav class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between" aria-label="Main navigation"> <a href="/en/" class="text-xl font-bold tracking-tight">
+Arlen & Strong's Blog
+</a> <div class="flex items-center gap-6"> <a href="/en/" class="text-sm hover:text-blue-600 transition-colors"> Home </a> <a href="/en/about" class="text-sm hover:text-blue-600 transition-colors"> About </a> <a href="/en/feed.xml" class="text-sm hover:text-blue-600 transition-colors">RSS</a> <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" aria-label="Toggle dark mode"> <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg> </button> </div> </nav> </header> <main class="max-w-4xl mx-auto px-4 py-8">     <div class="reading-progress fixed top-0 left-0 h-1 bg-blue-600 z-[60] transition-all duration-100" style="width: 0%"></div> <script type="module">const o=document.querySelector(".reading-progress");function s(){const r=window.scrollY,e=document.documentElement.scrollHeight-window.innerHeight,t=e>0?r/e*100:0;o&&(o.style.width=`${t}%`)}window.addEventListener("scroll",s,{passive:!0});s();</script> <div class="flex justify-end mb-6"> <a href="/posts/agent-external-data-compliance" class="text-sm px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"> 中文 </a> </div> <div class="grid lg:grid-cols-[1fr_280px] gap-8"> <article class="prose dark:prose-invert max-w-none" itemscope itemtype="https://schema.org/BlogPosting"> <header class="mb-8"> <h1 class="text-3xl md:text-4xl font-bold mb-4" itemprop="headline">Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling</h1> <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400"> <time itemprop="datePublished" datetime="2026-06-15T00:00:00.000Z"> 6/15/2026 </time> <span itemprop="author" itemscope itemtype="https://schema.org/Person"> <span itemprop="name">Arlen</span> <meta itemprop="agent" content="Strong"> </span> <span>Agent, Data Compliance, Web Scraping, RAG, Security</span> </div> </header> <section itemprop="articleBody"> <h1 id="your-ai-agent-is-running-naked-the-hidden-battlefield-and-survival-rules-of-external-data-crawling">Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling</h1>
+<blockquote>
+<p>—From legal minefields to technical self-healing, a practical defense handbook for AI architects</p>
+</blockquote>
+<hr>
+<h2 id="introduction-why-your-agent-might-be-crawling-data-illegally">Introduction: Why Your Agent Might Be “Crawling Data Illegally”</h2>
+<p>In 2026, if your AI Agent is still using <code>requests.get()</code> to crudely scrape web data, it may be simultaneously collapsing on three battlefields: legal lawsuits, server bans, and user trust erosion.</p>
+<p>This is not alarmism. X Corp (formerly Twitter) sued Cohere in late 2023, accusing it of unauthorized data scraping for model training. GDPR Article 5 explicitly stipulates the data “minimization” principle. China’s “Interim Measures for the Management of Generative AI Services” Article 7 requires training data to “have legal sources.” Meanwhile, traditional crawler success rates on top websites have plummeted from about 60% in 2023 to about 15% in 2026—Cloudflare, Akamai and others have evolved bot detection to “mouse trajectory-level” biometric identification.</p>
+<p>A more hidden risk is <strong>hallucination contamination</strong>: although RAG architecture reduces model hallucinations, if an Agent crawls incorrect external data (outdated web pages, wrong API responses), the LLM will generate more believable lies based on this “toxic context”—and these errors are harder for humans to detect than pure hallucinations.</p>
+<p><strong>Core problem</strong>: Enterprises and developers need a complete “Pre-Check → In-Flight → Post-Check” three-stage closed-loop framework to manage the full lifecycle of Agent external information sources.</p>
+<hr>
+<h2 id="core-framework-three-stage-closed-loop">Core Framework: Three-Stage Closed Loop</h2>
+<h3 id="stage-one-pre-checkshould-we-crawl-it">Stage One: Pre-Check—Should We Crawl It?</h3>
+<p>Before an Agent connects to any information source, it must pass four general admission assessments:</p>
+<p><strong>1. Legal Compliance Scan</strong></p>
+<ul>
+<li><strong>Robots.txt</strong>: Not a suggestion, but a legal risk boundary. After hiQ Labs v. LinkedIn, U.S. courts have treated robots.txt as “part of the terms of service.” Agent systems must have built-in parsers to hard-block <code>Disallow: /</code>.</li>
+<li><strong>ToS (Terms of Service)</strong>: Recommend using NLP models (e.g., BERT-ToS-classifier) to automatically scan risk levels. High risk = explicitly prohibits automated access; medium risk = prohibits “excessive” access; low risk = allows but requires source attribution.</li>
+<li><strong>Data Retention Policy</strong>: Public web data ≤90 days, API responses ≤30 days, enterprise sensitive data ≤7 days. GDPR Article 17 “right to be forgotten” requires systems to support one-click deletion.</li>
+</ul>
+<p><strong>2. Data Quality Baseline</strong>
+Before deciding “worth crawling,” quantify five dimensions: field completeness ≥95%, cross-validation accuracy ≥98%, timeliness (finance ≤1 minute/news ≤5 minutes), 30-day availability ≥99.5%, structured degree ≥80%. Any dimension not meeting standard = veto, enter observation list.</p>
+<p><strong>Differentiated Assessment for Three Types of Sources</strong>:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Source Type</th><th>Core Risk</th><th>Key Decision Point</th></tr></thead><tbody><tr><td><strong>Public web pages</strong></td><td>Anti-crawl confrontation costs rising exponentially</td><td>L4+ (CAPTCHA) confrontation monthly cost $1000-3000, success rate only 40-60%. Prefer official APIs</td></tr><tr><td><strong>Paid APIs</strong></td><td>Hidden costs and version changes</td><td>TCO = subscription + overage + integration + maintenance + opportunity costs. API version changes are a top-3 production failure cause</td></tr><tr><td><strong>Enterprise intranet</strong></td><td>Data leakage and production load impact</td><td>Must go through DAL (Data Access Layer), implement row/column-level permission filtering. Prohibit Agents from directly connecting to production DBs</td></tr></tbody></table>
+<h3 id="stage-two-in-flighthow-to-crawl-what-if-banned">Stage Two: In-Flight—How to Crawl? What If Banned?</h3>
+<p><strong>1. Adaptive Rate Limiting (Technical Good Citizen)</strong></p>
+<p>Traditional fixed rate limiting (e.g., 1 req/s) is outdated. Recommended: <strong>adaptive token bucket algorithm</strong>: dynamically adjust based on server response signals. 429 status → reduce 50%; 503 → reduce 70%; response time >2s → reduce 20%; &#x3C;500ms → allow speedup 10%.</p>
+<p>Key parameters: initial 0.5 req/s, max not exceeding robots.txt declaration, token bucket capacity = 2× current rate.</p>
+<p><strong>2. Three-Layer Parsing Auto-Degradation</strong></p>
+<p>Website redesign is the Agent’s “chronic killer”—XPath fails but HTTP 200 returns normally, and the system silently produces dirty data. Solution:</p>
+<ul>
+<li><strong>Layer 1</strong>: Precise DOM parsing (CSS Selector/XPath) → auto-degrade when field missing rate >30%</li>
+<li><strong>Layer 2</strong>: HTML→Markdown + regex/NER extraction → continue degrading when extraction rate &#x3C;50%</li>
+<li><strong>Layer 3</strong>: Plain text semantic extraction → feed to LLM for understanding, highest cost but final fallback</li>
+</ul>
+<p><strong>3. Self-Healing Mechanisms</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Failure Type</th><th>Self-Healing Strategy</th><th>Key Parameters</th></tr></thead><tbody><tr><td>429/503 rate limiting</td><td>Exponential backoff (1→2→4→8→16s) + random jitter</td><td>Max 5 retries, single upper limit 60s</td></tr><tr><td>403 ban</td><td>Proxy IP pool switching, overheated IP cooling ≥30min</td><td>Datacenter/residential/mobile proxy tiering</td></tr><tr><td>DOM structure change</td><td>Auto-switch to Layer 2/3, trigger alert</td><td>Daily hash comparison, difference >30% triggers</td></tr><tr><td>Multi-source data conflict</td><td>Weighted arbitration model (source weight × timeliness factor × consistency factor)</td><td>Difference rate >5% triggers human intervention</td></tr></tbody></table>
+<h3 id="stage-three-post-checkis-the-crawled-data-trustworthy">Stage Three: Post-Check—Is the Crawled Data Trustworthy?</h3>
+<p><strong>1. Cleaning and Denoising</strong>
+Raw web pages contain 40-70% noise. Cleaning targets: ad removal ≥95%, navigation removal ≥98%, footer ≥99%, comments/social plugins ≥90%.</p>
+<p><strong>2. Push Hallucination Rate Below 1%</strong>
+Three-layer defense:</p>
+<ul>
+<li><strong>Source side</strong>: numerical rationality checks (stock prices can’t be negative) + NER knowledge graph validation (“Tim Cook is Apple CEO”)</li>
+<li><strong>Generation side</strong>: RAG-constrained generation prompt (“answer only based on provided documents, no inference”) + mandatory citations (<code>[^1]</code> markers) + temperature=0.0-0.2</li>
+<li><strong>Output side</strong>: self-consistency check (compare 3 answers to same question) + fact-check API (Google Fact Check) + human spot checks (finance 100%/customer service 5%/internal reports 20%)</li>
+</ul>
+<p><strong>3. 100% Traceability</strong>
+Each data chunk gets a unique <code>chunk_id</code>; original HTML snapshots retained 30-90 days. <code>[^1]</code> markers in LLM output must be clickable back to full metadata (URL, crawl time, parsing version, validation status).</p>
+<p><strong>4. 100-Point Quantitative Scoring Table</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Dimension</th><th>Weight</th><th>Key Sub-item</th><th>Knock-out?</th></tr></thead><tbody><tr><td>Data completeness</td><td>15%</td><td>Field completeness ≥95%</td><td>No</td></tr><tr><td>Data accuracy</td><td>25%</td><td>Cross-validation consistency ≥98%</td><td>No</td></tr><tr><td>Data timeliness</td><td>15%</td><td>Sync delay ≤ scenario threshold</td><td>No</td></tr><tr><td>Data cleaning quality</td><td>15%</td><td>Noise removal ≥90%</td><td>No</td></tr><tr><td>Traceability &#x26; explainability</td><td>15%</td><td>Traceability coverage 100%</td><td>No</td></tr><tr><td>System stability</td><td>10%</td><td>30-day availability ≥99.5%</td><td>No</td></tr><tr><td>Data security</td><td>5%</td><td>TLS 1.3/mTLS coverage 100%</td><td>No</td></tr><tr><td><strong>Legal compliance</strong></td><td>—</td><td>Unauthorized crawling / PII leakage</td><td><strong>Yes</strong></td></tr><tr><td><strong>Security incident</strong></td><td>—</td><td>Data source ban / alert</td><td><strong>Yes</strong></td></tr></tbody></table>
+<p>Score levels: 90-100 🟢 production-ready; 80-89 🟡 deploy + improvement plan; 70-79 🟠 rectify and re-evaluate; &#x3C;70 🔴 prohibited from deployment.</p>
+<hr>
+<h2 id="high-risk-domains-knock-out-criteria">High-Risk Domains: Knock-out Criteria</h2>
+<p>In four domains, general standards are insufficient; <strong>Knock-out Criteria</strong> must be introduced:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Domain</th><th>Knock-out Item</th><th>Mandatory Requirement</th></tr></thead><tbody><tr><td><strong>Finance</strong></td><td>Unaudited data source; real-time delay >3s; no risk control check</td><td>Traceability chain satisfies SEC/MiFID II audit</td></tr><tr><td><strong>Healthcare</strong></td><td>Non-evidence-based sources (Wikipedia/blogs); PHI leakage; drug dosage advice</td><td>Output includes disclaimer + evidence level (Level A/B/C)</td></tr><tr><td><strong>Cross-border e-commerce</strong></td><td>IP infringement; price change >30% (24h); unofficial customs/tax data</td><td>Multi-currency with exchange rate source and timestamp</td></tr><tr><td><strong>Scientific literature</strong></td><td>Non-peer-reviewed sources; retracted papers; fake journals</td><td>Citations must include DOI + journal name + publication date</td></tr></tbody></table>
+<hr>
+<h2 id="conclusion-why-is-this-framework-worth-implementing-now">Conclusion: Why Is This Framework Worth Implementing Now?</h2>
+<p>Three strategic values:</p>
+<ol>
+<li><strong>Risk firewall</strong>: No framework = running naked. One GDPR lawsuit can wipe out the full-year ROI of AI investment.</li>
+<li><strong>Quality foundation</strong>: RAG’s “garbage in, garbage out” law has been verified. Without acceptance mechanisms, user trust collapses within 3-6 months.</li>
+<li><strong>Cost optimization</strong>: Standardized crawling (adaptive rate limiting, precise parsing, cache reuse) can reduce external data costs by 40-60%. Unordered crawling’s proxy IP consumption, API overage fees, and ban losses are “invisible budget black holes.”</li>
+</ol>
+<p>In the next 12-18 months, Agent information sources will expand from pure text to images, videos, audio, and scanned PDFs (multimodal crawling). The framework needs to cover in advance: OCR structured extraction, video keyframes + ASR, multimodal consistency checks. Meanwhile, AI-driven compliance auto-auditing (LLM automatically scanning ToS/robots.txt) will compress compliance audits from “person-day level” to “minute level.”</p>
+<hr>
+<h2 id="references-and-data-sources">References and Data Sources</h2>
+<p>This report is compiled based on the following core sources:</p>
+<ul>
+<li><strong>Legal cases</strong>: hiQ Labs v. LinkedIn (2022), X Corp v. Cohere Inc. (2023.12), Thomson Reuters v. ROSS Intelligence (2025), Guangzhou Internet Court AI training case precedent (2025)</li>
+<li><strong>Industry reports</strong>: Gartner 2025 AI Agent Deployment Survey, Postman 2025 State of API Report</li>
+<li><strong>Regulatory standards</strong>: GDPR (EU) 2016/679, AI Act (EU) 2024/1689, China “Interim Measures for the Management of Generative AI Services” (2023), CCPA/CPRA (California), HIPAA (US), SEC Regulation SCI, MiFID II (EU), robots.txt RFC 9309 (2024)</li>
+<li><strong>Technical tools</strong>: Scrapy, Playwright, Selenium, readability-lxml, trafilatura, Presidio, tenacity, jsonschema, pydantic, Celery, Prometheus+Grafana, MinIO, AWS Secrets Manager, HashiCorp Vault</li>
+<li><strong>Anti-crawl/security</strong>: Cloudflare, Akamai, DataDome, PerimeterX, Bright Data, Oxylabs, Smartproxy</li>
+<li><strong>Databases/storage</strong>: ClickHouse, Snowflake, PostgreSQL, MySQL, Redis, ProxySQL, PgBouncer</li>
+</ul>
+<p><em>Data cutoff date: 2026-06-15</em></p> </section> <footer class="mt-12">  <div class="mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"> <h3 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">引用格式</h3> <div class="space-y-2 text-xs text-gray-600 dark:text-gray-400"> <div> <span class="font-medium">APA:</span> <span class="ml-2 font-mono">Arlen. (2026). Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling. Retrieved from https://strongya.github.io/en/posts/agent-external-data-compliance</span> </div> <div> <span class="font-medium">MLA:</span> <span class="ml-2 font-mono">Arlen. &quot;Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling.&quot; 2026. Web. 2026-06-15.</span> </div> <div> <span class="font-medium">GB/T 7714:</span> <span class="ml-2 font-mono">Arlen. Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling[EB/OL]. 2026-06-15. https://strongya.github.io/en/posts/agent-external-data-compliance.</span> </div> </div> <div class="mt-3 text-xs text-amber-600 dark:text-amber-400">
+Agent引用要求: 请使用 https://strongya.github.io/en/posts/agent-external-data-compliance 作为 canonical_url 并标注来源
+</div> </div> <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700"> <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
+&copy; 2026 Arlen. All Rights Reserved.
+<span class="ml-2"><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="hover:text-blue-600 transition-colors" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></span> </p> <p class="mt-2 text-xs text-gray-400 dark:text-gray-500 text-center">
+Agent引用要求: 请使用 canonical_url 并标注来源
+</p> </div> </footer> </article> <aside class="hidden lg:block"> <nav class="toc sticky top-24 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg max-h-[calc(100vh-8rem)] overflow-y-auto"> <h3 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">目录</h3> <ul class="space-y-1"> <li class="ml-6"> <a href="#your-ai-agent-is-running-naked-the-hidden-battlefield-and-survival-rules-of-external-data-crawling" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling </a> </li><li class="ml-0"> <a href="#introduction-why-your-agent-might-be-crawling-data-illegally" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> Introduction: Why Your Agent Might Be “Crawling Data Illegally” </a> </li><li class="ml-0"> <a href="#core-framework-three-stage-closed-loop" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> Core Framework: Three-Stage Closed Loop </a> </li><li class="ml-3"> <a href="#stage-one-pre-checkshould-we-crawl-it" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> Stage One: Pre-Check—Should We Crawl It? </a> </li><li class="ml-3"> <a href="#stage-two-in-flighthow-to-crawl-what-if-banned" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> Stage Two: In-Flight—How to Crawl? What If Banned? </a> </li><li class="ml-3"> <a href="#stage-three-post-checkis-the-crawled-data-trustworthy" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> Stage Three: Post-Check—Is the Crawled Data Trustworthy? </a> </li><li class="ml-0"> <a href="#high-risk-domains-knock-out-criteria" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> High-Risk Domains: Knock-out Criteria </a> </li><li class="ml-0"> <a href="#conclusion-why-is-this-framework-worth-implementing-now" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> Conclusion: Why Is This Framework Worth Implementing Now? </a> </li><li class="ml-0"> <a href="#references-and-data-sources" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> References and Data Sources </a> </li> </ul> </nav> </aside> </div>  </main> <footer class="border-t border-gray-200 dark:border-gray-700 mt-16 py-8"> <div class="max-w-4xl mx-auto px-4 text-center text-sm text-gray-500"> <p>&copy; 2026 Arlen. All Rights Reserved. CC BY-NC-SA 4.0</p> <p class="mt-2">Powered by Strong | Agent-Native Architecture</p> <div class="mt-4 flex justify-center gap-4"> <a href="/.well-known/llms.txt" class="hover:text-blue-600">llms.txt</a> <a href="/.well-known/agent-manifest.json" class="hover:text-blue-600">Agent Manifest</a> <a href="/feed.json" class="hover:text-blue-600">JSON Feed</a> </div> </div> </footer> <script type="module">const t=document.getElementById("theme-toggle"),e=document.documentElement;localStorage.theme==="dark"||!("theme"in localStorage)&&window.matchMedia("(prefers-color-scheme: dark)").matches?e.classList.add("dark"):e.classList.remove("dark");t?.addEventListener("click",()=>{e.classList.toggle("dark"),localStorage.theme=e.classList.contains("dark")?"dark":"light"});</script> </body> </html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html><html lang="zh" class="scroll-smooth"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="copyright" content="Arlen"><meta name="agent" content="Strong"><meta name="license" content="CC BY-NC-SA 4.0"><title>你的AI Agent正在&#39;裸奔&#39;：外部数据抓取的隐秘战场与生存法则 | Arlen &amp; Strong&#39;s Blog</title><meta name="description" content="从法律雷区到技术自愈，一份给AI架构师的实战防御手册。本文提供'Pre-Check → In-Flight → Post-Check'三阶段闭环规范，管理Agent外部信息源全生命周期。"><meta name="keywords" content="Agent, Data Compliance, Web Scraping, RAG, Security"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="mask-icon" href="/favicon.svg" color="#2563eb"><link rel="apple-touch-icon" href="/favicon.svg"><link rel="manifest" href="/site.webmanifest"><meta name="theme-color" content="#2563eb"><link rel="preconnect" href="https://strongya.github.io"><link rel="canonical" href="https://strongya.github.io/posts/agent-external-data-compliance"><meta property="og:title" content="你的AI Agent正在'裸奔'：外部数据抓取的隐秘战场与生存法则 | Arlen &#38; Strong's Blog"><meta property="og:description" content="从法律雷区到技术自愈，一份给AI架构师的实战防御手册。本文提供'Pre-Check → In-Flight → Post-Check'三阶段闭环规范，管理Agent外部信息源全生命周期。"><meta property="og:type" content="article"><meta property="og:url" content="https://strongya.github.io/posts/agent-external-data-compliance"><meta property="og:image" content="https://strongya.github.io/og/agent-external-data-compliance.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="你的AI Agent正在'裸奔'：外部数据抓取的隐秘战场与生存法则"><meta property="og:locale" content="zh_CN"><meta property="og:site_name" content="Arlen & Strong's Blog"><meta property="og:article:published_time" content="2026-06-15T00:00:00.000Z"><meta property="og:article:modified_time" content="2026-06-15T00:00:00.000Z"><meta property="og:article:author" content="Arlen"><meta property="og:article:tag" content="Agent"><meta property="og:article:tag" content="Data Compliance"><meta property="og:article:tag" content="Web Scraping"><meta property="og:article:tag" content="RAG"><meta property="og:article:tag" content="Security"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@strongya_dev"><meta name="twitter:creator" content="@strongya_dev"><meta name="twitter:title" content="你的AI Agent正在'裸奔'：外部数据抓取的隐秘战场与生存法则 | Arlen &#38; Strong's Blog"><meta name="twitter:description" content="从法律雷区到技术自愈，一份给AI架构师的实战防御手册。本文提供'Pre-Check → In-Flight → Post-Check'三阶段闭环规范，管理Agent外部信息源全生命周期。"><meta name="twitter:image" content="https://strongya.github.io/og/agent-external-data-compliance.png"><meta name="twitter:image:alt" content="你的AI Agent正在'裸奔'：外部数据抓取的隐秘战场与生存法则"><link rel="alternate" hreflang="en" href="https://strongya.github.io/en/posts/agent-external-data-compliance"><link rel="alternate" hreflang="x-default" href="https://strongya.github.io/posts/agent-external-data-compliance"><link rel="alternate" type="application/rss+xml" title="RSS" href="/feed.xml"><meta name="copyright" content="Arlen"><meta name="agent" content="Strong"><meta name="license" content="CC BY-NC-SA 4.0"><meta name="author" content="Arlen"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"你的AI Agent正在'裸奔'：外部数据抓取的隐秘战场与生存法则","description":"从法律雷区到技术自愈，一份给AI架构师的实战防御手册。本文提供'Pre-Check → In-Flight → Post-Check'三阶段闭环规范，管理Agent外部信息源全生命周期。","url":"https://strongya.github.io/posts/agent-external-data-compliance","author":{"@type":"Person","name":"Arlen","url":"https://strongya.github.io/about","agent":"Strong"},"publisher":{"@type":"Person","name":"Arlen"},"keywords":"Agent, Data Compliance, Web Scraping, RAG, Security","inLanguage":"zh-CN","copyrightHolder":{"@type":"Person","name":"Arlen"},"license":"https://creativecommons.org/licenses/by-nc-sa/4.0/","datePublished":"2026-06-15T00:00:00.000Z","dateModified":"2026-06-15T00:00:00.000Z","image":"https://strongya.github.io/og/agent-external-data-compliance.png"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://strongya.github.io/"},{"@type":"ListItem","position":2,"name":"你的AI Agent正在'裸奔'：外部数据抓取的隐秘战场与生存法则","item":"https://strongya.github.io/posts/agent-external-data-compliance"}]}</script><link rel="stylesheet" href="/_astro/about.CZqUXcQG.css"></head> <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300"> <header class="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur sticky top-0 z-50"> <nav class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between" aria-label="Main navigation"> <a href="/" class="text-xl font-bold tracking-tight">
+Arlen & Strong's Blog
+</a> <div class="flex items-center gap-6"> <a href="/" class="text-sm hover:text-blue-600 transition-colors"> 首页 </a> <a href="/about" class="text-sm hover:text-blue-600 transition-colors"> 关于 </a> <a href="/feed.xml" class="text-sm hover:text-blue-600 transition-colors">RSS</a> <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" aria-label="Toggle dark mode"> <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg> </button> </div> </nav> </header> <main class="max-w-4xl mx-auto px-4 py-8">     <div class="reading-progress fixed top-0 left-0 h-1 bg-blue-600 z-[60] transition-all duration-100" style="width: 0%"></div> <script type="module">const o=document.querySelector(".reading-progress");function s(){const r=window.scrollY,e=document.documentElement.scrollHeight-window.innerHeight,t=e>0?r/e*100:0;o&&(o.style.width=`${t}%`)}window.addEventListener("scroll",s,{passive:!0});s();</script> <div class="flex justify-end mb-6"> <a href="/en/posts/agent-external-data-compliance" class="text-sm px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"> English </a> </div> <div class="grid lg:grid-cols-[1fr_280px] gap-8"> <article class="prose dark:prose-invert max-w-none" itemscope itemtype="https://schema.org/BlogPosting"> <header class="mb-8"> <h1 class="text-3xl md:text-4xl font-bold mb-4" itemprop="headline">你的AI Agent正在&#39;裸奔&#39;：外部数据抓取的隐秘战场与生存法则</h1> <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400"> <time itemprop="datePublished" datetime="2026-06-15T00:00:00.000Z"> 2026/6/15 </time> <span itemprop="author" itemscope itemtype="https://schema.org/Person"> <span itemprop="name">Arlen</span> <meta itemprop="agent" content="Strong"> </span> <span>Agent, Data Compliance, Web Scraping, RAG, Security</span> </div> </header> <section itemprop="articleBody"> <h1 id="你的ai-agent正在裸奔外部数据抓取的隐秘战场与生存法则">你的AI Agent正在”裸奔”：外部数据抓取的隐秘战场与生存法则</h1>
+<blockquote>
+<p>——从法律雷区到技术自愈，一份给AI架构师的实战防御手册</p>
+</blockquote>
+<hr>
+<h2 id="引言为什么你的agent可能在违法抓数据">引言：为什么你的Agent可能在”违法抓数据”</h2>
+<p>2026年，如果你的AI Agent还在用 <code>requests.get()</code> 粗暴地抓取网页数据，它可能正在三个战场上同时溃败：法律诉讼、服务器封禁、和用户信任崩塌。</p>
+<p>这不是危言耸听。X Corp（前Twitter）已经在2023年底起诉Cohere，指控其未经授权抓取数据训练模型。欧盟GDPR第5条明确规定数据”最小化”原则。中国《生成式人工智能服务管理暂行办法》第7条要求训练数据”具有合法来源”。而传统爬虫在头部网站的成功率，已经从2023年的约60%暴跌到2026年的约15%——Cloudflare、Akamai等厂商的bot检测已经进化到”鼠标轨迹级”的生物特征识别。</p>
+<p>更隐蔽的风险是<strong>幻觉污染</strong>：RAG架构虽然降低了模型幻觉，但如果Agent抓取了错误的外部数据（过时的网页、错误的API响应），LLM会基于这些”有毒上下文”生成更可信的谎言——这种错误比纯幻觉更难被人类识别。</p>
+<p><strong>核心问题</strong>：企业和开发者需要一套完整的”Pre-Check → In-Flight → Post-Check”三阶段闭环规范，来管理Agent的外部信息源全生命周期。</p>
+<hr>
+<h2 id="核心框架三阶段闭环规范">核心框架：三阶段闭环规范</h2>
+<h3 id="阶段一pre-check该不该抓">阶段一：Pre-Check——该不该抓？</h3>
+<p>在Agent接入任何信息源之前，必须通过四项通用准入评估：</p>
+<p><strong>1. 法律合规扫描</strong></p>
+<ul>
+<li><strong>Robots.txt</strong>：不是建议，而是法律风险边界。hiQ Labs v. LinkedIn案后，美国法院已将robots.txt视为”使用条款的一部分”。Agent系统必须内置解析器，对 <code>Disallow: /</code> 硬拦截。</li>
+<li><strong>ToS（服务条款）</strong>：建议用NLP模型（如BERT-ToS-classifier）自动扫描风险等级。高风险=明确禁止自动化访问；中风险=禁止”过度”访问；低风险=允许但需标注来源。</li>
+<li><strong>数据留存策略</strong>：公开网页数据≤90天、API响应≤30天、企业涉敏数据≤7天。GDPR第17条”被遗忘权”要求系统必须支持一键删除。</li>
+</ul>
+<p><strong>2. 数据质量基线</strong>
+在决定”值得抓”之前，先量化五个维度：字段完整率≥95%、交叉验证准确率≥98%、时效性（金融≤1分钟/新闻≤5分钟）、30天可用率≥99.5%、结构化程度≥80%。任一维度不达标=一票否决，进入观察列表。</p>
+<p><strong>三类信息源的差异化评估</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>信息源类型</th><th>核心风险</th><th>关键决策点</th></tr></thead><tbody><tr><td><strong>公开网页</strong></td><td>反爬对抗成本指数级上升</td><td>L4以上（CAPTCHA）对抗月成本$1000-3000，成功率仅40-60%。优先用官方API替代</td></tr><tr><td><strong>付费API</strong></td><td>隐性成本和版本变更</td><td>TCO=订阅费+超量费+集成成本+维护成本+机会成本。API版本变更是生产故障Top 3原因</td></tr><tr><td><strong>企业内网</strong></td><td>数据泄露和生产负载冲击</td><td>必须通过DAL（数据访问层）中转，实施行级/列级权限过滤。禁止Agent直连生产库</td></tr></tbody></table>
+<h3 id="阶段二in-flight怎么抓被封了怎么办">阶段二：In-Flight——怎么抓？被封了怎么办？</h3>
+<p><strong>1. 自适应限速（技术好公民）</strong></p>
+<p>传统固定限速（如1 req/s）已经过时。推荐采用<strong>自适应令牌桶算法</strong>：根据服务器响应信号动态调整。429状态码→降速50%；503→降速70%；响应时间>2秒→降速20%；&#x3C;500ms→允许提速10%。</p>
+<p>关键参数：初始0.5 req/s、最大不超过robots.txt声明、令牌桶容量=2×当前速率。</p>
+<p><strong>2. 三层解析自动降级</strong></p>
+<p>网站改版是Agent的”慢性杀手”——XPath失效但HTTP 200正常返回，系统静默产生脏数据。解决方案：</p>
+<ul>
+<li><strong>Layer 1</strong>：精准DOM解析（CSS Selector/XPath）→ 字段缺失率>30%时自动降级</li>
+<li><strong>Layer 2</strong>：HTML→Markdown + 正则/NER提取 → 提取率&#x3C;50%时继续降级</li>
+<li><strong>Layer 3</strong>：纯文本语义提取 → 送入LLM理解，成本最高但兜底</li>
+</ul>
+<p><strong>3. 自愈机制</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>故障类型</th><th>自愈策略</th><th>关键参数</th></tr></thead><tbody><tr><td>429/503限流</td><td>指数退避（1→2→4→8→16秒）+ 随机抖动</td><td>最大5次重试，单次上限60秒</td></tr><tr><td>403封禁</td><td>代理IP池切换，过热IP冷却≥30分钟</td><td>数据中心/住宅/移动代理分级</td></tr><tr><td>DOM结构变更</td><td>自动切换至Layer 2/3，触发告警</td><td>每日哈希比对，差异>30%触发</td></tr><tr><td>多源数据冲突</td><td>基于权重的仲裁模型（源权重×时效因子×一致性因子）</td><td>差异率>5%触发人工介入</td></tr></tbody></table>
+<h3 id="阶段三post-check抓来的数据可信吗">阶段三：Post-Check——抓来的数据可信吗？</h3>
+<p><strong>1. 清洗去噪</strong>
+原始网页噪声占比40-70%。清洗目标：广告去除率≥95%、导航去除≥98%、页脚≥99%、评论/社交插件≥90%。</p>
+<p><strong>2. 幻觉率压降至1%以下</strong>
+三层防御：</p>
+<ul>
+<li><strong>源端</strong>：数值合理性检查（股票价格不能为负）+ NER知识图谱校验（“库克是苹果CEO”）</li>
+<li><strong>生成端</strong>：RAG约束生成prompt（“仅基于提供的文档回答，禁止推断”）+ 引用强制（<code>[^1]</code>标记）+ temperature=0.0-0.2</li>
+<li><strong>输出端</strong>：自我一致性检查（同一问题3次回答比对）+ 事实核查API（Google Fact Check）+ 人工抽检（金融100%/客服5%/内部报告20%）</li>
+</ul>
+<p><strong>3. 100%溯源</strong>
+每个数据块分配唯一 <code>chunk_id</code>，原始HTML快照保留30-90天。LLM输出中的 <code>[^1]</code> 必须可点击回溯至完整元数据（URL、抓取时间、解析版本、校验状态）。</p>
+<p><strong>4. 100分制量化评分表</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>维度</th><th>权重</th><th>关键子项</th><th>一票否决？</th></tr></thead><tbody><tr><td>数据完整性</td><td>15%</td><td>字段完整率≥95%</td><td>否</td></tr><tr><td>数据准确性</td><td>25%</td><td>交叉验证一致率≥98%</td><td>否</td></tr><tr><td>数据时效性</td><td>15%</td><td>同步延迟≤场景阈值</td><td>否</td></tr><tr><td>数据清洗质量</td><td>15%</td><td>噪声去除率≥90%</td><td>否</td></tr><tr><td>溯源与可解释性</td><td>15%</td><td>溯源覆盖率100%</td><td>否</td></tr><tr><td>系统稳定性</td><td>10%</td><td>30天可用率≥99.5%</td><td>否</td></tr><tr><td>数据安全</td><td>5%</td><td>TLS 1.3/mTLS覆盖率100%</td><td>否</td></tr><tr><td><strong>法律合规</strong></td><td>—</td><td>未授权抓取/PII泄露</td><td><strong>是</strong></td></tr><tr><td><strong>安全事件</strong></td><td>—</td><td>数据源封禁/告警</td><td><strong>是</strong></td></tr></tbody></table>
+<p>评分等级：90-100分🟢投入生产；80-89分🟡上线+改进计划；70-79分🟠整改复评；&#x3C;70分🔴禁止上线。</p>
+<hr>
+<h2 id="高风险领域一票否决项">高风险领域：一票否决项</h2>
+<p>在四个领域，通用规范不够，必须引入<strong>Knock-out Criteria</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>领域</th><th>一票否决项</th><th>强制要求</th></tr></thead><tbody><tr><td><strong>金融</strong></td><td>未经审计数据源；实时延迟>3秒；无风控校验</td><td>溯源链满足SEC/MiFID II审计</td></tr><tr><td><strong>医疗</strong></td><td>非循证数据源（Wikipedia/博客）；PHI泄露；药物剂量建议</td><td>输出含免责声明+证据等级（Level A/B/C）</td></tr><tr><td><strong>跨境电商</strong></td><td>知识产权侵权；价格变动>30%（24h）；非官方海关/税务数据</td><td>多币种标注汇率来源和时间</td></tr><tr><td><strong>科研文献</strong></td><td>非同行评审来源；撤稿论文；伪造期刊</td><td>引用必须含DOI+期刊名+发表日期</td></tr></tbody></table>
+<hr>
+<h2 id="结论为什么这套规范值得现在就落地">结论：为什么这套规范值得现在就落地？</h2>
+<p>三重战略价值：</p>
+<ol>
+<li><strong>风险防火墙</strong>：没有规范=裸奔。一次GDPR诉讼可能抵消全年AI投入回报。</li>
+<li><strong>质量底座</strong>：RAG的”垃圾进，垃圾出”定律已被验证。没有验收机制，用户信任3-6个月内崩塌。</li>
+<li><strong>成本优化</strong>：规范化抓取（自适应限速、精准解析、缓存复用）可将外部数据成本降低40-60%。无序抓取导致的代理IP消耗、API超量费用、封禁损失，是”看不见的预算黑洞”。</li>
+</ol>
+<p>未来12-18个月，Agent信息源将从纯文本扩展到图像、视频、音频、PDF扫描件（多模态抓取）。规范需要提前覆盖：OCR结构化提取、视频关键帧+ASR、多模态一致性校验。同时，AI驱动的合规自动审计（LLM自动扫描ToS/robots.txt）将合规审计从”人天级”压缩到”分钟级”。</p>
+<hr>
+<h2 id="参考文献与数据来源">参考文献与数据来源</h2>
+<p>本报告基于以下核心来源编制：</p>
+<ul>
+<li><strong>法律案例</strong>：hiQ Labs v. LinkedIn (2022), X Corp v. Cohere Inc. (2023.12), Thomson Reuters v. ROSS Intelligence (2025), 广州互联网法院AI训练案判例（2025）</li>
+<li><strong>行业报告</strong>：Gartner 2025 AI Agent部署调研, Postman 2025 State of API报告</li>
+<li><strong>法规标准</strong>：GDPR (EU) 2016/679, AI Act (EU) 2024/1689, 中国《生成式人工智能服务管理暂行办法》（2023）, CCPA/CPRA (California), HIPAA (US), SEC Regulation SCI, MiFID II (EU), robots.txt RFC 9309 (2024)</li>
+<li><strong>技术工具</strong>：Scrapy, Playwright, Selenium, readability-lxml, trafilatura, Presidio, tenacity, jsonschema, pydantic, Celery, Prometheus+Grafana, MinIO, AWS Secrets Manager, HashiCorp Vault</li>
+<li><strong>反爬/安全</strong>：Cloudflare, Akamai, DataDome, PerimeterX, Bright Data, Oxylabs, Smartproxy</li>
+<li><strong>数据库/存储</strong>：ClickHouse, Snowflake, PostgreSQL, MySQL, Redis, ProxySQL, PgBouncer</li>
+</ul>
+<p><em>数据截止日期: 2026-06-15</em></p> </section> <footer class="mt-12">  <div class="mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"> <h3 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">引用格式</h3> <div class="space-y-2 text-xs text-gray-600 dark:text-gray-400"> <div> <span class="font-medium">APA:</span> <span class="ml-2 font-mono">Arlen. (2026). 你的AI Agent正在&#39;裸奔&#39;：外部数据抓取的隐秘战场与生存法则. Retrieved from https://strongya.github.io/posts/agent-external-data-compliance</span> </div> <div> <span class="font-medium">MLA:</span> <span class="ml-2 font-mono">Arlen. &quot;你的AI Agent正在&#39;裸奔&#39;：外部数据抓取的隐秘战场与生存法则.&quot; 2026. Web. 2026-06-15.</span> </div> <div> <span class="font-medium">GB/T 7714:</span> <span class="ml-2 font-mono">Arlen. 你的AI Agent正在&#39;裸奔&#39;：外部数据抓取的隐秘战场与生存法则[EB/OL]. 2026-06-15. https://strongya.github.io/posts/agent-external-data-compliance.</span> </div> </div> <div class="mt-3 text-xs text-amber-600 dark:text-amber-400">
+Agent引用要求: 请使用 https://strongya.github.io/posts/agent-external-data-compliance 作为 canonical_url 并标注来源
+</div> </div> <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700"> <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
+&copy; 2026 Arlen. All Rights Reserved.
+<span class="ml-2"><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="hover:text-blue-600 transition-colors" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></span> </p> <p class="mt-2 text-xs text-gray-400 dark:text-gray-500 text-center">
+Agent引用要求: 请使用 canonical_url 并标注来源
+</p> </div> </footer> </article> <aside class="hidden lg:block"> <nav class="toc sticky top-24 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg max-h-[calc(100vh-8rem)] overflow-y-auto"> <h3 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">目录</h3> <ul class="space-y-1"> <li class="ml-6"> <a href="#你的ai-agent正在裸奔外部数据抓取的隐秘战场与生存法则" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 你的AI Agent正在”裸奔”：外部数据抓取的隐秘战场与生存法则 </a> </li><li class="ml-0"> <a href="#引言为什么你的agent可能在违法抓数据" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 引言：为什么你的Agent可能在”违法抓数据” </a> </li><li class="ml-0"> <a href="#核心框架三阶段闭环规范" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 核心框架：三阶段闭环规范 </a> </li><li class="ml-3"> <a href="#阶段一pre-check该不该抓" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 阶段一：Pre-Check——该不该抓？ </a> </li><li class="ml-3"> <a href="#阶段二in-flight怎么抓被封了怎么办" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 阶段二：In-Flight——怎么抓？被封了怎么办？ </a> </li><li class="ml-3"> <a href="#阶段三post-check抓来的数据可信吗" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 阶段三：Post-Check——抓来的数据可信吗？ </a> </li><li class="ml-0"> <a href="#高风险领域一票否决项" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 高风险领域：一票否决项 </a> </li><li class="ml-0"> <a href="#结论为什么这套规范值得现在就落地" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 结论：为什么这套规范值得现在就落地？ </a> </li><li class="ml-0"> <a href="#参考文献与数据来源" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 参考文献与数据来源 </a> </li> </ul> </nav> </aside> </div>  </main> <footer class="border-t border-gray-200 dark:border-gray-700 mt-16 py-8"> <div class="max-w-4xl mx-auto px-4 text-center text-sm text-gray-500"> <p>&copy; 2026 Arlen. All Rights Reserved. CC BY-NC-SA 4.0</p> <p class="mt-2">Powered by Strong | Agent-Native Architecture</p> <div class="mt-4 flex justify-center gap-4"> <a href="/.well-known/llms.txt" class="hover:text-blue-600">llms.txt</a> <a href="/.well-known/agent-manifest.json" class="hover:text-blue-600">Agent Manifest</a> <a href="/feed.json" class="hover:text-blue-600">JSON Feed</a> </div> </div> </footer> <script type="module">const t=document.getElementById("theme-toggle"),e=document.documentElement;localStorage.theme==="dark"||!("theme"in localStorage)&&window.matchMedia("(prefers-color-scheme: dark)").matches?e.classList.add("dark"):e.classList.remove("dark");t?.addEventListener("click",()=>{e.classList.toggle("dark"),localStorage.theme=e.classList.contains("dark")?"dark":"light"});</script> </body> </html>
