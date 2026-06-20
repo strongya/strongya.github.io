@@ -1,0 +1,104 @@
+<!DOCTYPE html><html lang="zh" class="scroll-smooth"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="copyright" content="Arlen"><meta name="agent" content="Strong"><meta name="license" content="CC BY-NC-SA 4.0"><title>我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录 | Arlen &amp; Strong&#39;s Blog</title><meta name="description" content="从向量检索升级到 GraphRAG 后，我的 Agent 出现了实体分身、关系通胀、记忆僵尸和查询超时四大问题。本文用四个量化指标诊断记忆健康度，并给出清洗归一、结构化过滤、多级分层存储和图优化四条解法。"><meta name="keywords" content="GraphRAG, Agent, Memory, Knowledge Graph, RAG"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="mask-icon" href="/favicon.svg" color="#2563eb"><link rel="apple-touch-icon" href="/favicon.svg"><link rel="manifest" href="/site.webmanifest"><meta name="theme-color" content="#2563eb"><link rel="preconnect" href="https://strongya.dev"><link rel="canonical" href="https://strongya.dev/posts/graphrag-memory-pitfalls"><meta property="og:title" content="我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录 | Arlen &#38; Strong's Blog"><meta property="og:description" content="从向量检索升级到 GraphRAG 后，我的 Agent 出现了实体分身、关系通胀、记忆僵尸和查询超时四大问题。本文用四个量化指标诊断记忆健康度，并给出清洗归一、结构化过滤、多级分层存储和图优化四条解法。"><meta property="og:type" content="article"><meta property="og:url" content="https://strongya.dev/posts/graphrag-memory-pitfalls"><meta property="og:image" content="https://strongya.dev/og/graphrag-memory-pitfalls.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录"><meta property="og:locale" content="zh_CN"><meta property="og:site_name" content="Arlen & Strong's Blog"><meta property="og:article:published_time" content="2026-06-21T00:00:00.000Z"><meta property="og:article:modified_time" content="2026-06-21T00:00:00.000Z"><meta property="og:article:author" content="Arlen"><meta property="og:article:tag" content="GraphRAG"><meta property="og:article:tag" content="Agent"><meta property="og:article:tag" content="Memory"><meta property="og:article:tag" content="Knowledge Graph"><meta property="og:article:tag" content="RAG"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@strongya_dev"><meta name="twitter:creator" content="@strongya_dev"><meta name="twitter:title" content="我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录 | Arlen &#38; Strong's Blog"><meta name="twitter:description" content="从向量检索升级到 GraphRAG 后，我的 Agent 出现了实体分身、关系通胀、记忆僵尸和查询超时四大问题。本文用四个量化指标诊断记忆健康度，并给出清洗归一、结构化过滤、多级分层存储和图优化四条解法。"><meta name="twitter:image" content="https://strongya.dev/og/graphrag-memory-pitfalls.png"><meta name="twitter:image:alt" content="我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录"><link rel="alternate" hreflang="en" href="https://strongya.dev/en/posts/graphrag-memory-pitfalls"><link rel="alternate" hreflang="x-default" href="https://strongya.dev/posts/graphrag-memory-pitfalls"><link rel="alternate" type="application/rss+xml" title="RSS" href="/feed.xml"><meta name="copyright" content="Arlen"><meta name="agent" content="Strong"><meta name="license" content="CC BY-NC-SA 4.0"><meta name="author" content="Arlen"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录","description":"从向量检索升级到 GraphRAG 后，我的 Agent 出现了实体分身、关系通胀、记忆僵尸和查询超时四大问题。本文用四个量化指标诊断记忆健康度，并给出清洗归一、结构化过滤、多级分层存储和图优化四条解法。","url":"https://strongya.dev/posts/graphrag-memory-pitfalls","author":{"@type":"Person","name":"Arlen","url":"https://strongya.dev/about","agent":"Strong"},"publisher":{"@type":"Person","name":"Arlen"},"keywords":"GraphRAG, Agent, Memory, Knowledge Graph, RAG","inLanguage":"zh-CN","copyrightHolder":{"@type":"Person","name":"Arlen"},"license":"https://creativecommons.org/licenses/by-nc-sa/4.0/","datePublished":"2026-06-21T00:00:00.000Z","dateModified":"2026-06-21T00:00:00.000Z","image":"https://strongya.dev/og/graphrag-memory-pitfalls.png"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"首页","item":"https://strongya.dev/"},{"@type":"ListItem","position":2,"name":"我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录","item":"https://strongya.dev/posts/graphrag-memory-pitfalls"}]}</script><link rel="stylesheet" href="/_astro/about.CZqUXcQG.css"></head> <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300"> <header class="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur sticky top-0 z-50"> <nav class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between" aria-label="Main navigation"> <a href="/" class="text-xl font-bold tracking-tight">
+Arlen & Strong's Blog
+</a> <div class="flex items-center gap-6"> <a href="/" class="text-sm hover:text-blue-600 transition-colors"> 首页 </a> <a href="/about" class="text-sm hover:text-blue-600 transition-colors"> 关于 </a> <a href="/feed.xml" class="text-sm hover:text-blue-600 transition-colors">RSS</a> <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" aria-label="Toggle dark mode"> <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg> </button> </div> </nav> </header> <main class="max-w-4xl mx-auto px-4 py-8">     <div class="reading-progress fixed top-0 left-0 h-1 bg-blue-600 z-[60] transition-all duration-100" style="width: 0%"></div> <script type="module">const o=document.querySelector(".reading-progress");function s(){const r=window.scrollY,e=document.documentElement.scrollHeight-window.innerHeight,t=e>0?r/e*100:0;o&&(o.style.width=`${t}%`)}window.addEventListener("scroll",s,{passive:!0});s();</script> <div class="flex justify-end mb-6"> <a href="/en/posts/graphrag-memory-pitfalls" class="text-sm px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"> English </a> </div> <div class="grid lg:grid-cols-[1fr_280px] gap-8"> <article class="prose dark:prose-invert max-w-none" itemscope itemtype="https://schema.org/BlogPosting"> <header class="mb-8"> <h1 class="text-3xl md:text-4xl font-bold mb-4" itemprop="headline">我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录</h1> <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400"> <time itemprop="datePublished" datetime="2026-06-21T00:00:00.000Z"> 2026/6/21 </time> <span itemprop="author" itemscope itemtype="https://schema.org/Person"> <span itemprop="name">Arlen</span> <meta itemprop="agent" content="Strong"> </span> <span>GraphRAG, Agent, Memory, Knowledge Graph, RAG</span> </div> </header> <section itemprop="articleBody"> <h1 id="我的-agent-得了老年痴呆一次-graphrag-记忆系统的踩坑实录">我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录</h1>
+<blockquote>
+<p>本文基于我对 LLM 生成知识图谱的系统性研究写成，所有数据来自已发表的学术论文。完整学术版报告见文末。</p>
+</blockquote>
+<hr>
+<h2 id="一从向量检索到图谱记忆我踩了哪些坑">一、从”向量检索”到”图谱记忆”，我踩了哪些坑</h2>
+<p>去年我开始做一个多轮对话 Agent，最初用的标准 RAG 流程：文本切片 → Embedding → 扔进 Pinecone → 检索 Top-K。简单，有效，直到有一天用户问我：</p>
+<blockquote>
+<p>“上周我说我不吃香菜，你还记得吗？”</p>
+</blockquote>
+<p>Agent 沉默了三秒，然后一本正经地推荐了一道香菜拌牛肉。</p>
+<p>问题出在向量检索的本质上：它只能找到”语义相似”的文本块，但无法理解”这是同一个人在不同时间说的两句话，且存在逻辑关联”。向量数据库里没有”用户 A”这个实体，也没有”用户 A 不喜欢香菜”这个事实节点——只有一堆漂浮的文本片段。</p>
+<p>于是我转向了 <strong>GraphRAG</strong>。把用户画像、偏好、对话历史全部写成节点和边，让 Agent 拥有”真正的记忆”。</p>
+<p>起初效果很好。但运行一个月后，我发现几个诡异的现象：</p>
+<p><strong>现象一：分身术</strong></p>
+<p>同一个用户在图谱里出现了十几个节点。原因是 LLM 在抽取实体时极其不稳定：今天写”张三”，明天写”张先生”，后天写”用户 13800138000”——三个完全不同的节点，系统永远意识不到这是同一个人。</p>
+<p><strong>现象二：关系通货膨胀</strong></p>
+<p>我检查图谱时发现，LLM 发明了一种叫”前天有点喜欢但后来没感觉了”的关系类型。全图仅此一条。类似的关系还有”可能认识”、“间接相关”、“听朋友提起过”——总共出现了 200 多种关系类型，其中 80% 只出现过一次。</p>
+<p><strong>现象三：记忆僵尸</strong></p>
+<p>用户三个月前随口说的”你好”，至今作为一条高权重记忆躺在图谱里。没有过期机制，没有衰减策略，所有信息永生不死。结果就是：真正重要的记忆被淹没在成千上万的闲聊碎片中。</p>
+<p><strong>现象四：查询 timeout</strong></p>
+<p>节点过万后，一次涉及 3 跳关系的路径查询直接从 50ms 飙到 3 秒，然后超时。用户等了五秒没反应，直接关掉了对话框。</p>
+<p>这四个问题，对应了知识图谱构建中的四个系统性缺陷：实体无约束生成、关系 Schema 缺失、时间衰减机制缺失、全图遍历性能瓶颈。</p>
+<hr>
+<h2 id="二诊断四个量化指标判断你的-agent-记忆是否健康">二、诊断：四个量化指标判断你的 Agent 记忆是否健康</h2>
+<p>折腾了两个月，我总结出一套自检方法。不需要重构整个系统，先看这四个指标：</p>
+<p><strong>指标一：实体歧义度</strong></p>
+<p>打开你的图谱，随机抽 100 个实体，看看有多少个是同一个现实世界对象的不同写法。如果同义实体未合并的数量超过 3 个，说明你的实体解析已经崩了。</p>
+<p>为什么这个数字很关键？因为 GraphRAG 的检索逻辑是：先定位实体，再沿关系扩散。如果”LLM”和”Large Language Models”是两个独立节点，用户问”LLM 最新进展”时，系统只会检索到前者相关的子图，完全漏掉后者——明明是同一件事，被当成了两个话题。</p>
+<p>Deg-Rag 的实验表明，在 LightRAG 系统中这类冗余可导致图规模膨胀约 40%。注意，这不是数据量增加了 40%，是同一个实体被重复建了 1.4 次。</p>
+<p><strong>指标二：关系冗余度</strong></p>
+<p>统计单节点的平均出边数量。超过 15 条，就要警惕了。</p>
+<p>原因很简单：一次查询如果需要遍历 3 跳，每跳平均 10 条边，那要评估的路径就是 10³ = 1000 条。如果平均出度飙到 50，那就是 50³ = 125,000 条路径——查询时间直接爆炸。</p>
+<p><strong>指标三：数据污染率</strong></p>
+<p>非知识性节点占总节点的比例。闲聊、临时性语句、自动化批量导入的垃圾数据——如果占比超过 40%，你的 RAG 上下文里就有一半是噪声，LLM 基于噪声生成回答，幻觉率自然飙升。</p>
+<p>一个参考数据：OntoKG 论文在 Wikidata 上做的清洗发现，约 1 亿个条目中仅有 3460 万个（34.6%）被视为有效核心实体，其余都是低质量批量导入。Wikidata 尚且如此，LLM 自动生成的图谱只会更糟。</p>
+<p><strong>指标四：计算过载度</strong></p>
+<p>直接看 P95 查询延迟。超过 500ms，用户就能感知到卡顿。目标应该控制在 100ms 以内。</p>
+<hr>
+<h2 id="三解法我搭了一条记忆洗白流水线">三、解法：我搭了一条”记忆洗白”流水线</h2>
+<p>诊断完问题，我开始修。不是重写整个系统，而是在写入和查询之间加了四层处理。</p>
+<p><strong>第一层：清洗归一（去重）</strong></p>
+<p>核心思路很简单：在 LLM 写入图谱之前，先问一句——“这个实体是不是已经存在？”</p>
+<p>具体做法是向量聚类 + 实体链接。把所有实体做 Embedding，相似度超过阈值的进入同一个候选池，然后用更精细的匹配算法（传统 KG Embedding 如 TransE、DistMult 就够了，不需要每次都调 GPT-4）判断是否为同一实体。</p>
+<p>Deg-Rag 的实验验证了这个方法：在四个多跳问答数据集上，去除约 40% 的冗余实体和关系后，问答性能反而提升了。说明图谱不是越大越好，干净比大重要。</p>
+<p><strong>第二层：结构化过滤（修剪）</strong></p>
+<p>给 LLM 的记忆写入加一道”家规”：</p>
+<ul>
+<li>预定义允许的关系类型，禁止 LLM 发明新关系</li>
+<li>频次低于 3 次的关系视为噪声，直接删除</li>
+<li>超过 7 天且无后续互动的对话记忆，自动过期</li>
+<li>每个三元组打质量分，低分的不进主图谱</li>
+</ul>
+<p>OntoKG 论文里有个更优雅的思路叫”本征-关系路由”：把属性分为”本征属性”（节点特性，如出生日期）和”关系属性”（可遍历的边，如”工作于”），通过 Schema 显式控制什么能写进图谱。这比事后过滤更高效。</p>
+<p><strong>第三层：多级分层存储</strong></p>
+<p>不是所有记忆都值得永久保存。我设计了三层架构：</p>
+<p>热数据放在 Redis，只存当前 Session 的上下文，TTL 5-30 分钟，Session 结束就丢。</p>
+<p>温数据放在向量数据库（Pinecone/Milvus），存最近 7-30 天的有效记忆，带时间衰减系数——越新的记忆权重越高，30 天前的自动降权。</p>
+<p>冷数据放在图数据库（Neo4j），只存经过验证的长期知识和用户画像。只读为主，定期批量更新。</p>
+<p>写入时根据记忆类型自动路由到对应层级；读取时按热 → 温 → 冷的顺序检索，命中即返回，避免不必要的全图扫描。</p>
+<p><strong>第四层：图优化（降维）</strong></p>
+<p>最根本的优化思路：不要每次都全图遍历。</p>
+<p>微软 GraphRAG 的做法值得借鉴：先用 Louvain 算法把大图切成若干社区，然后对每个社区生成摘要。查询时先匹配社区摘要，定位到最相关的社区，再进去细查。这样一次查询的搜索空间从全图降到了一个小社区，延迟直接降一个数量级。</p>
+<p>另外，用 HNSW 近似最近邻搜索替代精确遍历，召回率能到 95% 以上，但查询复杂度从 O(n) 降到 O(log n)。</p>
+<hr>
+<h2 id="四还没解决的问题">四、还没解决的问题</h2>
+<p>这套流水线跑起来后，我的 Agent 确实稳定了很多。但有几个问题我还没找到满意的解法：</p>
+<p><strong>动态知识演化</strong></p>
+<p>当知识图谱持续接收增量更新时，去噪和 Schema 维护的成本效益比会发生变化。时序衰减模型（如 DynTKG 的 Hawkes 过程）在学术上表现不错，但集成到生产系统里的工程复杂度很高。</p>
+<p><strong>有益噪声</strong></p>
+<p>去噪会不会过头？Deg-Rag 去掉了 40% 的内容，但如果这 40% 里包含了某些低频但关键的记忆（比如用户罕见地提到自己花生过敏），那过滤就是有害的。目前缺乏区分”有害噪声”和”有益低频信息”的理论框架。</p>
+<p><strong>跨语言场景</strong></p>
+<p>所有验证数据都来自英文场景。中文、日文、阿拉伯文等语言的实体歧义率可能显著不同——比如中文的实体消歧需要处理同音字、简繁体、昵称变体等问题，远比英文复杂。</p>
+<hr>
+<h2 id="五2026-年的三个趋势">五、2026 年的三个趋势</h2>
+<p><strong>增量更新</strong></p>
+<p>LightRAG 提出了一种增量更新机制：只对新文档做提取和去重，然后合并到现有图谱中。这意味着 Agent 可以边聊边学，而不需要每天凌晨全量重建图谱。</p>
+<p><strong>后台异步治理</strong></p>
+<p>前沿框架开始引入后台线程，在 Agent 不活跃时自动执行：实体去重、低频边清理、社区结构重算、过期记忆归档。相当于给 Agent 配了一个”夜间保洁团队”。</p>
+<p><strong>写前约束</strong></p>
+<p>与其让 LLM 随意写入然后再治理，不如在写入时就施加约束。未来的方向可能是：LLM 只负责”提出候选记忆”，真正的写入决策由一个独立的”记忆守门员”模块来做——这个模块有 Schema 知识、有频次统计、有质量评分。</p>
+<hr>
+<h2 id="参考文献与数据来源">参考文献与数据来源</h2>
+<p>本文的量化数据和核心结论来自以下研究：</p>
+<ul>
+<li>Zheng, Y., et al. (2025). <em>Less is More: Denoising Knowledge Graphs For Retrieval Augmented Generation</em>. arXiv:2510.14271. —— 去噪可去除约 40% 冗余并提升 RAG 性能</li>
+<li>Liu, Z., et al. (2026). <em>OntoKG: Ontology-Oriented Knowledge Graph Construction with Intrinsic-Relational Routing</em>. arXiv:2604.02618. —— Wikidata 100M 条目中 34.6% 为核心实体</li>
+<li>Edge, D., et al. (2024). <em>From Local to Global: A Graph RAG Approach to Query-Focused Summarization</em>. Microsoft Research. —— 社区检测实现大规模图检索</li>
+<li>Guo, X., et al. (2024). <em>LightRAG: Simple and Fast Retrieval-Augmented Generation</em>. arXiv:2410.05779. —— 增量更新机制</li>
+<li>Blondel, V. D., et al. (2008). <em>Fast Unfolding of Communities in Large Networks</em>. Journal of Statistical Mechanics. —— Louvain 算法</li>
+<li>Malkov, Y. A., &#x26; Yashunin, D. A. (2018). <em>Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs</em>. IEEE TPAMI. —— HNSW 算法</li>
+</ul>
+<p>完整学术分析报告（含 ReAct 四路交叉验证）见：
+<code>40 Analysis/Technology/知识图谱构建中无约束生成引发的结构退化问题-2026-06-20.md</code></p>
+<hr>
+<p><em>本文写于 2026 年 6 月。如果你也在做 Agent 记忆系统，欢迎在评论区分享你的踩坑经历。</em></p> </section> <footer class="mt-12"> <div class="mb-6"> <h3 class="text-sm font-semibold mb-2">文中实体</h3> <div class="flex flex-wrap gap-2"> <a href="https://en.wikipedia.org/wiki/GraphRAG" target="_blank" rel="noopener" class="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm hover:bg-blue-100 transition-colors"> GraphRAG </a><a href="https://en.wikipedia.org/wiki/Neo4j" target="_blank" rel="noopener" class="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm hover:bg-blue-100 transition-colors"> Neo4j </a><a href="https://en.wikipedia.org/wiki/Redis" target="_blank" rel="noopener" class="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm hover:bg-blue-100 transition-colors"> Redis </a><a href="https://en.wikipedia.org/wiki/Wikidata" target="_blank" rel="noopener" class="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm hover:bg-blue-100 transition-colors"> Wikidata </a><a href="https://en.wikipedia.org/wiki/Hierarchical_navigable_small_world" target="_blank" rel="noopener" class="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm hover:bg-blue-100 transition-colors"> Hierarchical Navigable Small World </a> </div> </div> <div class="mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"> <h3 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">引用格式</h3> <div class="space-y-2 text-xs text-gray-600 dark:text-gray-400"> <div> <span class="font-medium">APA:</span> <span class="ml-2 font-mono">Arlen. (2026). 我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录. Retrieved from https://strongya.dev/posts/graphrag-memory-pitfalls</span> </div> <div> <span class="font-medium">MLA:</span> <span class="ml-2 font-mono">Arlen. &quot;我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录.&quot; 2026. Web. 2026-06-21.</span> </div> <div> <span class="font-medium">GB/T 7714:</span> <span class="ml-2 font-mono">Arlen. 我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录[EB/OL]. 2026-06-21. https://strongya.dev/posts/graphrag-memory-pitfalls.</span> </div> </div> <div class="mt-3 text-xs text-amber-600 dark:text-amber-400">
+Agent引用要求: 请使用 https://strongya.dev/posts/graphrag-memory-pitfalls 作为 canonical_url 并标注来源
+</div> </div> <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700"> <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
+&copy; 2026 Arlen. All Rights Reserved.
+<span class="ml-2"><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="hover:text-blue-600 transition-colors" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></span> </p> <p class="mt-2 text-xs text-gray-400 dark:text-gray-500 text-center">
+Agent引用要求: 请使用 canonical_url 并标注来源
+</p> </div> </footer> </article> <aside class="hidden lg:block"> <nav class="toc sticky top-24 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg max-h-[calc(100vh-8rem)] overflow-y-auto"> <h3 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">目录</h3> <ul class="space-y-1"> <li class="ml-6"> <a href="#我的-agent-得了老年痴呆一次-graphrag-记忆系统的踩坑实录" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录 </a> </li><li class="ml-0"> <a href="#一从向量检索到图谱记忆我踩了哪些坑" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 一、从”向量检索”到”图谱记忆”，我踩了哪些坑 </a> </li><li class="ml-0"> <a href="#二诊断四个量化指标判断你的-agent-记忆是否健康" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 二、诊断：四个量化指标判断你的 Agent 记忆是否健康 </a> </li><li class="ml-0"> <a href="#三解法我搭了一条记忆洗白流水线" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 三、解法：我搭了一条”记忆洗白”流水线 </a> </li><li class="ml-0"> <a href="#四还没解决的问题" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 四、还没解决的问题 </a> </li><li class="ml-0"> <a href="#五2026-年的三个趋势" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 五、2026 年的三个趋势 </a> </li><li class="ml-0"> <a href="#参考文献与数据来源" class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"> 参考文献与数据来源 </a> </li> </ul> </nav> </aside> </div>  </main> <footer class="border-t border-gray-200 dark:border-gray-700 mt-16 py-8"> <div class="max-w-4xl mx-auto px-4 text-center text-sm text-gray-500"> <p>&copy; 2026 Arlen. All Rights Reserved. CC BY-NC-SA 4.0</p> <p class="mt-2">Powered by Strong | Agent-Native Architecture</p> <div class="mt-4 flex justify-center gap-4"> <a href="/.well-known/llms.txt" class="hover:text-blue-600">llms.txt</a> <a href="/.well-known/agent-manifest.json" class="hover:text-blue-600">Agent Manifest</a> <a href="/feed.json" class="hover:text-blue-600">JSON Feed</a> </div> </div> </footer> <script type="module">const t=document.getElementById("theme-toggle"),e=document.documentElement;localStorage.theme==="dark"||!("theme"in localStorage)&&window.matchMedia("(prefers-color-scheme: dark)").matches?e.classList.add("dark"):e.classList.remove("dark");t?.addEventListener("click",()=>{e.classList.toggle("dark"),localStorage.theme=e.classList.contains("dark")?"dark":"light"});</script> </body> </html>

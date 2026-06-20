@@ -27,6 +27,144 @@
   "attribution_required": true,
   "items": [
     {
+      "id": "graphrag-memory-pitfalls.en.md",
+      "slug": "graphrag-memory-pitfalls",
+      "title": "My Agent Got Dementia: A GraphRAG Memory System Post-Mortem",
+      "content_text": " My Agent Got Dementia: A GraphRAG Memory System Post-Mortem\n\n> This article is based on my systematic study of LLM-generated knowledge graphs. All data come from published academic papers. A full academic analysis is referenced at the end.\n\n---\n\n 1. From Vector Retrieval to Graph Memory: The Pitfalls I Hit\n\nLast year I started building a multi-turn conversational Agent. At first I used a standard RAG pipeline: chunk text → embed → dump into Pinecone → retrieve Top-K. Simple, effective—until one day a user asked:\n\n> \"Last week I told you I don't eat cilantro. Do you remember?\"\n\nThe Agent paused for three seconds, then solemnly recommended a cilantro-and-beef salad.\n\nThe problem lies in the nature of vector retrieval: it can find semantically similar text chunks, but it cannot understand that \"these are two sentences spoken by the same person at different times and are logically related.\" The vector database has no entity called \"User A\" and no fact node \"User A dislikes cilantro\"—only a bunch of floating text fragments.\n\nSo I turned to GraphRAG. I wrote user profiles, preferences, and conversation history as nodes and edges, giving the Agent \"real memory.\"\n\nIt worked well at first. But after a month of operation, I noticed several bizarre phenomena:\n\nPhenomenon 1: Cloning\n\nThe same user appeared in the graph as more than a dozen distinct nodes. The reason is that LLM entity extraction is extremely unstable: today it writes \"Zhang San,\" tomorrow \"Mr. Zhang,\" the day after \"User 13800138000\"—three completely different nodes, and the system never realizes they are the same person.\n\nPhenomenon 2: Relation Inflation\n\nWhen I inspected the graph, I found that the LLM had invented a relation type called \"liked it a bit the day before yesterday but then lost interest.\" Only one edge in the entire graph used it. Similar relations included \"might know,\" \"indirectly related,\" and \"heard about from a friend\"—more than 200 relation types in total, 80% of which appeared only once.\n\nPhenomenon 3: Zombie Memories\n\nA casual \"hello\" the user uttered three months ago was still lying in the graph as a high-weight memory. No expiration mechanism, no decay strategy; all information lived forever. The result: truly important memories were drowned out by thousands of casual chat fragments.\n\nPhenomenon 4: Query Timeouts\n\nAfter the number of nodes exceeded ten thousand, a 3-hop path query jumped from 50 ms to 3 seconds and then timed out. The user waited five seconds with no response and simply closed the chat box.\n\nThese four phenomena map to four systemic defects in knowledge-graph construction: unconstrained entity generation, missing relation schemas, missing temporal decay, and full-graph traversal bottlenecks.\n\n---\n\n 2. Diagnosis: Four Quantitative Metrics for Agent Memory Health\n\nAfter two months of trial and error, I distilled a self-check method. You don't need to rewrite the whole system; just look at these four metrics first:\n\nMetric 1: Entity Ambiguity\n\nOpen your graph, randomly sample 100 entities, and count how many are different surface forms of the same real-world object. If the number of unmerged synonymous entities exceeds 3, your entity resolution is already broken.\n\nWhy is this number critical? Because GraphRAG retrieval works by locating an entity first and then spreading along relations. If \"LLM\" and \"Large Language Models\" are two independent nodes, when the user asks about \"latest LLM progress,\" the system will only retrieve the sub-graph connected to the former and completely miss the latter—the same thing treated as two separate topics.\n\nExperiments from Deg-Rag show that in LightRAG this kind of redundancy can inflate graph size by roughly 40%. Note that this is not a 40% increase in data volume; it is the same entity being created 1.4 times.\n\nMetric 2: Relation Redundancy\n\nCount the average out-degree per node. If it exceeds 15, be alert.\n\nThe reason is simple: if a query needs to traverse 3 hops with an average of 10 edges per hop, the number of paths to evaluate is 10³ = 1,000. If the average out-degree rises to 50, that's 50³ = 125,000 paths—and query time explodes.\n\nMetric 3: Data Pollution Rate\n\nThe proportion of non-knowledge nodes among all nodes. Casual chat, temporary statements, and garbage data from automated bulk imports—if this share exceeds 40%, half of your RAG context is noise. The LLM generates answers based on noise, so hallucination rates naturally soar.\n\nA reference: the OntoKG paper's cleaning of Wikidata found that among roughly 100 million entries, only 34.6 million 34.6% were considered valid core entities; the rest were low-quality bulk imports. If Wikidata is like this, LLM-auto-generated graphs will only be worse.\n\nMetric 4: Compute Overload\n\nLook directly at the P95 query latency. Above 500 ms, users perceive lag. The target should be under 100 ms.\n\n---\n\n 3. The Fix: A \"Memory Whitewash\" Pipeline\n\nAfter diagnosing the problems, I started fixing them. Not by rewriting the whole system, but by adding four layers between write and query.\n\nLayer 1: Cleaning and Normalization Deduplication\n\nThe core idea is simple: before the LLM writes to the graph, ask, \"Does this entity already exist?\"\n\nThe concrete approach is vector clustering plus entity linking. Embed all entities; those whose similarity exceeds a threshold enter the same candidate pool. Then use a finer matching algorithm classic KG embeddings such as TransE or DistMult are sufficient; you don't need to call GPT-4 every time to judge whether they are the same entity.\n\nDeg-Rag's experiments validated this method: on four multi-hop QA datasets, removing about 40% of redundant entities and relations actually improved QA performance. It shows that a graph is not better just because it is bigger—cleanliness beats size.\n\nLayer 2: Structured Filtering Pruning\n\nAdd a \"house rule\" to LLM memory writes:\n\n- Predefine allowed relation types; forbid the LLM from inventing new ones.\n- Relations occurring fewer than 3 times are treated as noise and deleted.\n- Conversation memories older than 7 days with no subsequent interaction automatically expire.\n- Every triple gets a quality score; low-scoring ones don't enter the main graph.\n\nThe OntoKG paper proposes a more elegant idea called \"intrinsic-relational routing\": divide attributes into \"intrinsic attributes\" node properties, e.g., birth date and \"relational attributes\" traversable edges, e.g., \"works at\", and use the schema to explicitly control what can be written into the graph. This is more efficient than filtering after the fact.\n\nLayer 3: Tiered Storage\n\nNot all memories deserve permanent storage. I designed a three-tier architecture:\n\nHot data goes in Redis, storing only the current session's context with a TTL of 5–30 minutes; dropped when the session ends.\n\nWarm data goes in a vector database Pinecone/Milvus, storing valid memories from the last 7–30 days with a temporal decay coefficient—newer memories have higher weight; those older than 30 days are automatically down-weighted.\n\nCold data goes in a graph database Neo4j, storing only validated long-term knowledge and user profiles. Read-mostly, updated periodically in batches.\n\nWrites are automatically routed to the appropriate tier based on memory type; reads follow hot → warm → cold order, returning on first hit and avoiding unnecessary full-graph scans.\n\nLayer 4: Graph Optimization Dimensionality Reduction\n\nThe most fundamental optimization idea: don't traverse the whole graph every time.\n\nMicrosoft's GraphRAG approach is worth borrowing: first cut the large graph into communities with the Louvain algorithm, then generate a summary for each community. At query time, match community summaries first to locate the most relevant community, then inspect it in detail. This shrinks the search space from the whole graph to a small community, reducing latency by an order of magnitude.\n\nIn addition, replacing exact traversal with HNSW approximate nearest-neighbor search can maintain recall above 95% while dropping query complexity from On to Olog n.\n\n---\n\n 4. Problems I Still Haven't Solved\n\nAfter this pipeline went live, my Agent became much more stable. But a few problems still lack satisfying solutions:\n\nDynamic Knowledge Evolution\n\nWhen a knowledge graph continuously receives incremental updates, the cost-benefit ratio of denoising and schema maintenance changes. Temporal decay models such as the Hawkes process in DynTKG perform well academically, but the engineering complexity of integrating them into production systems is high.\n\nBeneficial Noise\n\nCan denoising go too far? Deg-Rag removed 40% of content, but if that 40% contained some low-frequency yet critical memory e.g., the user rarely mentions a peanut allergy, then filtering becomes harmful. There is currently no theoretical framework for distinguishing \"harmful noise\" from \"beneficial low-frequency information.\"\n\nCross-Lingual Scenarios\n\nAll validation data come from English settings. Entity ambiguity rates may differ significantly for Chinese, Japanese, Arabic, and other languages—Chinese entity disambiguation, for example, must handle homophones, simplified/traditional variants, and nickname variants, which are far more complex than English.\n\n---\n\n 5. Three Trends for 2026\n\nIncremental Updates\n\nLightRAG proposes an incremental update mechanism: only extract and deduplicate new documents, then merge them into the existing graph. This means an Agent can learn while chatting, instead of rebuilding the entire graph every night at 2 a.m.\n\nBackground Async Governance\n\nCutting-edge frameworks are introducing background threads that automatically run when the Agent is inactive: entity deduplication, low-frequency edge cleanup, community structure recomputation, and expired-memory archiving. It's like giving the Agent a \"night cleaning crew.\"\n\nWrite-Time Constraints\n\nInstead of letting the LLM write freely and then govern, impose constraints at write time. A likely future direction: the LLM only \"proposes candidate memories,\" while the actual write decision is made by an independent \"memory gatekeeper\" module—one that knows the schema, frequency statistics, and quality scores.\n\n---\n\n References and Data Sources\n\nThe quantitative data and core conclusions in this article come from the following studies:\n\n- Zheng, Y., et al. 2025. Less is More: Denoising Knowledge Graphs For Retrieval Augmented Generation. arXiv:2510.14271. — Denoising can remove ~40% redundancy and improve RAG performance.\n- Liu, Z., et al. 2026. OntoKG: Ontology-Oriented Knowledge Graph Construction with Intrinsic-Relational Routing. arXiv:2604.02618. — 34.6% of 100M Wikidata entries are core entities.\n- Edge, D., et al. 2024. From Local to Global: A Graph RAG Approach to Query-Focused Summarization. Microsoft Research. — Community detection enables large-scale graph retrieval.\n- Guo, X., et al. 2024. LightRAG: Simple and Fast Retrieval-Augmented Generation. arXiv:2410.05779. — Incremental update mechanism.\n- Blondel, V. D., et al. 2008. Fast Unfolding of Communities in Large Networks. Journal of Statistical Mechanics. — Louvain algorithm.\n- Malkov, Y. A., & Yashunin, D. A. 2018. Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs. IEEE TPAMI. — HNSW algorithm.\n\nThe full academic analysis report including ReAct four-way cross-validation is at:\n40 Analysis/Technology/知识图谱构建中无约束生成引发的结构退化问题-2026-06-20.md\n\n---\n\nWritten in June 2026. If you are also working on Agent memory systems, feel free to share your own pitfall stories in the comments.",
+      "content_html": null,
+      "summary": "After upgrading from vector retrieval to GraphRAG, my Agent developed four pathologies: entity duplication, relation inflation, zombie memories, and query timeouts. This article diagnoses memory health with four quantitative metrics and proposes four fixes: deduplication, structured pruning, tiered storage, and graph optimization.",
+      "url": "https://strongya.dev/en/posts/graphrag-memory-pitfalls",
+      "date_published": "2026-06-21T00:00:00.000Z",
+      "date_modified": "2026-06-21T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "GraphRAG",
+        "Agent",
+        "Memory",
+        "Knowledge Graph",
+        "RAG"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/graphrag-memory-pitfalls"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). My Agent Got Dementia: A GraphRAG Memory System Post-Mortem. Retrieved from https://strongya.dev/en/posts/graphrag-memory-pitfalls",
+        "mla": "Arlen. \"My Agent Got Dementia: A GraphRAG Memory System Post-Mortem.\" 2026. Web. 2026-06-21.",
+        "gb": "Arlen. My Agent Got Dementia: A GraphRAG Memory System Post-Mortem[EB/OL]. 2026-06-21. https://strongya.dev/en/posts/graphrag-memory-pitfalls."
+      },
+      "entities": [
+        {
+          "name": "GraphRAG",
+          "type": "Technology",
+          "wiki_url": "https://en.wikipedia.org/wiki/GraphRAG"
+        },
+        {
+          "name": "Neo4j",
+          "type": "Technology",
+          "wiki_url": "https://en.wikipedia.org/wiki/Neo4j"
+        },
+        {
+          "name": "Redis",
+          "type": "Technology",
+          "wiki_url": "https://en.wikipedia.org/wiki/Redis"
+        },
+        {
+          "name": "Wikidata",
+          "type": "Dataset",
+          "wiki_url": "https://en.wikipedia.org/wiki/Wikidata"
+        },
+        {
+          "name": "Hierarchical Navigable Small World",
+          "type": "Algorithm",
+          "wiki_url": "https://en.wikipedia.org/wiki/Hierarchical_navigable_small_world"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1850,
+        "readingTime": 11
+      }
+    },
+    {
+      "id": "graphrag-memory-pitfalls.md",
+      "slug": "graphrag-memory-pitfalls",
+      "title": "我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录",
+      "content_text": " 我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录\n\n> 本文基于我对 LLM 生成知识图谱的系统性研究写成，所有数据来自已发表的学术论文。完整学术版报告见文末。\n\n---\n\n 一、从\"向量检索\"到\"图谱记忆\"，我踩了哪些坑\n\n去年我开始做一个多轮对话 Agent，最初用的标准 RAG 流程：文本切片 → Embedding → 扔进 Pinecone → 检索 Top-K。简单，有效，直到有一天用户问我：\n\n> \"上周我说我不吃香菜，你还记得吗？\"\n\nAgent 沉默了三秒，然后一本正经地推荐了一道香菜拌牛肉。\n\n问题出在向量检索的本质上：它只能找到\"语义相似\"的文本块，但无法理解\"这是同一个人在不同时间说的两句话，且存在逻辑关联\"。向量数据库里没有\"用户 A\"这个实体，也没有\"用户 A 不喜欢香菜\"这个事实节点——只有一堆漂浮的文本片段。\n\n于是我转向了 GraphRAG。把用户画像、偏好、对话历史全部写成节点和边，让 Agent 拥有\"真正的记忆\"。\n\n起初效果很好。但运行一个月后，我发现几个诡异的现象：\n\n现象一：分身术\n\n同一个用户在图谱里出现了十几个节点。原因是 LLM 在抽取实体时极其不稳定：今天写\"张三\"，明天写\"张先生\"，后天写\"用户 13800138000\"——三个完全不同的节点，系统永远意识不到这是同一个人。\n\n现象二：关系通货膨胀\n\n我检查图谱时发现，LLM 发明了一种叫\"前天有点喜欢但后来没感觉了\"的关系类型。全图仅此一条。类似的关系还有\"可能认识\"、\"间接相关\"、\"听朋友提起过\"——总共出现了 200 多种关系类型，其中 80% 只出现过一次。\n\n现象三：记忆僵尸\n\n用户三个月前随口说的\"你好\"，至今作为一条高权重记忆躺在图谱里。没有过期机制，没有衰减策略，所有信息永生不死。结果就是：真正重要的记忆被淹没在成千上万的闲聊碎片中。\n\n现象四：查询 timeout\n\n节点过万后，一次涉及 3 跳关系的路径查询直接从 50ms 飙到 3 秒，然后超时。用户等了五秒没反应，直接关掉了对话框。\n\n这四个问题，对应了知识图谱构建中的四个系统性缺陷：实体无约束生成、关系 Schema 缺失、时间衰减机制缺失、全图遍历性能瓶颈。\n\n---\n\n 二、诊断：四个量化指标判断你的 Agent 记忆是否健康\n\n折腾了两个月，我总结出一套自检方法。不需要重构整个系统，先看这四个指标：\n\n指标一：实体歧义度\n\n打开你的图谱，随机抽 100 个实体，看看有多少个是同一个现实世界对象的不同写法。如果同义实体未合并的数量超过 3 个，说明你的实体解析已经崩了。\n\n为什么这个数字很关键？因为 GraphRAG 的检索逻辑是：先定位实体，再沿关系扩散。如果\"LLM\"和\"Large Language Models\"是两个独立节点，用户问\"LLM 最新进展\"时，系统只会检索到前者相关的子图，完全漏掉后者——明明是同一件事，被当成了两个话题。\n\nDeg-Rag 的实验表明，在 LightRAG 系统中这类冗余可导致图规模膨胀约 40%。注意，这不是数据量增加了 40%，是同一个实体被重复建了 1.4 次。\n\n指标二：关系冗余度\n\n统计单节点的平均出边数量。超过 15 条，就要警惕了。\n\n原因很简单：一次查询如果需要遍历 3 跳，每跳平均 10 条边，那要评估的路径就是 10³ = 1000 条。如果平均出度飙到 50，那就是 50³ = 125,000 条路径——查询时间直接爆炸。\n\n指标三：数据污染率\n\n非知识性节点占总节点的比例。闲聊、临时性语句、自动化批量导入的垃圾数据——如果占比超过 40%，你的 RAG 上下文里就有一半是噪声，LLM 基于噪声生成回答，幻觉率自然飙升。\n\n一个参考数据：OntoKG 论文在 Wikidata 上做的清洗发现，约 1 亿个条目中仅有 3460 万个（34.6%）被视为有效核心实体，其余都是低质量批量导入。Wikidata 尚且如此，LLM 自动生成的图谱只会更糟。\n\n指标四：计算过载度\n\n直接看 P95 查询延迟。超过 500ms，用户就能感知到卡顿。目标应该控制在 100ms 以内。\n\n---\n\n 三、解法：我搭了一条\"记忆洗白\"流水线\n\n诊断完问题，我开始修。不是重写整个系统，而是在写入和查询之间加了四层处理。\n\n第一层：清洗归一（去重）\n\n核心思路很简单：在 LLM 写入图谱之前，先问一句——\"这个实体是不是已经存在？\"\n\n具体做法是向量聚类 + 实体链接。把所有实体做 Embedding，相似度超过阈值的进入同一个候选池，然后用更精细的匹配算法（传统 KG Embedding 如 TransE、DistMult 就够了，不需要每次都调 GPT-4）判断是否为同一实体。\n\nDeg-Rag 的实验验证了这个方法：在四个多跳问答数据集上，去除约 40% 的冗余实体和关系后，问答性能反而提升了。说明图谱不是越大越好，干净比大重要。\n\n第二层：结构化过滤（修剪）\n\n给 LLM 的记忆写入加一道\"家规\"：\n\n- 预定义允许的关系类型，禁止 LLM 发明新关系\n- 频次低于 3 次的关系视为噪声，直接删除\n- 超过 7 天且无后续互动的对话记忆，自动过期\n- 每个三元组打质量分，低分的不进主图谱\n\nOntoKG 论文里有个更优雅的思路叫\"本征-关系路由\"：把属性分为\"本征属性\"（节点特性，如出生日期）和\"关系属性\"（可遍历的边，如\"工作于\"），通过 Schema 显式控制什么能写进图谱。这比事后过滤更高效。\n\n第三层：多级分层存储\n\n不是所有记忆都值得永久保存。我设计了三层架构：\n\n热数据放在 Redis，只存当前 Session 的上下文，TTL 5-30 分钟，Session 结束就丢。\n\n温数据放在向量数据库（Pinecone/Milvus），存最近 7-30 天的有效记忆，带时间衰减系数——越新的记忆权重越高，30 天前的自动降权。\n\n冷数据放在图数据库（Neo4j），只存经过验证的长期知识和用户画像。只读为主，定期批量更新。\n\n写入时根据记忆类型自动路由到对应层级；读取时按热 → 温 → 冷的顺序检索，命中即返回，避免不必要的全图扫描。\n\n第四层：图优化（降维）\n\n最根本的优化思路：不要每次都全图遍历。\n\n微软 GraphRAG 的做法值得借鉴：先用 Louvain 算法把大图切成若干社区，然后对每个社区生成摘要。查询时先匹配社区摘要，定位到最相关的社区，再进去细查。这样一次查询的搜索空间从全图降到了一个小社区，延迟直接降一个数量级。\n\n另外，用 HNSW 近似最近邻搜索替代精确遍历，召回率能到 95% 以上，但查询复杂度从 On 降到 Olog n。\n\n---\n\n 四、还没解决的问题\n\n这套流水线跑起来后，我的 Agent 确实稳定了很多。但有几个问题我还没找到满意的解法：\n\n动态知识演化\n\n当知识图谱持续接收增量更新时，去噪和 Schema 维护的成本效益比会发生变化。时序衰减模型（如 DynTKG 的 Hawkes 过程）在学术上表现不错，但集成到生产系统里的工程复杂度很高。\n\n有益噪声\n\n去噪会不会过头？Deg-Rag 去掉了 40% 的内容，但如果这 40% 里包含了某些低频但关键的记忆（比如用户罕见地提到自己花生过敏），那过滤就是有害的。目前缺乏区分\"有害噪声\"和\"有益低频信息\"的理论框架。\n\n跨语言场景\n\n所有验证数据都来自英文场景。中文、日文、阿拉伯文等语言的实体歧义率可能显著不同——比如中文的实体消歧需要处理同音字、简繁体、昵称变体等问题，远比英文复杂。\n\n---\n\n 五、2026 年的三个趋势\n\n增量更新\n\nLightRAG 提出了一种增量更新机制：只对新文档做提取和去重，然后合并到现有图谱中。这意味着 Agent 可以边聊边学，而不需要每天凌晨全量重建图谱。\n\n后台异步治理\n\n前沿框架开始引入后台线程，在 Agent 不活跃时自动执行：实体去重、低频边清理、社区结构重算、过期记忆归档。相当于给 Agent 配了一个\"夜间保洁团队\"。\n\n写前约束\n\n与其让 LLM 随意写入然后再治理，不如在写入时就施加约束。未来的方向可能是：LLM 只负责\"提出候选记忆\"，真正的写入决策由一个独立的\"记忆守门员\"模块来做——这个模块有 Schema 知识、有频次统计、有质量评分。\n\n---\n\n 参考文献与数据来源\n\n本文的量化数据和核心结论来自以下研究：\n\n- Zheng, Y., et al. 2025. Less is More: Denoising Knowledge Graphs For Retrieval Augmented Generation. arXiv:2510.14271. —— 去噪可去除约 40% 冗余并提升 RAG 性能\n- Liu, Z., et al. 2026. OntoKG: Ontology-Oriented Knowledge Graph Construction with Intrinsic-Relational Routing. arXiv:2604.02618. —— Wikidata 100M 条目中 34.6% 为核心实体\n- Edge, D., et al. 2024. From Local to Global: A Graph RAG Approach to Query-Focused Summarization. Microsoft Research. —— 社区检测实现大规模图检索\n- Guo, X., et al. 2024. LightRAG: Simple and Fast Retrieval-Augmented Generation. arXiv:2410.05779. —— 增量更新机制\n- Blondel, V. D., et al. 2008. Fast Unfolding of Communities in Large Networks. Journal of Statistical Mechanics. —— Louvain 算法\n- Malkov, Y. A., & Yashunin, D. A. 2018. Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs. IEEE TPAMI. —— HNSW 算法\n\n完整学术分析报告（含 ReAct 四路交叉验证）见：\n40 Analysis/Technology/知识图谱构建中无约束生成引发的结构退化问题-2026-06-20.md\n\n---\n\n本文写于 2026 年 6 月。如果你也在做 Agent 记忆系统，欢迎在评论区分享你的踩坑经历。",
+      "content_html": null,
+      "summary": "从向量检索升级到 GraphRAG 后，我的 Agent 出现了实体分身、关系通胀、记忆僵尸和查询超时四大问题。本文用四个量化指标诊断记忆健康度，并给出清洗归一、结构化过滤、多级分层存储和图优化四条解法。",
+      "url": "https://strongya.dev/posts/graphrag-memory-pitfalls",
+      "date_published": "2026-06-21T00:00:00.000Z",
+      "date_modified": "2026-06-21T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "GraphRAG",
+        "Agent",
+        "Memory",
+        "Knowledge Graph",
+        "RAG"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/graphrag-memory-pitfalls"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录. Retrieved from https://strongya.dev/posts/graphrag-memory-pitfalls",
+        "mla": "Arlen. \"我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录.\" 2026. Web. 2026-06-21.",
+        "gb": "Arlen. 我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录[EB/OL]. 2026-06-21. https://strongya.dev/posts/graphrag-memory-pitfalls."
+      },
+      "entities": [
+        {
+          "name": "GraphRAG",
+          "type": "Technology",
+          "wiki_url": "https://en.wikipedia.org/wiki/GraphRAG"
+        },
+        {
+          "name": "Neo4j",
+          "type": "Technology",
+          "wiki_url": "https://en.wikipedia.org/wiki/Neo4j"
+        },
+        {
+          "name": "Redis",
+          "type": "Technology",
+          "wiki_url": "https://en.wikipedia.org/wiki/Redis"
+        },
+        {
+          "name": "Wikidata",
+          "type": "Dataset",
+          "wiki_url": "https://en.wikipedia.org/wiki/Wikidata"
+        },
+        {
+          "name": "Hierarchical Navigable Small World",
+          "type": "Algorithm",
+          "wiki_url": "https://en.wikipedia.org/wiki/Hierarchical_navigable_small_world"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 2697,
+        "readingTime": 7
+      }
+    },
+    {
       "id": "agent-external-data-compliance.en.md",
       "slug": "agent-external-data-compliance",
       "title": "Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling",
