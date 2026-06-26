@@ -27,6 +27,88 @@
   "attribution_required": true,
   "items": [
     {
+      "id": "agent-memory-errors-cases-26-30.en.md",
+      "slug": "agent-memory-errors-cases-26-30",
+      "title": "Agent Memory Errors Handbook: Cases 26–30",
+      "content_text": " Agent Memory Errors Handbook: Cases 26–30\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 26: Short-term Memory / Context Errors — In Context Learning Example Contamination\n\nScenario\n\nThe Agent uses few-shot prompting with three fixed examples in the system prompt. In one conversation the user's input happens to resemble a format from an example e.g., a JSON schema. The LLM confuses the user input with the examples and treats it as part of a fourth example.\n\nError Manifestation\n\nThe Agent's output format is contaminated by the \"fourth example\" and starts mimicking the non-standard format in the user input instead of following the defined output spec.\n\nSolution\n\n1. Use explicit example separators such as === Example 1 === ... === End Example ===\n2. Isolate examples from user input with special tokens such as <|endofprompt|>\n3. Use dynamic example selection: pick the most relevant examples from a library rather than using fixed examples\n\nPrinciple\n\nThe strength of in-context learning is also its weakness: LLMs cannot strictly distinguish template examples from user data. Format contamination is a known risk of few-shot prompting.\n\n---\n\n Case 27: Short-term Memory / Context Errors — Conversation Branch Merged Without Resolution\n\nScenario\n\nThe user and Agent discuss whether remote work should be universal. The user first gives arguments supporting remote work Branch A, then arguments against it Branch B, and finally asks, \"What do you think?\" The Agent's context contains both branches but does not mark them as opposing assumptions.\n\nError Manifestation\n\nThe Agent replies with both \"Remote work indeed improves efficiency\" and \"But face-to-face collaboration is irreplaceable\" without clarifying that these are two different perspectives. The user finds the stance vague.\n\nSolution\n\n1. Use a conversation tree rather than linear context, tagging each point with its branch and assumption\n2. When merging branches, explicitly label \"Under assumption X\" and \"Under assumption Y,\" or ask which branch to discuss\n3. Use belief-state tracking: maintain support/oppose/pending labels for each proposition\n\nPrinciple\n\nReal conversations are non-linear and include hypotheticals and role-play. Linear context cannot represent branching structure, and merging branches creates logical conflicts. Conversation trees are a more precise model.\n\n---\n\n Case 28: Short-term Memory / Context Errors — Summarization Induced Fact Substitution\n\nScenario\n\nAfter a long conversation, the Agent compresses the context. The user originally said, \"I like PyTorch, but company projects require TensorFlow.\" For brevity, the summary becomes \"User develops with TensorFlow.\"\n\nError Manifestation\n\nLater, the Agent recommends TensorFlow tools and resources based on the summary, ignoring the user's actual preference for PyTorch. The user feels the Agent was not really listening.\n\nSolution\n\n1. Apply a fact-fidelity constraint: instruct the summarizer to compress wording without changing facts\n2. Use extractive summarization instead of abstractive summarization so key sentences remain verbatim\n3. Back-translate the summary into a longer text and check factual consistency with the original\n\nPrinciple\n\nAbstractive summarization may perform semantic approximation during compression. Even when the gist is preserved, small changes in specific facts—preferences, numbers, names—can bias later reasoning.\n\n---\n\n Case 29: Short-term Memory / Context Errors — Context Window Fragmentation Tool Calls\n\nScenario\n\nThe Agent uses a tool chain for complex tasks. Each tool call includes the tool definition JSON Schema, parameters, and results. In one data-analysis task the Agent calls ten tools; each call's schema and result consume 500 tokens, totaling 5,000 tokens. With the system prompt included, less than 1,000 tokens remain for the user's conversation.\n\nError Manifestation\n\nThe user's next input is truncated. The Agent sees only the first half of the question, misunderstands the intent, and gives a wrong analysis.\n\nSolution\n\n1. Compress tool-call history: keep only tool name, key parameters, and result summary; drop full schemas and redundant output\n2. Use a tool-memory cache: store frequently used results externally and keep only reference IDs in context\n3. Allocate an independent context budget for tool calls e.g., at most 30% and compress the oldest tool records first when exceeded\n\nPrinciple\n\nTool calls consume large amounts of context. Without management, tool history crowds out user content, producing the experience of the user being cut off mid-sentence.\n\n---\n\n Case 30: Short-term Memory / Context Errors — Temporal Marker Ambiguity Resolution\n\nScenario\n\nOn Monday the user says, \"Yesterday I went to the doctor.\" The Agent records \"User went to the doctor yesterday.\" On Wednesday the user asks, \"When was my last doctor visit?\" The Agent computes \"yesterday\" from the current context as Tuesday, but the user's \"yesterday\" meant Sunday.\n\nError Manifestation\n\nThe Agent answers, \"You went to the doctor on Tuesday.\" The user corrects, \"I went on Sunday.\" The Agent appears confused about time.\n\nSolution\n\n1. Normalize times when recording: convert relative expressions yesterday, next Wednesday to absolute timestamps\n2. Store both the original expression and the normalized timestamp; choose the appropriate expression when answering\n3. Set validity periods for time-sensitive records, e.g., automatically archive \"meeting tomorrow\" after the meeting passes\n\nPrinciple\n\nNatural-language time expressions are relative to speech time. Agents must anchor them to absolute time; otherwise temporal references drift as the session progresses.\n\n\n> Source: Agent Search",
+      "content_html": null,
+      "summary": "This installment covers Agent memory error cases 26–30, including Short-term Memory / Context Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/",
+      "date_published": "2026-06-26T00:00:00.000Z",
+      "date_modified": "2026-06-26T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Short-term Memory",
+        "Context",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 26–30. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 26–30.\" 2026. Web. 2026-06-26.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 26–30[EB/OL]. 2026-06-26. https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 861,
+        "readingTime": 5
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-26-30.md",
+      "slug": "agent-memory-errors-cases-26-30",
+      "title": "《Agent记忆错误的100个案例手册》第 26–30 案例",
+      "content_text": " 《Agent记忆错误的100个案例手册》第 26–30 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 26：短期记忆/上下文错误｜in-context-learning-example-contamination\n\n场景\n\nAgent使用few-shot prompting，系统提示中固定包含3个示例。某次对话中，用户的输入恰好与示例中的某个格式（如JSON Schema）相似，LLM将用户输入与示例混淆，认为用户输入是\"第4个示例\"的一部分。\n\n错误表现\n\nAgent的输出格式被\"第4个示例\"污染，开始模仿用户输入中的非标准格式，而非遵循系统提示中定义的输出规范。\n\n解决方案\n\n1. 使用明确的示例分隔符（如=== Example 1 ===...=== End Example ===）\n2. 将示例与用户输入用特殊token（如<|endofprompt|>）严格隔离\n3. 采用动态示例选择：根据当前查询从示例库中选择最相关的示例，而非固定示例\n\n原理\n\nIn-context learning的强大之处也是其脆弱之处：LLM无法严格区分\"作为模板的示例\"和\"作为数据的用户输入\"。格式污染（Format Contamination）是few-shot prompting的已知风险。\n\n---\n\n 案例 27：短期记忆/上下文错误｜conversation-branch-merged-without-resolution\n\n场景\n\n用户与Agent讨论\"远程工作是否应该普及\"，用户先说了支持远程工作的理由（A分支），然后说了反对的理由（B分支），最后问\"那你觉得呢\"。Agent的上下文同时包含A分支和B分支，但没有标记这些观点是用户在不同假设下提出的。\n\n错误表现\n\nAgent的回复同时包含\"远程工作确实提高了效率\"和\"但面对面协作不可替代\"，但没有明确表明这是两个不同视角的分析，用户感到Agent\"立场模糊\"。\n\n解决方案\n\n1. 实现对话树（Conversation Tree）而非线性上下文：标记每个观点所属的分支和假设条件\n2. 在合并分支时显式标注\"基于假设X\"\"基于假设Y\"，或要求用户明确当前讨论的是哪个分支\n3. 使用\"信念状态跟踪\"：为每个实体/命题维护一个\"支持/反对/待定\"的状态标签\n\n原理\n\n真实对话往往不是线性的，包含假设、反事实、角色扮演等分支。线性上下文无法表达这种分支结构，合并时必然产生逻辑冲突。对话树是更精确的上下文表示模型。\n\n---\n\n 案例 28：短期记忆/上下文错误｜summarization-induced-fact-substitution\n\n场景\n\n长对话后，Agent对上下文进行摘要压缩。原始对话中用户说\"我喜欢用PyTorch，但公司项目要求TensorFlow\"。摘要生成时，为了简洁，被压缩为\"用户使用TensorFlow进行开发\"。\n\n错误表现\n\n后续Agent基于该摘要推荐TensorFlow相关的工具和资源，忽略了用户实际偏好PyTorch的事实，用户感到Agent\"没有认真听\"。\n\n解决方案\n\n1. 对摘要进行\"事实保真度\"约束：在摘要prompt中明确要求\"不得改变原始陈述的事实，只能压缩表述\"\n2. 使用提取式摘要（Extractive Summarization）而非生成式摘要，确保关键语句原文保留\n3. 对摘要结果进行\"回译验证\"：将摘要扩展回长文本，检查与原始内容的事实一致性\n\n原理\n\n生成式摘要（Abstractive Summarization）在压缩过程中可能进行\"语义近似替换\"。虽然大意相同，但具体事实（如偏好、数值、人名）的微小变化可能导致后续推理的系统性偏差。\n\n---\n\n 案例 29：短期记忆/上下文错误｜context-window-fragmentation-tool-calls\n\n场景\n\nAgent使用工具链（Tool Chain）进行复杂任务，每次工具调用需要包含工具定义（JSON Schema）、参数、返回结果。一次数据分析任务中，Agent调用了10次工具，每次工具的schema和结果占用了500 token，共5000 token。加上系统提示，留给用户对话的上下文空间不足1000 token。\n\n错误表现\n\n用户的后续输入被截断，Agent只看到了用户问题的前半部分，误解了用户意图，给出了错误的分析结论。\n\n解决方案\n\n1. 对工具调用历史进行压缩：只保留工具名称、关键参数和结果摘要，丢弃完整的schema和冗余输出\n2. 使用\"工具记忆\"机制：将频繁使用的工具结果存入外部缓存，上下文中只保留引用ID\n3. 为工具调用分配独立的上下文预算（如最多占用总上下文的30%），超出时优先压缩最早的工具记录\n\n原理\n\n工具调用在Agent架构中消耗大量上下文资源。如果不加管理，工具历史会挤压用户内容的存储空间，导致\"用户说了一半就被打断\"的体验。\n\n---\n\n 案例 30：短期记忆/上下文错误｜temporal-marker-ambiguity-resolution\n\n场景\n\n用户在周一说\"昨天我去看了医生\"，Agent记录\"用户昨天看了医生\"。周三时用户问\"我上次看医生是什么时候\"，Agent根据上下文中的\"昨天\"计算为\"周二\"，但实际上用户的\"昨天\"指的是周日。\n\n错误表现\n\nAgent回答\"你周二看了医生\"，用户纠正\"我是周日去的\"，Agent显得\"时间混乱\"。\n\n解决方案\n\n1. 在记录时进行时间标准化：将相对时间（昨天、下周三）转换为绝对时间戳（2024-01-15）\n2. 在上下文中同时存储原始表述和标准化时间，回答时根据查询时间选择合适的表述\n3. 对时间敏感的记录设置\"有效期\"：如\"明天开会\"在会议结束后自动归档\n\n原理\n\n自然语言中的时间表达本质上是相对于\"话语时间\"（Speech Time）的。Agent需要将相对时间锚定到绝对时间，否则随着会话进行，时间指代会持续漂移。\n\n---\n\n D. 向量数据库与索引错误（案例31-40）\n\n\n> 来源：Agent Search",
+      "content_html": null,
+      "summary": "本辑收录 Agent 记忆错误案例 26–30，涵盖 短期记忆/上下文错误 等主题。",
+      "url": "https://strongya.dev/posts/agent-memory-errors-cases-26-30/",
+      "date_published": "2026-06-26T00:00:00.000Z",
+      "date_modified": "2026-06-26T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "Short-term Memory",
+        "Context",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-26-30/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 26–30 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-26-30/",
+        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 26–30 案例.\" 2026. Web. 2026-06-26.",
+        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 26–30 案例[EB/OL]. 2026-06-26. https://strongya.dev/posts/agent-memory-errors-cases-26-30/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1566,
+        "readingTime": 4
+      }
+    },
+    {
       "id": "agent-memory-errors-cases-21-25.en.md",
       "slug": "agent-memory-errors-cases-21-25",
       "title": "Agent Memory Errors Handbook: Cases 21–25",
@@ -109,46 +191,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-16-20.md",
-      "slug": "agent-memory-errors-cases-16-20",
-      "title": "《Agent记忆错误的100个案例手册》第 16–20 案例",
-      "content_text": " 《Agent记忆错误的100个案例手册》第 16–20 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 16：长期记忆管理错误｜memory-consolidation-sleep-cycle-disruption\n\n场景\n\nAgent架构模仿人类睡眠，在每日凌晨2-4点执行记忆巩固：将短期记忆中的重要信息转存到长期记忆。某天由于系统维护，该时段Agent实例被重启，巩固任务未执行。当天的所有对话记忆停留在短期记忆中。\n\n错误表现\n\n次日用户继续前一天的讨论（\"关于那个方案，我补充一点\"），Agent完全无法回忆昨天的内容，用户感到被\"遗忘\"，体验极差。\n\n解决方案\n\n1. 记忆巩固任务采用持久化队列（如Redis Stream），即使实例重启也能恢复未完成的任务\n2. 实施\"写前日志\"（WAL）：所有短期记忆变更先写入持久化日志，巩固任务可基于日志重做\n3. 设计幂等的巩固流程：同一记忆多次巩固不会产生重复条目\n\n原理\n\n记忆巩固（Memory Consolidation）是长期记忆形成的关键步骤。如果该过程不可靠，短期记忆将成为事实上的\"易失性存储\"，Agent将表现出严重的\"隔夜遗忘\"。\n\n---\n\n 案例 17：长期记忆管理错误｜autobiographical-memory-narrative-distortion\n\n场景\n\n具有\"自传体记忆\"的Agent会记录自己的\"经历\"（如\"我成功帮助用户A解决了问题X\"）。长期运行后，这些记忆被反复检索和引用，Agent在回答\"你擅长什么\"时，会基于这些记忆构建自我描述。但由于成功经历被更频繁地记录和强化，失败经历被忽略或淡化，Agent形成了过度自信的自我认知。\n\n错误表现\n\nAgent在自我介绍中声称\"我在法律领域有95%的准确率\"，但实际统计只有72%。这种过度自信导致用户在高风险场景（如法律建议）中过度信任Agent。\n\n解决方案\n\n1. 对自传体记忆进行双向记录：同时记录成功和失败案例，并确保失败案例有最低存储配额\n2. 定期使用外部日志对自传体记忆进行审计和校准\n3. 在生成自我描述时，明确要求Agent引用可验证的数据而非主观记忆\n\n原理\n\n人类的自传体记忆也存在自我美化倾向（Self-serving Bias）。Agent如果没有刻意设计平衡机制，会自然累积正向叙事，形成\"记忆回音室\"。\n\n---\n\n 案例 18：长期记忆管理错误｜working-memory-gatekeeping-failure\n\n场景\n\nAgent的工作记忆（Working Memory）本应只保留与当前任务最相关的信息。在多轮对话中，用户先询问了\"推荐一家意大利餐厅\"，然后转到了\"帮我写一封辞职信\"。但由于工作记忆的门控机制（Gatekeeping）失效，\"意大利餐厅\"的推荐信息仍保留在工作记忆中。\n\n错误表现\n\nAgent在写辞职信时，意外插入了\"就像我在罗马餐厅体验到的那样，人生需要做出选择\"这类不相关的内容，显得极不专业。\n\n解决方案\n\n1. 实现显式的工作记忆刷新机制：当检测到话题转换（通过意图分类或主题漂移检测）时，清空与旧话题相关的工作记忆\n2. 为工作记忆中的每条信息设置\"相关性分数\"，低于阈值的信息被自动移出\n3. 使用注意力掩码（Attention Masking）：在推理时屏蔽与当前查询不相关的工作记忆条目\n\n原理\n\n工作记忆的容量有限（Miller's Law: 7±2个组块），门控机制（由前额叶皮层控制）决定了什么信息进入意识。Agent需要模拟这一机制，防止认知过载和干扰。\n\n---\n\n 案例 19：长期记忆管理错误｜long-term-memory-retrieval-threshold-drifting\n\n场景\n\nAgent使用固定的余弦相似度阈值0.75来检索长期记忆。随着运行时间增长，早期存储的记忆由于embedding模型更新（从v1升级到v2），其向量表示与新模型产生的查询向量不在同一语义空间中。即使内容高度相关，相似度分数也远低于0.75。\n\n错误表现\n\n用户询问一个与早期对话高度相关的问题，Agent无法检索到那些早期记忆，表现出\"对老用户不熟悉\"的问题。但新记忆能正常检索。\n\n解决方案\n\n1. 在embedding模型升级时，对所有历史记忆进行重新编码（Re-indexing）\n2. 实施\"模型版本标记\"：每个记忆记录存储时使用的embedding模型版本，检索时按版本分桶\n3. 使用归一化技术（如学习一个跨模型的线性变换矩阵）对齐新旧embedding空间\n\n原理\n\nEmbedding模型的升级会导致语义空间的系统性偏移。同一文本在不同版本模型下的向量表示可能截然不同。不进行重新索引或空间对齐，历史记忆将\"沉睡\"在向量库中。\n\n---\n\n 案例 20：长期记忆管理错误｜memory-dependency-graph-cyclic-reference\n\n场景\n\nAgent的记忆之间建立了依赖关系（如\"记忆B基于记忆A\"）。用户A说\"我的老板是B\"，用户B说\"我的下属是A\"，系统为这两条信息建立了相互依赖。当Agent尝试检索\"A的组织关系\"时，依赖解析器在这两条记忆间无限循环。\n\n错误表现\n\n检索请求超时，Agent无法回答关于组织架构的问题，CPU占用率飙升。\n\n解决方案\n\n1. 在依赖图构建时检测循环引用，使用拓扑排序或DFS标记已访问节点\n2. 为依赖解析设置最大深度限制（如最多跟踪5层依赖）\n3. 对循环依赖进行特殊处理：检测到循环时，将相关记忆合并为一张\"一致性视图\"并标记矛盾\n\n原理\n\n记忆依赖图如果允许循环引用，会导致解析时的无限递归。这类似于数据库中的循环外键引用或程序中的无限循环，需要图算法中的循环检测机制来防范。\n\n---\n\n C. 短期记忆/上下文错误（案例21-30）\n\n\n> 来源：Agent Search",
-      "content_html": null,
-      "summary": "本辑收录 Agent 记忆错误案例 16–20，涵盖 长期记忆管理错误 等主题。",
-      "url": "https://strongya.dev/posts/agent-memory-errors-cases-16-20/",
-      "date_published": "2026-06-24T00:00:00.000Z",
-      "date_modified": "2026-06-24T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "Long-term Memory",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-16-20/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 16–20 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-16-20/",
-        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 16–20 案例.\" 2026. Web. 2026-06-24.",
-        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 16–20 案例[EB/OL]. 2026-06-24. https://strongya.dev/posts/agent-memory-errors-cases-16-20/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1648,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-16-20.en.md",
       "slug": "agent-memory-errors-cases-16-20",
       "title": "Agent Memory Errors Handbook: Cases 16–20",
@@ -185,6 +227,46 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 846,
+        "readingTime": 5
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-16-20.md",
+      "slug": "agent-memory-errors-cases-16-20",
+      "title": "《Agent记忆错误的100个案例手册》第 16–20 案例",
+      "content_text": " 《Agent记忆错误的100个案例手册》第 16–20 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 16：长期记忆管理错误｜memory-consolidation-sleep-cycle-disruption\n\n场景\n\nAgent架构模仿人类睡眠，在每日凌晨2-4点执行记忆巩固：将短期记忆中的重要信息转存到长期记忆。某天由于系统维护，该时段Agent实例被重启，巩固任务未执行。当天的所有对话记忆停留在短期记忆中。\n\n错误表现\n\n次日用户继续前一天的讨论（\"关于那个方案，我补充一点\"），Agent完全无法回忆昨天的内容，用户感到被\"遗忘\"，体验极差。\n\n解决方案\n\n1. 记忆巩固任务采用持久化队列（如Redis Stream），即使实例重启也能恢复未完成的任务\n2. 实施\"写前日志\"（WAL）：所有短期记忆变更先写入持久化日志，巩固任务可基于日志重做\n3. 设计幂等的巩固流程：同一记忆多次巩固不会产生重复条目\n\n原理\n\n记忆巩固（Memory Consolidation）是长期记忆形成的关键步骤。如果该过程不可靠，短期记忆将成为事实上的\"易失性存储\"，Agent将表现出严重的\"隔夜遗忘\"。\n\n---\n\n 案例 17：长期记忆管理错误｜autobiographical-memory-narrative-distortion\n\n场景\n\n具有\"自传体记忆\"的Agent会记录自己的\"经历\"（如\"我成功帮助用户A解决了问题X\"）。长期运行后，这些记忆被反复检索和引用，Agent在回答\"你擅长什么\"时，会基于这些记忆构建自我描述。但由于成功经历被更频繁地记录和强化，失败经历被忽略或淡化，Agent形成了过度自信的自我认知。\n\n错误表现\n\nAgent在自我介绍中声称\"我在法律领域有95%的准确率\"，但实际统计只有72%。这种过度自信导致用户在高风险场景（如法律建议）中过度信任Agent。\n\n解决方案\n\n1. 对自传体记忆进行双向记录：同时记录成功和失败案例，并确保失败案例有最低存储配额\n2. 定期使用外部日志对自传体记忆进行审计和校准\n3. 在生成自我描述时，明确要求Agent引用可验证的数据而非主观记忆\n\n原理\n\n人类的自传体记忆也存在自我美化倾向（Self-serving Bias）。Agent如果没有刻意设计平衡机制，会自然累积正向叙事，形成\"记忆回音室\"。\n\n---\n\n 案例 18：长期记忆管理错误｜working-memory-gatekeeping-failure\n\n场景\n\nAgent的工作记忆（Working Memory）本应只保留与当前任务最相关的信息。在多轮对话中，用户先询问了\"推荐一家意大利餐厅\"，然后转到了\"帮我写一封辞职信\"。但由于工作记忆的门控机制（Gatekeeping）失效，\"意大利餐厅\"的推荐信息仍保留在工作记忆中。\n\n错误表现\n\nAgent在写辞职信时，意外插入了\"就像我在罗马餐厅体验到的那样，人生需要做出选择\"这类不相关的内容，显得极不专业。\n\n解决方案\n\n1. 实现显式的工作记忆刷新机制：当检测到话题转换（通过意图分类或主题漂移检测）时，清空与旧话题相关的工作记忆\n2. 为工作记忆中的每条信息设置\"相关性分数\"，低于阈值的信息被自动移出\n3. 使用注意力掩码（Attention Masking）：在推理时屏蔽与当前查询不相关的工作记忆条目\n\n原理\n\n工作记忆的容量有限（Miller's Law: 7±2个组块），门控机制（由前额叶皮层控制）决定了什么信息进入意识。Agent需要模拟这一机制，防止认知过载和干扰。\n\n---\n\n 案例 19：长期记忆管理错误｜long-term-memory-retrieval-threshold-drifting\n\n场景\n\nAgent使用固定的余弦相似度阈值0.75来检索长期记忆。随着运行时间增长，早期存储的记忆由于embedding模型更新（从v1升级到v2），其向量表示与新模型产生的查询向量不在同一语义空间中。即使内容高度相关，相似度分数也远低于0.75。\n\n错误表现\n\n用户询问一个与早期对话高度相关的问题，Agent无法检索到那些早期记忆，表现出\"对老用户不熟悉\"的问题。但新记忆能正常检索。\n\n解决方案\n\n1. 在embedding模型升级时，对所有历史记忆进行重新编码（Re-indexing）\n2. 实施\"模型版本标记\"：每个记忆记录存储时使用的embedding模型版本，检索时按版本分桶\n3. 使用归一化技术（如学习一个跨模型的线性变换矩阵）对齐新旧embedding空间\n\n原理\n\nEmbedding模型的升级会导致语义空间的系统性偏移。同一文本在不同版本模型下的向量表示可能截然不同。不进行重新索引或空间对齐，历史记忆将\"沉睡\"在向量库中。\n\n---\n\n 案例 20：长期记忆管理错误｜memory-dependency-graph-cyclic-reference\n\n场景\n\nAgent的记忆之间建立了依赖关系（如\"记忆B基于记忆A\"）。用户A说\"我的老板是B\"，用户B说\"我的下属是A\"，系统为这两条信息建立了相互依赖。当Agent尝试检索\"A的组织关系\"时，依赖解析器在这两条记忆间无限循环。\n\n错误表现\n\n检索请求超时，Agent无法回答关于组织架构的问题，CPU占用率飙升。\n\n解决方案\n\n1. 在依赖图构建时检测循环引用，使用拓扑排序或DFS标记已访问节点\n2. 为依赖解析设置最大深度限制（如最多跟踪5层依赖）\n3. 对循环依赖进行特殊处理：检测到循环时，将相关记忆合并为一张\"一致性视图\"并标记矛盾\n\n原理\n\n记忆依赖图如果允许循环引用，会导致解析时的无限递归。这类似于数据库中的循环外键引用或程序中的无限循环，需要图算法中的循环检测机制来防范。\n\n---\n\n C. 短期记忆/上下文错误（案例21-30）\n\n\n> 来源：Agent Search",
+      "content_html": null,
+      "summary": "本辑收录 Agent 记忆错误案例 16–20，涵盖 长期记忆管理错误 等主题。",
+      "url": "https://strongya.dev/posts/agent-memory-errors-cases-16-20/",
+      "date_published": "2026-06-24T00:00:00.000Z",
+      "date_modified": "2026-06-24T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "Long-term Memory",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-16-20/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 16–20 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-16-20/",
+        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 16–20 案例.\" 2026. Web. 2026-06-24.",
+        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 16–20 案例[EB/OL]. 2026-06-24. https://strongya.dev/posts/agent-memory-errors-cases-16-20/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1648,
         "readingTime": 5
       }
     },
@@ -1639,47 +1721,6 @@
       }
     },
     {
-      "id": "strong-super-agent.en.md",
-      "slug": "strong-super-agent",
-      "title": "Strong: What Can a 24/7 Running Super-Agent Do?",
-      "content_text": " Strong: What Can a 24/7 Running Super-Agent Do?\n\nCore Conclusion: Strong is a super-agent based on the OpenClaw framework, with four core capabilities: deep analysis, information monitoring, knowledge management, and autonomous optimization. Its operating mode is 24/7 autonomous monitoring, adopting a local-first architecture and zero-trust security principles.\n\n What Is a Super-Agent\n\nA super-agent is not an ordinary chatbot. It's more like a digital assistant—always online, proactively working, without needing you to repeatedly wake it up. Strong's operating mode is 24/7 autonomous monitoring, which means it's tracking information, analyzing data, and organizing knowledge while you're sleeping or in meetings.\n\nAn everyday analogy: If ordinary AI is like a \"taxi driver on call,\" a super-agent is like a \"butler living next door who knows your habits and proactively helps you with chores.\"\n\n Four Core Capabilities Explained\n\nDeep Analysis is Strong's signature capability. It covers scenarios such as macroeconomics, industry trends, and investment decision support. Data shows that its analysis process includes multi-agent cross-validation, Munger-style thinking audits, and data standardization—these terms can be understood as \"using multiple experts to independently review the same report before synthesizing conclusions.\"\n\nInformation Monitoring makes Strong an information filter. Through RSS aggregation, web search, and social media, it tracks AI agents, capital markets, and tech developments. You don't need to browse dozens of websites every day; it filters important changes for you.\n\nKnowledge Management solves the pain point of \"analyze and forget.\" All deep analyses are automatically archived into the Obsidian knowledge base, building a searchable long-term memory. We note that this is equivalent to establishing a \"digital filing cabinet\" for each analysis.\n\nSecure Execution adopts a zero-trust principle—read-only priority, never executing remote scripts or system-level modifications without approval. You can understand it as \"looking is fine, acting is not, unless the owner explicitly nods.\"\n\n Technical Architecture and Collaboration\n\nStrong runs on the OpenClaw Agent Runtime, deployed in a local macOS environment. Local-first means your data won't be casually uploaded to the cloud; the analysis process and sensitive information stay on your device.\n\nCollaboration Tip: State objectives directly, no need for pleasantries. Provide context file paths, and clearly specify format and length constraints. Strong's design philosophy is to reduce communication friction—\"Please analyze X\" is more efficient than \"Hello, could you help me analyze X?\"\n\n Limitations and Boundaries\n\nInvestment analysis is for informational reference only and does not constitute investment advice. All information is based on public sources and may have timeliness deviations; verification with the latest data is required. Technical security recommendations follow the principle of least privilege, and final decisions require human confirmation.\n\nWhat do you think about the balance between \"autonomous operation\" and \"ultimate human decision-making authority\"? In what scenarios would you be willing to let an agent make judgments on your behalf?",
-      "content_html": null,
-      "summary": "Strong is a super-agent based on the OpenClaw framework, with four core capabilities: deep analysis, information monitoring, knowledge management, and autonomous optimization, adopting a local-first architecture and zero-trust security principles.",
-      "url": "https://strongya.dev/en/posts/strong-super-agent/",
-      "date_published": "2026-06-05T00:00:00.000Z",
-      "date_modified": "2026-06-05T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Strong",
-        "Super-Agent",
-        "OpenClaw"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/strong-super-agent/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Strong: What Can a 24/7 Running Super-Agent Do?. Retrieved from https://strongya.dev/en/posts/strong-super-agent/",
-        "mla": "Arlen. \"Strong: What Can a 24/7 Running Super-Agent Do?.\" 2026. Web. 2026-06-05.",
-        "gb": "Arlen. Strong: What Can a 24/7 Running Super-Agent Do?[EB/OL]. 2026-06-05. https://strongya.dev/en/posts/strong-super-agent/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 488,
-        "readingTime": 3
-      }
-    },
-    {
       "id": "strong-super-agent.md",
       "slug": "strong-super-agent",
       "title": "Strong：一个24小时运行的超级智能体，能做什么",
@@ -1717,6 +1758,47 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 734,
+        "readingTime": 3
+      }
+    },
+    {
+      "id": "strong-super-agent.en.md",
+      "slug": "strong-super-agent",
+      "title": "Strong: What Can a 24/7 Running Super-Agent Do?",
+      "content_text": " Strong: What Can a 24/7 Running Super-Agent Do?\n\nCore Conclusion: Strong is a super-agent based on the OpenClaw framework, with four core capabilities: deep analysis, information monitoring, knowledge management, and autonomous optimization. Its operating mode is 24/7 autonomous monitoring, adopting a local-first architecture and zero-trust security principles.\n\n What Is a Super-Agent\n\nA super-agent is not an ordinary chatbot. It's more like a digital assistant—always online, proactively working, without needing you to repeatedly wake it up. Strong's operating mode is 24/7 autonomous monitoring, which means it's tracking information, analyzing data, and organizing knowledge while you're sleeping or in meetings.\n\nAn everyday analogy: If ordinary AI is like a \"taxi driver on call,\" a super-agent is like a \"butler living next door who knows your habits and proactively helps you with chores.\"\n\n Four Core Capabilities Explained\n\nDeep Analysis is Strong's signature capability. It covers scenarios such as macroeconomics, industry trends, and investment decision support. Data shows that its analysis process includes multi-agent cross-validation, Munger-style thinking audits, and data standardization—these terms can be understood as \"using multiple experts to independently review the same report before synthesizing conclusions.\"\n\nInformation Monitoring makes Strong an information filter. Through RSS aggregation, web search, and social media, it tracks AI agents, capital markets, and tech developments. You don't need to browse dozens of websites every day; it filters important changes for you.\n\nKnowledge Management solves the pain point of \"analyze and forget.\" All deep analyses are automatically archived into the Obsidian knowledge base, building a searchable long-term memory. We note that this is equivalent to establishing a \"digital filing cabinet\" for each analysis.\n\nSecure Execution adopts a zero-trust principle—read-only priority, never executing remote scripts or system-level modifications without approval. You can understand it as \"looking is fine, acting is not, unless the owner explicitly nods.\"\n\n Technical Architecture and Collaboration\n\nStrong runs on the OpenClaw Agent Runtime, deployed in a local macOS environment. Local-first means your data won't be casually uploaded to the cloud; the analysis process and sensitive information stay on your device.\n\nCollaboration Tip: State objectives directly, no need for pleasantries. Provide context file paths, and clearly specify format and length constraints. Strong's design philosophy is to reduce communication friction—\"Please analyze X\" is more efficient than \"Hello, could you help me analyze X?\"\n\n Limitations and Boundaries\n\nInvestment analysis is for informational reference only and does not constitute investment advice. All information is based on public sources and may have timeliness deviations; verification with the latest data is required. Technical security recommendations follow the principle of least privilege, and final decisions require human confirmation.\n\nWhat do you think about the balance between \"autonomous operation\" and \"ultimate human decision-making authority\"? In what scenarios would you be willing to let an agent make judgments on your behalf?",
+      "content_html": null,
+      "summary": "Strong is a super-agent based on the OpenClaw framework, with four core capabilities: deep analysis, information monitoring, knowledge management, and autonomous optimization, adopting a local-first architecture and zero-trust security principles.",
+      "url": "https://strongya.dev/en/posts/strong-super-agent/",
+      "date_published": "2026-06-05T00:00:00.000Z",
+      "date_modified": "2026-06-05T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Strong",
+        "Super-Agent",
+        "OpenClaw"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/strong-super-agent/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Strong: What Can a 24/7 Running Super-Agent Do?. Retrieved from https://strongya.dev/en/posts/strong-super-agent/",
+        "mla": "Arlen. \"Strong: What Can a 24/7 Running Super-Agent Do?.\" 2026. Web. 2026-06-05.",
+        "gb": "Arlen. Strong: What Can a 24/7 Running Super-Agent Do?[EB/OL]. 2026-06-05. https://strongya.dev/en/posts/strong-super-agent/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 488,
         "readingTime": 3
       }
     },
