@@ -27,6 +27,88 @@
   "attribution_required": true,
   "items": [
     {
+      "id": "agent-memory-errors-cases-41-45.en.md",
+      "slug": "agent-memory-errors-cases-41-45",
+      "title": "Agent Memory Errors Handbook: Cases 41–45",
+      "content_text": " Agent Memory Errors Handbook: Cases 41–45\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 41: Multi-Agent & Collaboration Memory Errors — Shared Memory Race Condition Write\n\nScenario\n\nTwo Agent instances, AgentA and AgentB, simultaneously handle different requests from the same user and both try to update the shared \"preference settings\" memory. AgentA writes \"theme=dark mode\" while AgentB writes \"font size=14px.\" Because the read-modify-write is not atomic, the final memory keeps only the later field and loses the earlier one.\n\nError Manifestation\n\nThe user finds that after setting dark mode the font size reverts to default, or vice versa; settings cannot be saved together.\n\nSolution\n\n1. Use optimistic or distributed locking on shared memory: check version numbers on write and retry or merge on conflict\n2. Merge at the field level: when different Agents update different fields, combine rather than overwrite the whole record\n3. Use event sourcing for frequently updated memories: record each update event and replay/merge on query\n\nPrinciple\n\nShared memory with multiple writers has classic race conditions. Without concurrency control, last-write-wins causes data loss.\n\n---\n\n Case 42: Multi-Agent & Collaboration Memory Errors — Agent State Desync Orchestration\n\nScenario\n\nIn a multi-Agent system, an orchestrator maintains a global state table of each Agent's current task and progress. Agent1 completes its task and reports to the orchestrator, but the report is lost in the network. The orchestrator believes Agent1 is still working and assigns a new task to Agent2.\n\nError Manifestation\n\nAgent2 starts a follow-up task that should continue from Agent1's results. Without the intermediate output, Agent2 starts from scratch, duplicating work and confusing the user \"Didn't you already do this?\".\n\nSolution\n\n1. Implement heartbeats: Agents periodically send heartbeats carrying current-state summaries\n2. Use state-acknowledgment receipts: the orchestrator ACKs reports, and Agents retry if no ACK is received\n3. Pre-check state before assigning new tasks by querying the Agent directly rather than relying only on local cache\n\nPrinciple\n\nState synchronization in distributed systems is a classic challenge. The CAP theorem limits consistency and availability during partitions. Heartbeats and ACKs improve reliability but cannot eliminate inconsistency windows.\n\n---\n\n Case 43: Multi-Agent & Collaboration Memory Errors — Cross Agent Message Order Inversion\n\nScenario\n\nAgent1 sends two messages to Agent2: M1 \"Create order 123\" and M2 \"Cancel order 123.\" Due to network latency, M2 arrives first. Agent2 processes cancel first order does not exist, error, then create order is created but not canceled.\n\nError Manifestation\n\nThe final state is the opposite of the intended one: order 123 still exists. The user expected it canceled. The log shows \"Cancel failed: order does not exist,\" making the ordering issue hard to diagnose.\n\nSolution\n\n1. Attach logical timestamps Lamport or vector clocks to cross-Agent messages and process in logical-time order\n2. Enforce causal consistency: check dependencies e.g., cancel depends on create and hold messages whose prerequisites are not yet met\n3. Use a message queue that guarantees ordering within partitions\n\nPrinciple\n\nPhysical message order in distributed systems does not equal logical order. Without ordering guarantees, causal inversion can put the state machine into an illegal state.\n\n---\n\n Case 44: Multi-Agent & Collaboration Memory Errors — Knowledge Silo Agent Specialization Barrier\n\nScenario\n\nAgentA handles technical questions and AgentB handles business questions. The user asks, \"What is the implementation cost and timeline for this technical solution?\" AgentA answers the technical part and AgentB the business part, but neither knows the other's details. Their cost and timeline assumptions do not match e.g., AgentA says three months while AgentB quotes based on one month.\n\nError Manifestation\n\nThe user receives contradictory information and cannot decide. The handoff between Agents shares too little context.\n\nSolution\n\n1. Establish a shared-context protocol: hand off complete conversation history and intermediate reasoning\n2. Design a coordinator Agent that integrates outputs from specialists, checks consistency, and resolves conflicts\n3. For cross-domain questions, use joint reasoning where multiple Agents share a single working-memory space\n\nPrinciple\n\nSpecialization improves single-domain efficiency but sacrifices cross-domain integration. The \"silo\" problem familiar in enterprises also appears in Multi-Agent systems and requires deliberate collaboration design.\n\n---\n\n Case 45: Multi-Agent & Collaboration Memory Errors — Agent Identity Confusion User Perspective\n\nScenario\n\nThe chat interface shows a unified assistant, but multiple backend Agents handle requests. Yesterday the user discussed a technical issue with the assistant actually AgentA, building technical context. Today the user says, \"I tried that and there's a new situation,\" and the request is routed to AgentB, which lacks yesterday's context.\n\nError Manifestation\n\nAgentB replies, \"Which problem are you referring to?\" The user feels reset and the experience is fragmented. The user does not know there are multiple Agents and expects the assistant to have continuous memory.\n\nSolution\n\n1. Implement a user-session memory layer: maintain unified user-level memory shared by all Agents\n2. If routing to different Agents is necessary, inject relevant historical summaries into the new Agent\n3. At the interface layer, clearly distinguish Agent identities and capabilities to manage expectations\n\nPrinciple\n\nThe user's mental model is \"I am talking to one assistant,\" while the architecture is \"multiple specialist Agents taking turns.\" This cognition-architecture mismatch is a core UX challenge of Multi-Agent systems.\n\n\n> Source: Agent Search",
+      "content_html": null,
+      "summary": "This installment covers Agent memory error cases 41–45, including Multi-Agent & Collaboration Memory Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-41-45/",
+      "date_published": "2026-06-29T00:00:00.000Z",
+      "date_modified": "2026-06-29T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Multi-Agent",
+        "Collaboration",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-41-45/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 41–45. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-41-45/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 41–45.\" 2026. Web. 2026-06-29.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 41–45[EB/OL]. 2026-06-29. https://strongya.dev/en/posts/agent-memory-errors-cases-41-45/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 884,
+        "readingTime": 5
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-41-45.md",
+      "slug": "agent-memory-errors-cases-41-45",
+      "title": "《Agent记忆错误的100个案例手册》第 41–45 案例",
+      "content_text": " 《Agent记忆错误的100个案例手册》第 41–45 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 41：多Agent与协作记忆错误｜shared-memory-race-condition-write\n\n场景\n\n两个Agent实例（AgentA和AgentB）同时处理同一用户的不同请求，都尝试更新用户的\"偏好设置\"共享记忆。AgentA写入\"主题=暗黑模式\"，AgentB同时写入\"字体大小=14px\"。由于读写不是原子操作，最终共享记忆中可能只保留了后写入的字段，先写入的字段丢失。\n\n错误表现\n\n用户发现设置了暗黑模式后字体大小恢复默认，或设置了字体大小后主题恢复默认，设置无法同时保存。\n\n解决方案\n\n1. 对共享记忆实施\"乐观锁\"或\"分布式锁\"：写入时检查版本号，版本冲突时重试或合并\n2. 使用\"字段级合并\"策略：不同Agent更新不同字段时，自动合并而非覆盖整个记录\n3. 对高频更新的记忆采用\"事件溯源\"（Event Sourcing）模式：记录每次更新事件，查询时重放合并\n\n原理\n\n共享内存的多写者场景存在经典的竞态条件（Race Condition）。如果没有并发控制机制，最后写入者胜出（Last Write Wins）会导致数据丢失。\n\n---\n\n 案例 42：多Agent与协作记忆错误｜agent-state-desync-orchestration\n\n场景\n\n多Agent系统中，编排器（Orchestrator）维护一个\"全局状态表\"记录各Agent的当前任务和进度。Agent1完成了任务并向编排器汇报，但汇报消息在网络中丢失。编排器认为Agent1仍在处理中，将新任务分配给Agent2。\n\n错误表现\n\nAgent2开始处理本应由Agent1继续的后续任务，由于缺少Agent1的中间结果，Agent2从头开始，导致重复工作和用户困惑（\"你刚才不是已经处理过了吗？\"）。\n\n解决方案\n\n1. 实施心跳机制：Agent定期向编排器发送心跳，心跳中携带当前状态摘要\n2. 使用\"状态确认回执\"：编排器收到Agent汇报后发送ACK，Agent未收到ACK时重试汇报\n3. 编排器在分配新任务前进行\"状态预检\"：直接向Agent查询当前状态，而非仅依赖本地缓存\n\n原理\n\n分布式系统中的状态同步是经典难题。CAP定理表明，在网络分区时无法同时保证一致性和可用性。心跳和ACK机制能提高状态同步的可靠性，但无法完全消除不一致窗口。\n\n---\n\n 案例 43：多Agent与协作记忆错误｜cross-agent-message-order-inversion\n\n场景\n\nAgent1向Agent2发送两条消息：M1\"创建订单123\"，M2\"取消订单123\"。由于网络延迟，M2先于M1到达Agent2。Agent2先处理\"取消订单\"（此时订单不存在，报错），后处理\"创建订单\"（订单被创建但未被取消）。\n\n错误表现\n\n最终状态与预期相反：订单123仍然存在，而用户期望它被取消。Agent2的日志显示\"取消失败：订单不存在\"，但排查时难以发现是消息顺序问题。\n\n解决方案\n\n1. 为跨Agent消息添加逻辑时间戳（Lamport Clock或Vector Clock），接收方按逻辑时间排序处理\n2. 实现\"因果一致性\"：消息处理时检查依赖关系（如\"取消\"依赖\"创建\"），依赖未满足时暂存等待\n3. 使用消息队列（如RabbitMQ、Kafka）保证分区内的消息顺序性\n\n原理\n\n分布式系统中消息传递的物理顺序不等于逻辑顺序。缺乏顺序保证的系统可能出现因果倒置（Causal Inversion），导致状态机进入非法状态。\n\n---\n\n 案例 44：多Agent与协作记忆错误｜knowledge-silo-agent-specialization-barrier\n\n场景\n\n系统设计为：AgentA处理技术问题，AgentB处理商务问题。用户询问\"这个技术方案的实施成本和时间预估\"。技术部分由AgentA回答，商务部分由AgentB回答。但AgentA不知道AgentB的成本数据，AgentB不知道AgentA的技术细节，两者给出的时间和成本无法对应（如AgentA说\"需要3个月\"，AgentB基于\"1个月\"的假设报价）。\n\n错误表现\n\n用户得到的信息自相矛盾，无法做出决策。Agent之间的\"交接\"没有共享足够的上下文。\n\n解决方案\n\n1. 建立\"共享上下文协议\"：Agent间交接时传递完整的对话历史和推理中间结果\n2. 设计\"协调Agent\"：专门负责整合多个专业Agent的输出，检查一致性并解决冲突\n3. 对跨领域问题使用\"联合推理\"模式：多个Agent同时参与，共享同一个工作记忆空间\n\n原理\n\n专业化分工提高了单领域效率，但牺牲了跨领域整合能力。企业中的\"部门墙\"问题在Multi-Agent系统中同样存在，需要刻意设计协作机制。\n\n---\n\n 案例 45：多Agent与协作记忆错误｜agent-identity-confusion-user-perspective\n\n场景\n\n前端对话界面中，用户与多个后端Agent交互，但界面呈现为统一的\"助手\"形象。昨天用户向\"助手\"（实际是AgentA）咨询了技术问题并建立了技术上下文。今天用户问\"那个问题我试了，还有新情况\"，请求被路由到AgentB，AgentB没有昨天的技术上下文。\n\n错误表现\n\nAgentB回答\"请问您指的是什么问题？\"，用户感到被\"重置\"了，体验割裂。用户不理解后端有多个Agent，期望\"助手\"有连续的记忆。\n\n解决方案\n\n1. 实施\"用户会话记忆\"层：在用户层面维护统一的记忆，所有Agent共享该用户的核心上下文\n2. 若必须路由到不同Agent，在交接时进行\"上下文注入\"：将相关历史摘要传递给新Agent\n3. 在界面层明确区分不同Agent的身份和能力边界，管理用户期望\n\n原理\n\n用户的认知模型是\"我在和同一个助手对话\"，而系统架构是\"多个专业Agent轮岗\"。这种认知-架构不匹配是多Agent系统的UX核心挑战。\n\n\n> 来源：Agent Search",
+      "content_html": null,
+      "summary": "本辑收录 Agent 记忆错误案例 41–45，涵盖 多Agent与协作记忆错误 等主题。",
+      "url": "https://strongya.dev/posts/agent-memory-errors-cases-41-45/",
+      "date_published": "2026-06-29T00:00:00.000Z",
+      "date_modified": "2026-06-29T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "Multi-Agent",
+        "Collaboration",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-41-45/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 41–45 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-41-45/",
+        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 41–45 案例.\" 2026. Web. 2026-06-29.",
+        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 41–45 案例[EB/OL]. 2026-06-29. https://strongya.dev/posts/agent-memory-errors-cases-41-45/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1595,
+        "readingTime": 4
+      }
+    },
+    {
       "id": "agent-memory-errors-cases-36-40.en.md",
       "slug": "agent-memory-errors-cases-36-40",
       "title": "Agent Memory Errors Handbook: Cases 36–40",
@@ -355,46 +437,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-16-20.en.md",
-      "slug": "agent-memory-errors-cases-16-20",
-      "title": "Agent Memory Errors Handbook: Cases 16–20",
-      "content_text": " Agent Memory Errors Handbook: Cases 16–20\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 16: Long-term Memory Management Errors — Memory Consolidation Sleep Cycle Disruption\n\nScenario\n\nThe Agent mimics human sleep by running memory consolidation from 2 AM to 4 AM, transferring important short-term memories to long-term memory. During a maintenance window, the Agent instance restarts and consolidation is skipped. All conversation memories from that day remain in short-term memory.\n\nError Manifestation\n\nThe next day the user continues yesterday's discussion \"About that plan, I have one more point\". The Agent cannot recall yesterday's content at all, making the user feel forgotten.\n\nSolution\n\n1. Put consolidation tasks on a persistent queue e.g., Redis Stream so unfinished tasks resume after restart\n2. Use write-ahead logging: all short-term changes are logged first, and consolidation can replay from the log\n3. Make consolidation idempotent so the same memory processed multiple times does not create duplicates\n\nPrinciple\n\nMemory consolidation is essential for forming long-term memory. If it is unreliable, short-term memory becomes de facto volatile storage, and the Agent suffers severe overnight forgetting.\n\n---\n\n Case 17: Long-term Memory Management Errors — Autobiographical Memory Narrative Distortion\n\nScenario\n\nAn Agent with autobiographical memory records its own experiences, such as \"I successfully helped user A solve problem X.\" Over time, successful episodes are recorded and reinforced more often, while failures are ignored or diluted. When asked \"What are you good at?\" the Agent builds an overconfident self-image.\n\nError Manifestation\n\nThe Agent claims \"I have 95% accuracy in legal questions\" when the real figure is 72%. This overconfidence leads users to over-rely on the Agent in high-risk situations.\n\nSolution\n\n1. Record autobiographical memories in both directions: successes and failures, with a minimum quota for failures\n2. Periodically audit and calibrate autobiographical memories against external logs\n3. Require the Agent to cite verifiable data, not subjective memory, when generating self-descriptions\n\nPrinciple\n\nHuman autobiographical memory also shows self-serving bias. Without deliberate balancing, Agents naturally accumulate positive narratives and form a memory echo chamber.\n\n---\n\n Case 18: Long-term Memory Management Errors — Working Memory Gatekeeping Failure\n\nScenario\n\nThe Agent's working memory should retain only information most relevant to the current task. In a multi-turn conversation the user first asks, \"Recommend an Italian restaurant,\" then shifts to \"Help me write a resignation letter.\" The gatekeeping mechanism fails, and the restaurant recommendation stays in working memory.\n\nError Manifestation\n\nWhile drafting the resignation letter, the Agent inserts irrelevant text such as \"As I experienced at that Roman restaurant, life requires making choices,\" appearing highly unprofessional.\n\nSolution\n\n1. Explicitly refresh working memory when a topic shift is detected via intent classification or topic-drift detection\n2. Assign relevance scores to working-memory items and evict those below threshold\n3. Use attention masking to suppress working-memory entries irrelevant to the current query\n\nPrinciple\n\nWorking memory capacity is limited Miller's Law: 7±2 chunks. The gatekeeping mechanism determines what enters consciousness; Agents need to simulate it to avoid cognitive overload and interference.\n\n---\n\n Case 19: Long-term Memory Management Errors — Long Term Memory Retrieval Threshold Drifting\n\nScenario\n\nThe Agent uses a fixed cosine-similarity threshold of 0.75 for long-term memory retrieval. Over time the embedding model is upgraded from v1 to v2, so early memories and new queries live in different semantic spaces. Even highly relevant content scores well below 0.75.\n\nError Manifestation\n\nThe user asks a question closely related to an early conversation, but the Agent cannot retrieve that early memory, appearing unfamiliar with long-time users. Newer memories still retrieve normally.\n\nSolution\n\n1. Re-encode all historical memories re-index when upgrading embedding models\n2. Tag each memory with the embedding-model version used at write time and bucket retrieval by version\n3. Use normalization, such as a learned linear transformation, to align old and new embedding spaces\n\nPrinciple\n\nEmbedding-model upgrades shift the semantic space. The same text can have very different vectors across versions. Without re-indexing or alignment, historical memories become dormant in the database.\n\n---\n\n Case 20: Long-term Memory Management Errors — Memory Dependency Graph Cyclic Reference\n\nScenario\n\nThe Agent links memories by dependency e.g., \"Memory B is based on Memory A\". User A says, \"My boss is B,\" and user B says, \"My subordinate is A.\" The system creates mutual dependencies. When the Agent retrieves \"A's organizational relationship,\" the dependency parser loops infinitely between the two memories.\n\nError Manifestation\n\nThe retrieval request times out, the Agent cannot answer organizational-structure questions, and CPU usage spikes.\n\nSolution\n\n1. Detect cycles when building the dependency graph, using topological sorting or DFS visited-node markers\n2. Cap dependency resolution depth e.g., at most five layers\n3. On detecting a cycle, merge the related memories into a consistent view and flag the contradiction\n\nPrinciple\n\nAllowing cycles in a memory dependency graph causes infinite recursion during resolution. This is analogous to circular foreign keys or infinite loops and requires cycle detection.\n\n\n> Source: Agent Search",
-      "content_html": null,
-      "summary": "This installment covers Agent memory error cases 16–20, including Long-term Memory Management Errors.",
-      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-16-20/",
-      "date_published": "2026-06-24T00:00:00.000Z",
-      "date_modified": "2026-06-24T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Long-term Memory",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-16-20/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 16–20. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-16-20/",
-        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 16–20.\" 2026. Web. 2026-06-24.",
-        "gb": "Arlen. Agent Memory Errors Handbook: Cases 16–20[EB/OL]. 2026-06-24. https://strongya.dev/en/posts/agent-memory-errors-cases-16-20/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 846,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-16-20.md",
       "slug": "agent-memory-errors-cases-16-20",
       "title": "《Agent记忆错误的100个案例手册》第 16–20 案例",
@@ -431,6 +473,46 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 1648,
+        "readingTime": 5
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-16-20.en.md",
+      "slug": "agent-memory-errors-cases-16-20",
+      "title": "Agent Memory Errors Handbook: Cases 16–20",
+      "content_text": " Agent Memory Errors Handbook: Cases 16–20\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 16: Long-term Memory Management Errors — Memory Consolidation Sleep Cycle Disruption\n\nScenario\n\nThe Agent mimics human sleep by running memory consolidation from 2 AM to 4 AM, transferring important short-term memories to long-term memory. During a maintenance window, the Agent instance restarts and consolidation is skipped. All conversation memories from that day remain in short-term memory.\n\nError Manifestation\n\nThe next day the user continues yesterday's discussion \"About that plan, I have one more point\". The Agent cannot recall yesterday's content at all, making the user feel forgotten.\n\nSolution\n\n1. Put consolidation tasks on a persistent queue e.g., Redis Stream so unfinished tasks resume after restart\n2. Use write-ahead logging: all short-term changes are logged first, and consolidation can replay from the log\n3. Make consolidation idempotent so the same memory processed multiple times does not create duplicates\n\nPrinciple\n\nMemory consolidation is essential for forming long-term memory. If it is unreliable, short-term memory becomes de facto volatile storage, and the Agent suffers severe overnight forgetting.\n\n---\n\n Case 17: Long-term Memory Management Errors — Autobiographical Memory Narrative Distortion\n\nScenario\n\nAn Agent with autobiographical memory records its own experiences, such as \"I successfully helped user A solve problem X.\" Over time, successful episodes are recorded and reinforced more often, while failures are ignored or diluted. When asked \"What are you good at?\" the Agent builds an overconfident self-image.\n\nError Manifestation\n\nThe Agent claims \"I have 95% accuracy in legal questions\" when the real figure is 72%. This overconfidence leads users to over-rely on the Agent in high-risk situations.\n\nSolution\n\n1. Record autobiographical memories in both directions: successes and failures, with a minimum quota for failures\n2. Periodically audit and calibrate autobiographical memories against external logs\n3. Require the Agent to cite verifiable data, not subjective memory, when generating self-descriptions\n\nPrinciple\n\nHuman autobiographical memory also shows self-serving bias. Without deliberate balancing, Agents naturally accumulate positive narratives and form a memory echo chamber.\n\n---\n\n Case 18: Long-term Memory Management Errors — Working Memory Gatekeeping Failure\n\nScenario\n\nThe Agent's working memory should retain only information most relevant to the current task. In a multi-turn conversation the user first asks, \"Recommend an Italian restaurant,\" then shifts to \"Help me write a resignation letter.\" The gatekeeping mechanism fails, and the restaurant recommendation stays in working memory.\n\nError Manifestation\n\nWhile drafting the resignation letter, the Agent inserts irrelevant text such as \"As I experienced at that Roman restaurant, life requires making choices,\" appearing highly unprofessional.\n\nSolution\n\n1. Explicitly refresh working memory when a topic shift is detected via intent classification or topic-drift detection\n2. Assign relevance scores to working-memory items and evict those below threshold\n3. Use attention masking to suppress working-memory entries irrelevant to the current query\n\nPrinciple\n\nWorking memory capacity is limited Miller's Law: 7±2 chunks. The gatekeeping mechanism determines what enters consciousness; Agents need to simulate it to avoid cognitive overload and interference.\n\n---\n\n Case 19: Long-term Memory Management Errors — Long Term Memory Retrieval Threshold Drifting\n\nScenario\n\nThe Agent uses a fixed cosine-similarity threshold of 0.75 for long-term memory retrieval. Over time the embedding model is upgraded from v1 to v2, so early memories and new queries live in different semantic spaces. Even highly relevant content scores well below 0.75.\n\nError Manifestation\n\nThe user asks a question closely related to an early conversation, but the Agent cannot retrieve that early memory, appearing unfamiliar with long-time users. Newer memories still retrieve normally.\n\nSolution\n\n1. Re-encode all historical memories re-index when upgrading embedding models\n2. Tag each memory with the embedding-model version used at write time and bucket retrieval by version\n3. Use normalization, such as a learned linear transformation, to align old and new embedding spaces\n\nPrinciple\n\nEmbedding-model upgrades shift the semantic space. The same text can have very different vectors across versions. Without re-indexing or alignment, historical memories become dormant in the database.\n\n---\n\n Case 20: Long-term Memory Management Errors — Memory Dependency Graph Cyclic Reference\n\nScenario\n\nThe Agent links memories by dependency e.g., \"Memory B is based on Memory A\". User A says, \"My boss is B,\" and user B says, \"My subordinate is A.\" The system creates mutual dependencies. When the Agent retrieves \"A's organizational relationship,\" the dependency parser loops infinitely between the two memories.\n\nError Manifestation\n\nThe retrieval request times out, the Agent cannot answer organizational-structure questions, and CPU usage spikes.\n\nSolution\n\n1. Detect cycles when building the dependency graph, using topological sorting or DFS visited-node markers\n2. Cap dependency resolution depth e.g., at most five layers\n3. On detecting a cycle, merge the related memories into a consistent view and flag the contradiction\n\nPrinciple\n\nAllowing cycles in a memory dependency graph causes infinite recursion during resolution. This is analogous to circular foreign keys or infinite loops and requires cycle detection.\n\n\n> Source: Agent Search",
+      "content_html": null,
+      "summary": "This installment covers Agent memory error cases 16–20, including Long-term Memory Management Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-16-20/",
+      "date_published": "2026-06-24T00:00:00.000Z",
+      "date_modified": "2026-06-24T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Long-term Memory",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-16-20/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 16–20. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-16-20/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 16–20.\" 2026. Web. 2026-06-24.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 16–20[EB/OL]. 2026-06-24. https://strongya.dev/en/posts/agent-memory-errors-cases-16-20/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 846,
         "readingTime": 5
       }
     },
