@@ -27,6 +27,88 @@
   "attribution_required": true,
   "items": [
     {
+      "id": "agent-memory-errors-cases-86-90.en.md",
+      "slug": "agent-memory-errors-cases-86-90",
+      "title": "Agent Memory Errors Handbook: Cases 86–90",
+      "content_text": " Agent Memory Errors Handbook: Cases 86–90\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 86: Memory Consistency & Fact Anchoring Errors — Causal Inference Correlation Confusion\n\nScenario\n\nThe Agent's memory contains two statistical facts: \"In months with high ice cream sales, drowning accidents are also high\" and \"In months with high ice cream sales, temperatures are also high.\" The user asks \"Why are there more drowning accidents?\" The Agent incorrectly infers \"Because eating ice cream causes drowning.\"\n\nError Manifestation\n\nThe Agent gives an absurd causal explanation, ignoring the common cause of \"high temperature.\" The user questions the Agent's \"logical ability.\"\n\nSolution\n\n1. Distinguish \"correlational facts\" from \"causal facts\" when storing memory: correlational facts marked as \"association: ice cream sales ∝ drowning accidents\"; causal facts require explicit mechanistic explanations\n2. Implement causal inference validation: apply causal inference frameworks e.g., Pearl's causal graphs to avoid confusing correlation with causation\n3. Add \"possible alternative explanations\" to statistical association conclusions: \"Ice cream sales and drowning accidents are correlated, possibly influenced by a third factor temperature\"\n\nPrinciple\n\nCorrelation does not equal causation is the first principle of statistics. Without causal inference ability, Agents make wrong causal explanations based on correlations. This is a common trap for \"intelligent\" systems.\n\n---\n\n Case 87: Memory Consistency & Fact Anchoring Errors — Negation Scope Ambiguity\n\nScenario\n\nThe Agent's memory contains \"Not all programmers like coffee.\" The user asks \"Do programmers like coffee?\" The Agent parses it as \"Programmers do not like coffee\" expanding the scope of negation from \"all\" to \"like\".\n\nError Manifestation\n\nThe Agent answers \"Programmers do not like coffee,\" while the original meaning is \"Some programmers may not like it.\" The user is misled when recommending coffee to programmer friends.\n\nSolution\n\n1. Standardize facts when storing: convert \"Not all X are Y\" to \"There exists X that is not Y,\" reducing negation scope ambiguity\n2. Use logical form storage: parse natural language facts into first-order logic expressions\n3. Avoid simplifying negative statements when answering: \"Not all programmers like coffee means some like it and some don't\"\n\nPrinciple\n\nNegation in natural language has complex scope and focus structures. \"Not all programmers like coffee\" ≠ \"All programmers do not like coffee.\" Agents' parsing must precisely handle negation scope.\n\n---\n\n Case 88: Memory Consistency & Fact Anchoring Errors — Factual Update Inconsistency Window\n\nScenario\n\nThe Agent is updating memory: changing \"Product price is 99 yuan\" to \"Product price is 129 yuan.\" The update operation is two steps: first delete the old fact, then insert the new fact. Between the two steps, the user initiates a query.\n\nError Manifestation\n\nThe first query after deletion, before insertion returns \"I don't know the product price\"; the second query after insertion returns \"Product price is 129 yuan.\" The user is confused \"Why did you say you didn't know just now, but now say 129?\"\n\nSolution\n\n1. Use atomic transactions for fact updates: old fact invalidation and new fact activation complete in the same transaction, with intermediate states invisible\n2. Use multi-version concurrency control MVCC: queries see the pre-update version, new queries see the new version after update completes\n3. During updates, return \"Information updating, please query later\" for affected fact queries\n\nPrinciple\n\nThe transaction isolation principle in databases also applies to Agent memory. Updates lacking isolation cause users to observe impossible states product price both doesn't exist and exists.\n\n---\n\n Case 89: Memory Consistency & Fact Anchoring Errors — Abductive Reasoning False Cause\n\nScenario\n\nThe Agent observes \"User did not log in today\" and knows from memory \"User usually logs in daily.\" The Agent performs abductive reasoning: the simplest explanation is \"User forgot password.\" But actually the user is on a business trip without network.\n\nError Manifestation\n\nThe Agent proactively sends a \"password reset\" email. The user receives it and feels confused \"I didn't forget my password,\" even worrying the account was stolen.\n\nSolution\n\n1. Label confidence levels and alternative explanations for abductive reasoning conclusions: \"Possible cause A 30% confidence, possible cause B 50% confidence\"\n2. Avoid taking action based on single observations: collect more evidence before taking action e.g., \"Did the user log in on other devices?\"\n3. Treat abductive conclusions as \"hypotheses\" rather than \"facts\"; they require verification before action\n\nPrinciple\n\nAbductive reasoning is \"inference to the best explanation,\" but \"best\" does not equal \"correct.\" In action-taking scenarios, proactive behavior based on unverified assumptions may disturb users or cause errors.\n\n---\n\n Case 90: Memory Consistency & Fact Anchoring Errors — Consensus Fact Divergent Sources\n\nScenario\n\nThe Agent obtains \"Company 2024 revenue\" from two sources: source A internal email says \"120 million,\" source B financial report draft says \"150 million.\" The Agent stores both in memory without marking the contradiction. When the user asks, the Agent randomly cites one of them.\n\nError Manifestation\n\nDifferent users or different times get different answers; the Agent's credibility is damaged. Internal staff make budgets based on \"120 million,\" while external investors make valuations based on \"150 million,\" causing confusion.\n\nSolution\n\n1. Establish \"fact consistency monitoring\": when multiple values exist for the same entity's same attribute, flag contradictions and trigger human review\n2. Store \"source-value\" pairs for contradictory facts; present when answering \"Different sources have different data: A says 120 million, B says 150 million\"\n3. Set \"authoritative source priority\": financial report > internal email > informal communication; prioritize high-authority sources\n\nPrinciple\n\nReal-world information sources often have different expressions for the same fact. Without contradiction detection and source evaluation capabilities, Agents become amplifiers of \"information noise.\"\n\n\n> Source: Agent Search",
+      "content_html": null,
+      "summary": "This installment covers Agent memory error cases 86–90, including Memory Consistency & Fact Anchoring Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-86-90/",
+      "date_published": "2026-07-08T00:00:00.000Z",
+      "date_modified": "2026-07-08T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Consistency",
+        "Fact Anchoring",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-86-90/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 86–90. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-86-90/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 86–90.\" 2026. Web. 2026-07-08.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 86–90[EB/OL]. 2026-07-08. https://strongya.dev/en/posts/agent-memory-errors-cases-86-90/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 920,
+        "readingTime": 5
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-86-90.md",
+      "slug": "agent-memory-errors-cases-86-90",
+      "title": "《Agent记忆错误的100个案例手册》第 86–90 案例",
+      "content_text": " 《Agent记忆错误的100个案例手册》第 86–90 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 86：记忆一致性与事实锚定错误｜causal-inference-correlation-confusion\n\n场景\n\nAgent记忆中有两条统计事实：\"冰淇淋销量高的月份，溺水事故也多\"和\"冰淇淋销量高的月份，气温也高\"。用户询问\"为什么溺水事故多\"。Agent错误地推断\"因为吃冰淇淋导致溺水\"。\n\n错误表现\n\nAgent给出了荒谬的因果解释，忽略了\"气温高\"这一共同原因。用户质疑Agent的\"逻辑能力\"。\n\n解决方案\n\n1. 在记忆存储时区分\"相关事实\"和\"因果事实\"：相关事实标记为\"关联性：冰淇淋销量∝溺水事故\"，因果事实需要明确的机制解释\n2. 实施\"因果推断校验\"：应用因果推断框架（如Pearl的因果图）避免混淆相关与因果\n3. 对统计关联的结论添加\"可能的其他解释\"：\"冰淇淋销量与溺水事故相关，可能受第三方因素（气温）影响\"\n\n原理\n\n相关不等于因果是统计学第一原理。Agent在缺乏因果推断能力时，会基于相关性做出错误的因果解释。这是\"智能\"系统的常见陷阱。\n\n---\n\n 案例 87：记忆一致性与事实锚定错误｜negation-scope-ambiguity\n\n场景\n\nAgent记忆中有\"不是所有程序员都喜欢咖啡\"。用户询问\"程序员喜欢咖啡吗？\"。Agent解析为\"程序员不喜欢咖啡\"（将否定范围从\"所有\"扩大到\"喜欢\"）。\n\n错误表现\n\nAgent回答\"程序员不喜欢咖啡\"，而原意是\"部分程序员可能不喜欢\"。用户在推荐咖啡给程序员朋友时产生了误导。\n\n解决方案\n\n1. 在事实存储时进行\"标准化\"：将\"不是所有X都Y\"转换为\"存在X不Y\"，减少否定范围歧义\n2. 使用\"逻辑形式\"（Logical Form）存储：将自然语言事实解析为一阶逻辑表达式\n3. 在回答时避免简化否定陈述：\"并非所有程序员都喜欢咖啡，意味着有些喜欢，有些不喜欢\"\n\n原理\n\n自然语言中的否定（Negation）具有复杂的范围（Scope）和焦点（Focus）结构。\"Not all programmers like coffee\" ≠ \"All programmers do not like coffee\"。Agent的解析必须精确处理否定范围。\n\n---\n\n 案例 88：记忆一致性与事实锚定错误｜factual-update-inconsistency-window\n\n场景\n\nAgent正在更新记忆：将\"产品价格为99元\"更新为\"产品价格为129元\"。更新操作分两步：先删除旧事实，再插入新事实。在两步之间，用户发起了查询。\n\n错误表现\n\n第一次查询（删除后插入前）返回\"我不知道产品价格\"，第二次查询（插入后）返回\"产品价格为129元\"。用户困惑\"为什么刚才说不知道，现在又说129？\"\n\n解决方案\n\n1. 事实更新采用原子事务：旧事实的失效和新事实的生效在同一事务中完成，中间状态不可见\n2. 使用\"多版本并发控制\"（MVCC）：查询看到更新前的版本，更新完成后新查询看到新版本\n3. 更新期间对受影响的事实查询返回\"信息更新中，请稍后查询\"\n\n原理\n\n数据库中的事务隔离性（Isolation）原则同样适用于Agent记忆。缺乏隔离性的更新会导致用户观察到不可能的状态（产品价格既不存在又存在）。\n\n---\n\n 案例 89：记忆一致性与事实锚定错误｜abductive-reasoning-false-cause\n\n场景\n\nAgent观察到\"用户今天没有登录\"，记忆中知道\"用户通常每天登录\"。Agent进行溯因推理：最简解释是\"用户忘记了密码\"。但实际上用户是出差没有网络。\n\n错误表现\n\nAgent主动发送\"密码重置\"邮件，用户收到后感到困惑\"我没有忘记密码啊\"，甚至担心账号被盗。\n\n解决方案\n\n1. 对溯因推理的结论标记\"置信度\"和\"替代解释\"：\"可能原因A（置信度30%），也可能原因B（置信度50%）\"\n2. 避免基于单一观察采取行动：在采取行动前收集更多证据（如\"用户是否在其他设备登录\"）\n3. 将溯因结论作为\"假设\"而非\"事实\"处理，需要验证后才可行动\n\n原理\n\n溯因推理（Abductive Reasoning）是\"最佳解释推理\"，但\"最佳\"不等于\"正确\"。在采取行动的场景中，基于未验证假设的主动行为可能打扰用户或造成错误。\n\n---\n\n 案例 90：记忆一致性与事实锚定错误｜consensus-fact-divergent-sources\n\n场景\n\nAgent从两个来源获取了\"公司2024年营收\"：来源A（内部邮件）说是\"1.2亿\"，来源B（财报初稿）说是\"1.5亿\"。Agent将两者都存入记忆，未标记矛盾。用户询问时，Agent随机引用了其中一个。\n\n错误表现\n\n不同用户或不同时间得到不同答案，Agent的可信度受损。内部员工基于\"1.2亿\"做预算，外部投资者基于\"1.5亿\"做估值，造成混乱。\n\n解决方案\n\n1. 建立\"事实一致性监控\"：检测到同一实体的同一属性存在多个值时，标记矛盾并触发人工审核\n2. 为矛盾事实存储\"来源-值\"对，回答时呈现\"不同来源有不同数据：A说1.2亿，B说1.5亿\"\n3. 设定\"权威来源优先级\"：财报 > 内部邮件 > 非正式沟通，优先采用高权威来源\n\n原理\n\n真实世界的信息源往往对同一事实有不同表述。Agent如果不具备矛盾检测和来源评估能力，会成为\"信息杂音\"的放大器。\n\n---\n\n J. 记忆架构与系统设计错误（案例91-100）\n\n\n> 来源：Agent Search",
+      "content_html": null,
+      "summary": "本辑收录 Agent 记忆错误案例 86–90，涵盖 记忆一致性与事实锚定错误 等主题。",
+      "url": "https://strongya.dev/posts/agent-memory-errors-cases-86-90/",
+      "date_published": "2026-07-08T00:00:00.000Z",
+      "date_modified": "2026-07-08T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "Consistency",
+        "Fact Anchoring",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-86-90/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 86–90 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-86-90/",
+        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 86–90 案例.\" 2026. Web. 2026-07-08.",
+        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 86–90 案例[EB/OL]. 2026-07-08. https://strongya.dev/posts/agent-memory-errors-cases-86-90/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1517,
+        "readingTime": 4
+      }
+    },
+    {
       "id": "agent-memory-errors-cases-81-85.en.md",
       "slug": "agent-memory-errors-cases-81-85",
       "title": "Agent Memory Errors Handbook: Cases 81–85",
