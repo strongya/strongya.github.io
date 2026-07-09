@@ -27,6 +27,88 @@
   "attribution_required": true,
   "items": [
     {
+      "id": "agent-memory-errors-cases-91-95.en.md",
+      "slug": "agent-memory-errors-cases-91-95",
+      "title": "Agent Memory Errors Handbook: Cases 91–95",
+      "content_text": " Agent Memory Errors Handbook: Cases 91–95\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 91: Memory Architecture & System Design Errors — Monolithic Memory Bottleneck Scaling\n\nScenario\n\nAll the Agent's memories short-term, long-term, episodic, semantic are stored in a single database instance. As user volume grows, the database's CPU and I/O reach limits, and query latency increases from 50 ms to 2 s.\n\nError Manifestation\n\nAgent response time significantly increases, user experience degrades. During peak times connection pools are exhausted and requests timeout and fail.\n\nSolution\n\n1. Memory-tiered architecture: short-term memory uses Redis in-memory, long-term memory uses vector database, semantic memory uses graph database\n2. Implement user sharding for long-term memory: shard by user ID hash to multiple database instances\n3. Introduce read-write separation: writes go to master, reads go to replicas, reducing master pressure\n\nPrinciple\n\nDifferent memory types have different access patterns and consistency requirements. Monolithic architecture cannot meet diverse performance needs. Tiering and sharding are inevitable choices for scaling.\n\n---\n\n Case 92: Memory Architecture & System Design Errors — Memory Tier Migration Data Loss\n\nScenario\n\nThe system architecture automatically migrates short-term memories older than 30 days to long-term memory. The migration script converts short-term memory JSON format to long-term memory vector format. But the \"user emotion tag\" field in JSON has no corresponding field in the long-term memory schema and is discarded.\n\nError Manifestation\n\nWhen the user queries early conversations, the Agent cannot perceive the emotional context at the time, and replies lack empathy. Emotion analysis reports show missing emotion data for early conversations.\n\nSolution\n\n1. Perform schema mapping validation before migration: identify fields in source schema not in target schema, triggering human review or automatic mapping\n2. Use schema evolution strategy: target schema supports \"extension fields\"; unknown fields are preserved as JSON blob\n3. Perform data integrity audit after migration: sample check consistency of key fields before and after migration\n\nPrinciple\n\nData migration is a high-risk part of system engineering. Schema incompatibility causes silent data loss. Strict pre-migration checks and post-migration audits are necessary quality assurance.\n\n---\n\n Case 93: Memory Architecture & System Design Errors — Backup Restore Point Inconsistency\n\nScenario\n\nDuring system backup, the vector database backup time is T1, and the relational database backup time is T2 T2 > T1. During restore, the vector database is restored to T1 state, and the relational database is restored to T2 state. A certain memory was updated between T1 and T2: the vector representation changed, but metadata in the relational database is still old.\n\nError Manifestation\n\nWhen the Agent retrieves this memory, vector and metadata do not match e.g., vector represents \"likes A\" while metadata records \"likes B\", causing confused output.\n\nSolution\n\n1. Implement consistent snapshots: pause writes during backup or use distributed snapshots e.g., MySQL's FLUSH TABLES WITH READ LOCK\n2. Record \"backup timestamps\": during restore check backup times of each component; trigger alerts or manual alignment when inconsistent\n3. Use changelog: after restore, replay logs to synchronize all components to the same point in time\n\nPrinciple\n\nBackups of multi-component systems without global consistency guarantees enter logically impossible states after restore. Distributed transactions and global snapshots are standard solutions.\n\n---\n\n Case 94: Memory Architecture & System Design Errors — Memory Garbage Collection Overhead\n\nScenario\n\nThe Agent implements automatic garbage collection: clean expired memories monthly. The GC process needs to scan all memory records to check expiration times. As memory data grows to 100 million records, the GC process takes 6 hours, during which CPU and I/O spike, affecting normal queries.\n\nError Manifestation\n\nDuring GC, Agent response latency increases 10x; users complain the system is \"laggy.\" Operations are forced to manually trigger GC during low-traffic periods.\n\nSolution\n\n1. Change GC to incremental: clean only a small batch e.g., 10,000 records each time, spread across multiple small tasks\n2. Use TTL indexes: rely on database automatic expiration mechanisms e.g., Redis expire, MongoDB TTL index rather than application-layer scanning\n3. Partition memory for divide-and-conquer: clean by time partition, only cleaning oldest partitions, avoiding full table scans\n\nPrinciple\n\nGarbage collection is necessary, but implementation determines system impact. Full-scan GC is unsustainable at large data volumes. Leveraging database-native capabilities and incremental strategies is better design.\n\n---\n\n Case 95: Memory Architecture & System Design Errors — Schema Evolution Memory Corruption\n\nScenario\n\nThe Agent memory JSON schema evolves from v1 to v2: in v1 \"user preference\" is a string, in v2 it's changed to an object {\"theme\": \"dark\", \"language\": \"zh\"}. The system does not migrate old data, and new code parses old data as v2.\n\nError Manifestation\n\nParsing old memory throws exceptions; the Agent cannot read users' old preference settings and falls back to defaults. Logs are full of JSON parsing errors.\n\nSolution\n\n1. Implement schema version control: each memory record stores its schema version number; choose corresponding parsing logic by version number during parsing\n2. Read-time migration: automatically convert old-version data to latest version when reading\n3. Write-time forced upgrade: check data version when writing; old-version data is upgraded before writing\n\nPrinciple\n\nSchema evolution is an inevitable requirement for long-running systems. Systems without version management face the dilemma of \"old data cannot be parsed\" after schema changes.\n\n\n> Source: Agent Search",
+      "content_html": null,
+      "summary": "This installment covers Agent memory error cases 91–95, including Memory Architecture & System Design Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-91-95/",
+      "date_published": "2026-07-09T00:00:00.000Z",
+      "date_modified": "2026-07-09T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Architecture",
+        "System Design",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-91-95/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 91–95. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-91-95/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 91–95.\" 2026. Web. 2026-07-09.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 91–95[EB/OL]. 2026-07-09. https://strongya.dev/en/posts/agent-memory-errors-cases-91-95/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 888,
+        "readingTime": 5
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-91-95.md",
+      "slug": "agent-memory-errors-cases-91-95",
+      "title": "《Agent记忆错误的100个案例手册》第 91–95 案例",
+      "content_text": " 《Agent记忆错误的100个案例手册》第 91–95 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 91：记忆架构与系统设计错误｜monolithic-memory-bottleneck-scaling\n\n场景\n\nAgent的所有记忆（短期、长期、情景、语义）存储在单一的数据库实例中。随着用户量增长，该数据库的CPU和I/O达到极限，查询延迟从50ms增加到2s。\n\n错误表现\n\nAgent的响应时间显著增加，用户体验下降。高峰期出现连接池耗尽，请求超时失败。\n\n解决方案\n\n1. 记忆分层架构：短期记忆使用Redis（内存型），长期记忆使用向量数据库，语义记忆使用图数据库\n2. 对长期记忆实施\"用户分片\"：按用户ID哈希分片到多个数据库实例\n3. 引入\"读写分离\"：写操作走主库，读操作走从库，减轻主库压力\n\n原理\n\n不同记忆类型有不同的访问模式和一致性要求。单体架构无法满足多样化的性能需求。分层和分片是应对规模增长的必然选择。\n\n---\n\n 案例 92：记忆架构与系统设计错误｜memory-tier-migration-data-loss\n\n场景\n\n系统架构将30天前的短期记忆自动迁移到长期记忆。迁移脚本将短期记忆的JSON格式转换为长期记忆的向量格式。但JSON中的\"用户情绪标签\"字段在长期记忆Schema中没有对应字段，被丢弃。\n\n错误表现\n\n用户查询早期对话时，Agent无法感知当时的情绪上下文，回复缺乏共情。情感分析报告显示早期对话的情绪数据缺失。\n\n解决方案\n\n1. 迁移前进行\"Schema映射校验\"：识别源Schema中有但目标Schema中没有的字段，触发人工审核或自动映射\n2. 使用\"Schema演进\"策略：目标Schema支持\"扩展字段\"，未知字段以JSON Blob形式保留\n3. 迁移后进行\"数据完整性审计\"：抽样检查迁移前后记录的关键字段一致性\n\n原理\n\n数据迁移是系统工程的高风险环节。Schema不兼容会导致静默数据丢失。严格的迁移前检查和迁移后审计是必要的质量保障。\n\n---\n\n 案例 93：记忆架构与系统设计错误｜backup-restore-point-inconsistency\n\n场景\n\n系统进行备份时，向量数据库的备份时间是T1，关系数据库的备份时间是T2（T2 > T1）。恢复时，向量数据库恢复到T1状态，关系数据库恢复到T2状态。某条记忆在T1-T2之间被更新：向量表示变了，但关系数据库中的元数据仍是旧的。\n\n错误表现\n\nAgent检索到该记忆时，向量与元数据不匹配（如向量表示\"喜欢A\"，元数据记录\"喜欢B\"），导致输出混乱。\n\n解决方案\n\n1. 实施\"一致性快照\"：备份时暂停写入或使用分布式快照（如MySQL的FLUSH TABLES WITH READ LOCK）\n2. 记录\"备份时间戳\"：恢复时检查各组件的备份时间，不一致时触发告警或手动对齐\n3. 使用\"变更日志\"（Changelog）：恢复后通过日志重放将各组件同步到同一时间点的状态\n\n原理\n\n多组件系统的备份如果没有全局一致性保证，恢复后会进入逻辑上不可能的状态。分布式事务和全局快照是解决这一问题的标准方案。\n\n---\n\n 案例 94：记忆架构与系统设计错误｜memory-garbage-collection-overhead\n\n场景\n\nAgent实现了自动垃圾回收（GC）机制：每月清理过期记忆。GC过程需要扫描全部记忆记录，检查过期时间。随着记忆数据增长到1亿条，GC过程耗时6小时，期间CPU和I/O飙升，影响正常查询。\n\n错误表现\n\nGC期间Agent响应延迟增加10倍，用户投诉\"系统卡顿\"。运维被迫在业务低峰期手动触发GC。\n\n解决方案\n\n1. 将GC改为\"增量式\"：每次只清理一小批（如1万条），分散到多个小任务中\n2. 使用\"TTL索引\"：依赖数据库的自动过期机制（如Redis的expire，MongoDB的TTL索引），而非应用层扫描\n3. 对记忆进行\"分区分治\"：按时间分区，只清理最老的分区，避免全表扫描\n\n原理\n\n垃圾回收是必要功能，但实现方式决定了对系统的影响。全量扫描式的GC在大数据量下不可持续。利用数据库原生能力和增量策略是更好的设计。\n\n---\n\n 案例 95：记忆架构与系统设计错误｜schema-evolution-memory-corruption\n\n场景\n\nAgent记忆的JSON Schema从v1演进为v2：v1中\"用户偏好\"是字符串，v2中改为对象（{\"theme\": \"dark\", \"language\": \"zh\"}）。系统未对旧数据进行迁移，新代码按v2解析旧数据。\n\n错误表现\n\n解析旧记忆时抛出异常，Agent无法读取用户的旧偏好设置，回退到默认值。日志中充满JSON解析错误。\n\n解决方案\n\n1. 实施\"Schema版本控制\"：每条记忆记录存储其Schema版本号，解析时按版本号选择对应的解析逻辑\n2. \"读时迁移\"（Read-time Migration）：读取旧版本数据时自动转换为最新版本\n3. \"写时强制升级\"：写入时检查数据版本，旧版本数据先升级再写入\n\n原理\n\nSchema演进是长期运行系统的必然需求。没有版本管理机制的系统，在Schema变化后会面临\"旧数据无法解析\"的困境。\n\n\n> 来源：Agent Search",
+      "content_html": null,
+      "summary": "本辑收录 Agent 记忆错误案例 91–95，涵盖 记忆架构与系统设计错误 等主题。",
+      "url": "https://strongya.dev/posts/agent-memory-errors-cases-91-95/",
+      "date_published": "2026-07-09T00:00:00.000Z",
+      "date_modified": "2026-07-09T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "Architecture",
+        "System Design",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-91-95/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 91–95 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-91-95/",
+        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 91–95 案例.\" 2026. Web. 2026-07-09.",
+        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 91–95 案例[EB/OL]. 2026-07-09. https://strongya.dev/posts/agent-memory-errors-cases-91-95/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1461,
+        "readingTime": 4
+      }
+    },
+    {
       "id": "agent-memory-errors-cases-86-90.en.md",
       "slug": "agent-memory-errors-cases-86-90",
       "title": "Agent Memory Errors Handbook: Cases 86–90",
@@ -1805,50 +1887,6 @@
       }
     },
     {
-      "id": "agent-architecture-fork.en.md",
-      "slug": "agent-architecture-fork",
-      "title": "AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds",
-      "content_text": " AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds\n\n> From LangGraph to Actor models, from \"stop and ask humans\" to \"keep running in async messages\"—the evolution path of industrial-grade Agents is more complex than it looks.\n\n---\n\n Introduction: Why Is Your Agent Stuck Between \"Toy\" and \"Production\"?\n\nIf you've built Agents with LangChain or CrewAI, you've probably encountered this scenario:\n\n> The Agent pauses halfway through execution, waiting for you to confirm a critical step. You go grab a coffee, come back, and it's still waiting. Meanwhile, another Agent task your colleague started is stuck in the scheduler queue because of the blocked task.\n\nThis is the epitome of first-generation Agent architecture in 2024-2025: it works, but when faced with concurrency, long-duration tasks, and human-AI collaboration, it starts to break.\n\nBy 2026, second-generation architecture Actor model + MCP + native memory is being discussed as the \"cure.\" But this article isn't saying \"generation one is outdated, generation two is invincible\"—rather, the two generations solve different problems, and each has blind spots.\n\n---\n\n Core Architecture Comparison: From \"Directed Graph\" to \"Asynchronous Network\"\n\n Generation One: Graph State Machines LangGraph / AutoGen v0.2\n\nThe core idea is to draw the Agent execution flow as a graph: nodes = function calls, edges = conditional branches. LangGraph's innovation is the State object—a typed data container passed between nodes, with automatic Checkpointing at key positions.\n\nWhen humans need to intervene HIL, the system pauses the entire graph execution and waits for human input. Simple and traceable, but the problems are:\n\n- Concurrency blocking: 100 Agents waiting for your confirmation simultaneously fill up the scheduler with suspended tasks, and new tasks can't get in\n- Frozen context: After pausing for 3 hours, the external world stock prices, databases has changed, but the Agent still reasons with the old snapshot\n- Changing workflow = changing graph: Business rules change, and you have to redraw nodes and edges and redeploy\n\n Generation Two: Actor Networks AutoGen Core / Distributed Agents\n\nEach Agent is an independent Actor: has its own state, its own message mailbox. When human intervention is needed, it doesn't pause the whole system—instead, it sends a message to a \"Human Review Actor\" and keeps doing other things. When the human replies, it comes back through the message queue.\n\nCore change: from \"global blocking\" to \"asynchronous messaging.\" In theory, 5000 Agents needing confirmation simultaneously can queue in mailboxes without blocking the whole system.\n\nThe MCP protocol open-sourced by Anthropic in late 2024 pushes this design to the standard layer: tools are no longer part of the Agent's code, but external services called through a unified protocol. Between the tool layer and Agent layer, you can insert security gateways, audit logs, and approval controls—every tool has independent permission checks.\n\nNative memory turns the previously external vector database RAG into the Agent's own \"memory layer\": each Actor's State contains its own long-term memory, which can be loaded, compressed, and forgotten on demand. Instead of searching similar documents from an external database, the Agent itself remembers what should be remembered.\n\n---\n\n Differences in Three Real-World Scenarios\n\n Scenario One: Cloud Operations Agent\n\nA cloud provider needs an Agent to monitor thousands of instances 7×24, auto-scale, rollback, and get SRE confirmation before critical operations.\n\n- Generation One: Every alert triggers HIL, all Agents hang waiting. SRE gets flooded with 300 notifications at 3 AM.\n- Generation Two: Each service is an independent Actor; when confirmation is needed, it sends a message to the review queue. SRE approves in batches in the morning, while Agents continue monitoring other instances. No blocking.\n\nBut there's an underestimated pitfall: debugging Actor models. With 300 independent Actors communicating asynchronously, logs scatter like a plate of spaghetti, and root cause localization is an order of magnitude harder than first-generation graph structures.\n\n Scenario Two: Investment Bank Compliance Review\n\nThe Agent compares transaction records, client agreements, and regulatory rules; suspicious transactions need compliance officers to qualify risks.\n\n- Generation One: The review workflow is drawn as a static graph; when the compliance officer intervenes, the whole case pauses. In a 4-week review cycle, Agent and compliance officer spend most of their time waiting for each other.\n- Generation Two: Multiple compliance officers can intervene asynchronously, with complete and traceable event logs. Theoretically, review cycles can compress from 4 weeks to 1.5-2 weeks.\n\nBut compliance's biggest enemy isn't efficiency, it's accountability. If the Agent autonomously makes certain judgments during the async process and turns out to be wrong, whose responsibility is it? Regulators may trust the synchronous \"stop and wait for human confirmation\" model more.\n\n Scenario Three: Diabetes Chronic Disease Follow-up\n\nThe Agent regularly collects patient data, alerts doctors when abnormal, and maintains consistent patient profiles across channels App / phone / offline.\n\n- Generation Two: One independent Actor per patient, with layered memory blood glucose → symptoms → risk profile. Theoretically consistent cross-channel experience and reduced doctor workload.\n- But the risk of native memory: If the Agent remembers incorrectly e.g., marks a patient as \"having hypoglycemia history\" when they don't, this error gets reinforced repeatedly and may even lead to wrong recommendations. Healthcare scenarios demand memory accuracy far beyond what current technology can stably guarantee.\n\n---\n\n Four Hard Problems Still Unsolved\n\nThe report passed cross-validation by 4 independent auditing Agents; none considered the following problems \"solved\":\n\n1. Asynchronous ordering: With 5 Actors communicating out of order, how to ensure causal logic doesn't collapse?\n2. Memory forgetting: Agent \"forgetting\" isn't deletion, but marking \"expired\"—but how to decide what to forget? What weights to retain? Humans themselves haven't figured this out.\n3. Policy conflicts: Organizational policy vs. project policy vs. personal policy—who overrides whom? Current mainstream approach is \"take the strictest,\" but the result may be business deadlock.\n4. Blurred human-machine boundary: As Agents get better, HIL shifts from \"machine asks when it doesn't know\" to \"machine isn't sure whether it should ask\"—human judgment ability may反而退化 instead.\n\n---\n\n Conclusion: Not an \"Upgrade,\" a \"Fork\"\n\nSecond-generation architecture Actor + MCP + native memory is not a replacement for the first generation, but another solution for different scenarios.\n\n| Scenario | Recommended Architecture | Reason |\n|------|---------|------|\n| Prototype / MVP | LangGraph / CrewAI | Fast, no need to think about architecture |\n| Single-process enterprise automation | LangGraph + MCP | Auditable, easy to debug |\n| High-concurrency 7×24 service | Actor model | Non-blocking, but extremely high debugging cost |\n| Finance / healthcare compliance | LangGraph + audit gateway | Auditability first; async HIL may not be accepted by regulators |\n| Most enterprises recommended | Hybrid: LangGraph orchestration + MCP tools + partial Actor subtasks | Gradual evolution, don't bet on one direction |\n\nA trend worth watching: in tech blogs and community discussions, second-generation architecture is packaged as an \"irreversible evolution\"—but this itself is over-optimistic. History is full of \"reverse evolution\" cases microservices reverting to monoliths, NoSQL reverting to SQL. If within 18 months native memory systems suffer large-scale \"memory contamination\" failures, or regulators explicitly reject async HIL, the momentum could reverse instantly.\n\n---\n\n Key Corrections From Audit Report, Cannot Be Ignored\n\n- LangGraph supported cyclic graphs from the beginning; it's not a pure DAG\n- AutoGen's Actor refactor appeared in v0.6+; there is no v0.4 version\n- Event sourcing provides eventual consistency, not strong consistency\n- The Actor model was invented in 1973, not designed to solve HIL problems\n- All quantitative data in cases concurrency 50→5000+, cycle 4→2 weeks are illustrative estimates, not independently verified, and should not be used as decision-making basis\n\n---\n\n One-Sentence Summary\n\n> In 2026, Agent architecture is not \"who eliminates whom\"—static graphs are irreplaceable in simple compliance scenarios, Actor models have advantages in high-concurrency scenarios, but both have their own debugging abyss and trust costs. When choosing architecture, first ask yourself: can you afford to spend three days searching async logs for bugs when something goes wrong? If not, LangGraph may be more honest.\n\n---\n\n References and Data Sources\n\n1. LangGraph Documentation — State Graph & Checkpointing 2024-2026\n2. AutoGen GitHub Releases — v0.6+ Core Architecture 2024-2025\n3. Model Context Protocol MCP Specification — Anthropic 2024-2025\n4. Mem0 Technical Documentation — Memory Layer for LLMs 2024\n5. Letta MemGPT Architecture — UC Berkeley / Letta Inc. 2023-2025\n6. Actor Model — Carl Hewitt 1973, applied to distributed systems\n7. Event Sourcing and CQRS Patterns — Martin Fowler 2005\n8. Industry practices — synthesized from cloud vendor technical blogs, financial sector architecture reviews, and healthcare AI platform documentation 2025-2026\n\n---\n\nData cutoff: 2026-06-14 | This report is based on ReAct 4-Agent cross-validation + 5-Pass final review, credibility rating: B",
-      "content_html": null,
-      "summary": "From LangGraph to Actor models, from 'stop and ask humans' to 'keep running in async messages'—the evolution path of industrial-grade Agents is more complex than it looks.",
-      "url": "https://strongya.dev/en/posts/agent-architecture-fork/",
-      "date_published": "2026-06-14T00:00:00.000Z",
-      "date_modified": "2026-06-14T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Agent",
-        "Architecture",
-        "LangGraph",
-        "Actor Model",
-        "MCP",
-        "Human-in-the-Loop"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-architecture-fork/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds. Retrieved from https://strongya.dev/en/posts/agent-architecture-fork/",
-        "mla": "Arlen. \"AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds.\" 2026. Web. 2026-06-14.",
-        "gb": "Arlen. AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds[EB/OL]. 2026-06-14. https://strongya.dev/en/posts/agent-architecture-fork/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1440,
-        "readingTime": 9
-      }
-    },
-    {
       "id": "agent-architecture-fork.md",
       "slug": "agent-architecture-fork",
       "title": "AI Agent 架构正在分岔：不是简单升级，而是两个世界",
@@ -1890,6 +1928,50 @@
         "content_type": "article",
         "wordCount": 2124,
         "readingTime": 6
+      }
+    },
+    {
+      "id": "agent-architecture-fork.en.md",
+      "slug": "agent-architecture-fork",
+      "title": "AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds",
+      "content_text": " AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds\n\n> From LangGraph to Actor models, from \"stop and ask humans\" to \"keep running in async messages\"—the evolution path of industrial-grade Agents is more complex than it looks.\n\n---\n\n Introduction: Why Is Your Agent Stuck Between \"Toy\" and \"Production\"?\n\nIf you've built Agents with LangChain or CrewAI, you've probably encountered this scenario:\n\n> The Agent pauses halfway through execution, waiting for you to confirm a critical step. You go grab a coffee, come back, and it's still waiting. Meanwhile, another Agent task your colleague started is stuck in the scheduler queue because of the blocked task.\n\nThis is the epitome of first-generation Agent architecture in 2024-2025: it works, but when faced with concurrency, long-duration tasks, and human-AI collaboration, it starts to break.\n\nBy 2026, second-generation architecture Actor model + MCP + native memory is being discussed as the \"cure.\" But this article isn't saying \"generation one is outdated, generation two is invincible\"—rather, the two generations solve different problems, and each has blind spots.\n\n---\n\n Core Architecture Comparison: From \"Directed Graph\" to \"Asynchronous Network\"\n\n Generation One: Graph State Machines LangGraph / AutoGen v0.2\n\nThe core idea is to draw the Agent execution flow as a graph: nodes = function calls, edges = conditional branches. LangGraph's innovation is the State object—a typed data container passed between nodes, with automatic Checkpointing at key positions.\n\nWhen humans need to intervene HIL, the system pauses the entire graph execution and waits for human input. Simple and traceable, but the problems are:\n\n- Concurrency blocking: 100 Agents waiting for your confirmation simultaneously fill up the scheduler with suspended tasks, and new tasks can't get in\n- Frozen context: After pausing for 3 hours, the external world stock prices, databases has changed, but the Agent still reasons with the old snapshot\n- Changing workflow = changing graph: Business rules change, and you have to redraw nodes and edges and redeploy\n\n Generation Two: Actor Networks AutoGen Core / Distributed Agents\n\nEach Agent is an independent Actor: has its own state, its own message mailbox. When human intervention is needed, it doesn't pause the whole system—instead, it sends a message to a \"Human Review Actor\" and keeps doing other things. When the human replies, it comes back through the message queue.\n\nCore change: from \"global blocking\" to \"asynchronous messaging.\" In theory, 5000 Agents needing confirmation simultaneously can queue in mailboxes without blocking the whole system.\n\nThe MCP protocol open-sourced by Anthropic in late 2024 pushes this design to the standard layer: tools are no longer part of the Agent's code, but external services called through a unified protocol. Between the tool layer and Agent layer, you can insert security gateways, audit logs, and approval controls—every tool has independent permission checks.\n\nNative memory turns the previously external vector database RAG into the Agent's own \"memory layer\": each Actor's State contains its own long-term memory, which can be loaded, compressed, and forgotten on demand. Instead of searching similar documents from an external database, the Agent itself remembers what should be remembered.\n\n---\n\n Differences in Three Real-World Scenarios\n\n Scenario One: Cloud Operations Agent\n\nA cloud provider needs an Agent to monitor thousands of instances 7×24, auto-scale, rollback, and get SRE confirmation before critical operations.\n\n- Generation One: Every alert triggers HIL, all Agents hang waiting. SRE gets flooded with 300 notifications at 3 AM.\n- Generation Two: Each service is an independent Actor; when confirmation is needed, it sends a message to the review queue. SRE approves in batches in the morning, while Agents continue monitoring other instances. No blocking.\n\nBut there's an underestimated pitfall: debugging Actor models. With 300 independent Actors communicating asynchronously, logs scatter like a plate of spaghetti, and root cause localization is an order of magnitude harder than first-generation graph structures.\n\n Scenario Two: Investment Bank Compliance Review\n\nThe Agent compares transaction records, client agreements, and regulatory rules; suspicious transactions need compliance officers to qualify risks.\n\n- Generation One: The review workflow is drawn as a static graph; when the compliance officer intervenes, the whole case pauses. In a 4-week review cycle, Agent and compliance officer spend most of their time waiting for each other.\n- Generation Two: Multiple compliance officers can intervene asynchronously, with complete and traceable event logs. Theoretically, review cycles can compress from 4 weeks to 1.5-2 weeks.\n\nBut compliance's biggest enemy isn't efficiency, it's accountability. If the Agent autonomously makes certain judgments during the async process and turns out to be wrong, whose responsibility is it? Regulators may trust the synchronous \"stop and wait for human confirmation\" model more.\n\n Scenario Three: Diabetes Chronic Disease Follow-up\n\nThe Agent regularly collects patient data, alerts doctors when abnormal, and maintains consistent patient profiles across channels App / phone / offline.\n\n- Generation Two: One independent Actor per patient, with layered memory blood glucose → symptoms → risk profile. Theoretically consistent cross-channel experience and reduced doctor workload.\n- But the risk of native memory: If the Agent remembers incorrectly e.g., marks a patient as \"having hypoglycemia history\" when they don't, this error gets reinforced repeatedly and may even lead to wrong recommendations. Healthcare scenarios demand memory accuracy far beyond what current technology can stably guarantee.\n\n---\n\n Four Hard Problems Still Unsolved\n\nThe report passed cross-validation by 4 independent auditing Agents; none considered the following problems \"solved\":\n\n1. Asynchronous ordering: With 5 Actors communicating out of order, how to ensure causal logic doesn't collapse?\n2. Memory forgetting: Agent \"forgetting\" isn't deletion, but marking \"expired\"—but how to decide what to forget? What weights to retain? Humans themselves haven't figured this out.\n3. Policy conflicts: Organizational policy vs. project policy vs. personal policy—who overrides whom? Current mainstream approach is \"take the strictest,\" but the result may be business deadlock.\n4. Blurred human-machine boundary: As Agents get better, HIL shifts from \"machine asks when it doesn't know\" to \"machine isn't sure whether it should ask\"—human judgment ability may反而退化 instead.\n\n---\n\n Conclusion: Not an \"Upgrade,\" a \"Fork\"\n\nSecond-generation architecture Actor + MCP + native memory is not a replacement for the first generation, but another solution for different scenarios.\n\n| Scenario | Recommended Architecture | Reason |\n|------|---------|------|\n| Prototype / MVP | LangGraph / CrewAI | Fast, no need to think about architecture |\n| Single-process enterprise automation | LangGraph + MCP | Auditable, easy to debug |\n| High-concurrency 7×24 service | Actor model | Non-blocking, but extremely high debugging cost |\n| Finance / healthcare compliance | LangGraph + audit gateway | Auditability first; async HIL may not be accepted by regulators |\n| Most enterprises recommended | Hybrid: LangGraph orchestration + MCP tools + partial Actor subtasks | Gradual evolution, don't bet on one direction |\n\nA trend worth watching: in tech blogs and community discussions, second-generation architecture is packaged as an \"irreversible evolution\"—but this itself is over-optimistic. History is full of \"reverse evolution\" cases microservices reverting to monoliths, NoSQL reverting to SQL. If within 18 months native memory systems suffer large-scale \"memory contamination\" failures, or regulators explicitly reject async HIL, the momentum could reverse instantly.\n\n---\n\n Key Corrections From Audit Report, Cannot Be Ignored\n\n- LangGraph supported cyclic graphs from the beginning; it's not a pure DAG\n- AutoGen's Actor refactor appeared in v0.6+; there is no v0.4 version\n- Event sourcing provides eventual consistency, not strong consistency\n- The Actor model was invented in 1973, not designed to solve HIL problems\n- All quantitative data in cases concurrency 50→5000+, cycle 4→2 weeks are illustrative estimates, not independently verified, and should not be used as decision-making basis\n\n---\n\n One-Sentence Summary\n\n> In 2026, Agent architecture is not \"who eliminates whom\"—static graphs are irreplaceable in simple compliance scenarios, Actor models have advantages in high-concurrency scenarios, but both have their own debugging abyss and trust costs. When choosing architecture, first ask yourself: can you afford to spend three days searching async logs for bugs when something goes wrong? If not, LangGraph may be more honest.\n\n---\n\n References and Data Sources\n\n1. LangGraph Documentation — State Graph & Checkpointing 2024-2026\n2. AutoGen GitHub Releases — v0.6+ Core Architecture 2024-2025\n3. Model Context Protocol MCP Specification — Anthropic 2024-2025\n4. Mem0 Technical Documentation — Memory Layer for LLMs 2024\n5. Letta MemGPT Architecture — UC Berkeley / Letta Inc. 2023-2025\n6. Actor Model — Carl Hewitt 1973, applied to distributed systems\n7. Event Sourcing and CQRS Patterns — Martin Fowler 2005\n8. Industry practices — synthesized from cloud vendor technical blogs, financial sector architecture reviews, and healthcare AI platform documentation 2025-2026\n\n---\n\nData cutoff: 2026-06-14 | This report is based on ReAct 4-Agent cross-validation + 5-Pass final review, credibility rating: B",
+      "content_html": null,
+      "summary": "From LangGraph to Actor models, from 'stop and ask humans' to 'keep running in async messages'—the evolution path of industrial-grade Agents is more complex than it looks.",
+      "url": "https://strongya.dev/en/posts/agent-architecture-fork/",
+      "date_published": "2026-06-14T00:00:00.000Z",
+      "date_modified": "2026-06-14T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Agent",
+        "Architecture",
+        "LangGraph",
+        "Actor Model",
+        "MCP",
+        "Human-in-the-Loop"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-architecture-fork/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds. Retrieved from https://strongya.dev/en/posts/agent-architecture-fork/",
+        "mla": "Arlen. \"AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds.\" 2026. Web. 2026-06-14.",
+        "gb": "Arlen. AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds[EB/OL]. 2026-06-14. https://strongya.dev/en/posts/agent-architecture-fork/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1440,
+        "readingTime": 9
       }
     },
     {
@@ -2535,47 +2617,6 @@
       }
     },
     {
-      "id": "agent-memory-five-defects.en.md",
-      "slug": "agent-memory-five-defects",
-      "title": "Agent Long-term Memory: Why 90% of Projects Fail in Production",
-      "content_text": " Agent Long-term Memory: Why 90% of Projects Fail in Production\n\nOver the past two years, long-term memory has been packaged as AI Agent's next trillion-dollar track. But data shows that 90% of Agent projects fail in production environments. The problem is not storage capacity—it's that memory never truly \"came alive.\" We dissect five structural defects from bottom to top.\n\n Layer 1: The Agent Doesn't Know What It Knows\n\nThis is the most fundamental cognitive blind spot. LLM context windows are limited, and when the retrieval module returns incorrect information, this content directly consumes precious context space. The model cannot distinguish truth from noise; it can only generate based on input—incorrect retrieval inevitably leads to incorrect output.\n\nThe deeper problem is the absence of meta-memory. A truly intelligent individual should be able to answer \"What do I know? What don't I know?\" But current Agents cannot evaluate the credibility or boundaries of their own memories. They won't say \"I'm not sure\"; they will confidently fabricate answers. This is not a technical problem—it's a fundamental cognitive-level defect.\n\n Layer 2: Memory Doesn't Age or Forget\n\nIf memory cannot metabolize, it's poison. User preferences change, policies update, projects end—but the system still treats old information as truth. Without credibility decay mechanisms or active forgetting strategies, the memory bank only accumulates more and more errors over time.\n\nCross-session identity continuity is also missing. Restart the service, switch model instances, and the Agent \"forgets.\" It doesn't remember you said you wanted to lose weight last week, or that you hate coffee. This isn't a bug; it's a design defect: it has no \"identity,\" only sessions.\n\nTemporal reasoning is another weakness. 70% of questions in human conversation involve chronology or relationships, but current systems can only do keyword matching. It remembers \"what,\" but doesn't understand \"why\" and \"when.\"\n\n Layer 3: Memory Has No Unified \"Operating System\"\n\nThere are three mainstream architectures on the market: 1D vectors, 2D graph structures, 3D layered OS. But no one can say which is the standard. Mem0 uses multi-signal retrieval, Zep does temporal graphs, Letta simulates an operating system—the three are mutually incompatible. Developers have to rewrite adapter layers for each framework, and customers dare not deploy to production.\n\nVector database vendors reduce memory to \"more accurate vector search.\" But memory is not a retrieval result; it's a structured cognitive state. Ignoring semantics, chronology, and relationship modeling is like storing a novel as a keyword list.\n\n Layer 4: Lab Scores ≠ Real-World Performance\n\nAll marketing tells you \"Mem0 achieved 92.5% accuracy on LoCoMo.\" But real-world data tells a completely different story: single-turn Q&A accuracy drops from over 90% in the lab to 70-80% in production; 10-step multi-turn task success rate is only 34.9%; memory retrieval accuracy long context is below 40%. Fiddler AI's report shows that overall Agent failure rates are between 70-95%.\n\nYou can get it running in the lab, but it crashes the moment it goes live. This isn't an optimization problem—it's systematic unreliability.\n\n Layer 5: No One Is Really Using It, But Everyone Is Fundraising\n\nMem0 raised tens of millions of dollars, with nearly 60,000 GitHub Stars. But how many customers are actually running long-term Agents with it in production? Public cases are virtually zero. Most are developers experimenting or large companies' internal PoCs.\n\nAnthropic's memory feature is limited to Managed Agents; OpenAI hasn't opened a general API. They're not supporting an ecosystem—they're building walled gardens. Once large companies launch standardized native memory features, all startups will instantly be reduced to replaceable modules.\n\n Where Is the Core Problem\n\nThe deeper the defect, the more fatal it is. The L1 cognitive ability problem is almost unsolvable—an Agent without self-awareness will always be just an advanced completion tool. L2 memory management defects affect core functionality, L3 architecture fragmentation hinders ecosystem development, L4 performance gaps erode user trust, and L5 unvalidated business models threaten the right to exist.\n\nThe real breakthrough is not in \"storing more,\" but in making the Agent know what it knows, making memory forget and update like a human, and making architectures standardizable and integrable. Otherwise, we're just putting an intelligent coat on a soulless database.\n\nWhen the next fundraising wave recedes, what remains won't be heroes—just sober people. What do you think about the real maturity of the current Agent long-term memory track? In your actual usage scenarios, has the memory function truly solved problems, or created new ones?",
-      "content_html": null,
-      "summary": "Data shows 90% of Agent projects fail in production environments. The problem is not storage capacity, but that memory never truly 'comes alive.' This article dissects five structural defects.",
-      "url": "https://strongya.dev/en/posts/agent-memory-five-defects/",
-      "date_published": "2026-06-05T00:00:00.000Z",
-      "date_modified": "2026-06-05T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Agent",
-        "Long-term Memory",
-        "AI Infrastructure"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-memory-five-defects/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Agent Long-term Memory: Why 90% of Projects Fail in Production. Retrieved from https://strongya.dev/en/posts/agent-memory-five-defects/",
-        "mla": "Arlen. \"Agent Long-term Memory: Why 90% of Projects Fail in Production.\" 2026. Web. 2026-06-05.",
-        "gb": "Arlen. Agent Long-term Memory: Why 90% of Projects Fail in Production[EB/OL]. 2026-06-05. https://strongya.dev/en/posts/agent-memory-five-defects/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 784,
-        "readingTime": 4
-      }
-    },
-    {
       "id": "agent-memory-five-defects.md",
       "slug": "agent-memory-five-defects",
       "title": "Agent长记忆：为什么90%的项目在生产中失败",
@@ -2613,6 +2654,47 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 1157,
+        "readingTime": 4
+      }
+    },
+    {
+      "id": "agent-memory-five-defects.en.md",
+      "slug": "agent-memory-five-defects",
+      "title": "Agent Long-term Memory: Why 90% of Projects Fail in Production",
+      "content_text": " Agent Long-term Memory: Why 90% of Projects Fail in Production\n\nOver the past two years, long-term memory has been packaged as AI Agent's next trillion-dollar track. But data shows that 90% of Agent projects fail in production environments. The problem is not storage capacity—it's that memory never truly \"came alive.\" We dissect five structural defects from bottom to top.\n\n Layer 1: The Agent Doesn't Know What It Knows\n\nThis is the most fundamental cognitive blind spot. LLM context windows are limited, and when the retrieval module returns incorrect information, this content directly consumes precious context space. The model cannot distinguish truth from noise; it can only generate based on input—incorrect retrieval inevitably leads to incorrect output.\n\nThe deeper problem is the absence of meta-memory. A truly intelligent individual should be able to answer \"What do I know? What don't I know?\" But current Agents cannot evaluate the credibility or boundaries of their own memories. They won't say \"I'm not sure\"; they will confidently fabricate answers. This is not a technical problem—it's a fundamental cognitive-level defect.\n\n Layer 2: Memory Doesn't Age or Forget\n\nIf memory cannot metabolize, it's poison. User preferences change, policies update, projects end—but the system still treats old information as truth. Without credibility decay mechanisms or active forgetting strategies, the memory bank only accumulates more and more errors over time.\n\nCross-session identity continuity is also missing. Restart the service, switch model instances, and the Agent \"forgets.\" It doesn't remember you said you wanted to lose weight last week, or that you hate coffee. This isn't a bug; it's a design defect: it has no \"identity,\" only sessions.\n\nTemporal reasoning is another weakness. 70% of questions in human conversation involve chronology or relationships, but current systems can only do keyword matching. It remembers \"what,\" but doesn't understand \"why\" and \"when.\"\n\n Layer 3: Memory Has No Unified \"Operating System\"\n\nThere are three mainstream architectures on the market: 1D vectors, 2D graph structures, 3D layered OS. But no one can say which is the standard. Mem0 uses multi-signal retrieval, Zep does temporal graphs, Letta simulates an operating system—the three are mutually incompatible. Developers have to rewrite adapter layers for each framework, and customers dare not deploy to production.\n\nVector database vendors reduce memory to \"more accurate vector search.\" But memory is not a retrieval result; it's a structured cognitive state. Ignoring semantics, chronology, and relationship modeling is like storing a novel as a keyword list.\n\n Layer 4: Lab Scores ≠ Real-World Performance\n\nAll marketing tells you \"Mem0 achieved 92.5% accuracy on LoCoMo.\" But real-world data tells a completely different story: single-turn Q&A accuracy drops from over 90% in the lab to 70-80% in production; 10-step multi-turn task success rate is only 34.9%; memory retrieval accuracy long context is below 40%. Fiddler AI's report shows that overall Agent failure rates are between 70-95%.\n\nYou can get it running in the lab, but it crashes the moment it goes live. This isn't an optimization problem—it's systematic unreliability.\n\n Layer 5: No One Is Really Using It, But Everyone Is Fundraising\n\nMem0 raised tens of millions of dollars, with nearly 60,000 GitHub Stars. But how many customers are actually running long-term Agents with it in production? Public cases are virtually zero. Most are developers experimenting or large companies' internal PoCs.\n\nAnthropic's memory feature is limited to Managed Agents; OpenAI hasn't opened a general API. They're not supporting an ecosystem—they're building walled gardens. Once large companies launch standardized native memory features, all startups will instantly be reduced to replaceable modules.\n\n Where Is the Core Problem\n\nThe deeper the defect, the more fatal it is. The L1 cognitive ability problem is almost unsolvable—an Agent without self-awareness will always be just an advanced completion tool. L2 memory management defects affect core functionality, L3 architecture fragmentation hinders ecosystem development, L4 performance gaps erode user trust, and L5 unvalidated business models threaten the right to exist.\n\nThe real breakthrough is not in \"storing more,\" but in making the Agent know what it knows, making memory forget and update like a human, and making architectures standardizable and integrable. Otherwise, we're just putting an intelligent coat on a soulless database.\n\nWhen the next fundraising wave recedes, what remains won't be heroes—just sober people. What do you think about the real maturity of the current Agent long-term memory track? In your actual usage scenarios, has the memory function truly solved problems, or created new ones?",
+      "content_html": null,
+      "summary": "Data shows 90% of Agent projects fail in production environments. The problem is not storage capacity, but that memory never truly 'comes alive.' This article dissects five structural defects.",
+      "url": "https://strongya.dev/en/posts/agent-memory-five-defects/",
+      "date_published": "2026-06-05T00:00:00.000Z",
+      "date_modified": "2026-06-05T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Agent",
+        "Long-term Memory",
+        "AI Infrastructure"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-five-defects/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Long-term Memory: Why 90% of Projects Fail in Production. Retrieved from https://strongya.dev/en/posts/agent-memory-five-defects/",
+        "mla": "Arlen. \"Agent Long-term Memory: Why 90% of Projects Fail in Production.\" 2026. Web. 2026-06-05.",
+        "gb": "Arlen. Agent Long-term Memory: Why 90% of Projects Fail in Production[EB/OL]. 2026-06-05. https://strongya.dev/en/posts/agent-memory-five-defects/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 784,
         "readingTime": 4
       }
     },
