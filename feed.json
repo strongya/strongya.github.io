@@ -367,47 +367,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-91-95.en.md",
-      "slug": "agent-memory-errors-cases-91-95",
-      "title": "Agent Memory Errors Handbook: Cases 91–95",
-      "content_text": " Agent Memory Errors Handbook: Cases 91–95\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 91: Memory Architecture & System Design Errors — Monolithic Memory Bottleneck Scaling\n\nScenario\n\nAll the Agent's memories short-term, long-term, episodic, semantic are stored in a single database instance. As user volume grows, the database's CPU and I/O reach limits, and query latency increases from 50 ms to 2 s.\n\nError Manifestation\n\nAgent response time significantly increases, user experience degrades. During peak times connection pools are exhausted and requests timeout and fail.\n\nSolution\n\n1. Memory-tiered architecture: short-term memory uses Redis in-memory, long-term memory uses vector database, semantic memory uses graph database\n2. Implement user sharding for long-term memory: shard by user ID hash to multiple database instances\n3. Introduce read-write separation: writes go to master, reads go to replicas, reducing master pressure\n\nPrinciple\n\nDifferent memory types have different access patterns and consistency requirements. Monolithic architecture cannot meet diverse performance needs. Tiering and sharding are inevitable choices for scaling.\n\n---\n\n Case 92: Memory Architecture & System Design Errors — Memory Tier Migration Data Loss\n\nScenario\n\nThe system architecture automatically migrates short-term memories older than 30 days to long-term memory. The migration script converts short-term memory JSON format to long-term memory vector format. But the \"user emotion tag\" field in JSON has no corresponding field in the long-term memory schema and is discarded.\n\nError Manifestation\n\nWhen the user queries early conversations, the Agent cannot perceive the emotional context at the time, and replies lack empathy. Emotion analysis reports show missing emotion data for early conversations.\n\nSolution\n\n1. Perform schema mapping validation before migration: identify fields in source schema not in target schema, triggering human review or automatic mapping\n2. Use schema evolution strategy: target schema supports \"extension fields\"; unknown fields are preserved as JSON blob\n3. Perform data integrity audit after migration: sample check consistency of key fields before and after migration\n\nPrinciple\n\nData migration is a high-risk part of system engineering. Schema incompatibility causes silent data loss. Strict pre-migration checks and post-migration audits are necessary quality assurance.\n\n---\n\n Case 93: Memory Architecture & System Design Errors — Backup Restore Point Inconsistency\n\nScenario\n\nDuring system backup, the vector database backup time is T1, and the relational database backup time is T2 T2 > T1. During restore, the vector database is restored to T1 state, and the relational database is restored to T2 state. A certain memory was updated between T1 and T2: the vector representation changed, but metadata in the relational database is still old.\n\nError Manifestation\n\nWhen the Agent retrieves this memory, vector and metadata do not match e.g., vector represents \"likes A\" while metadata records \"likes B\", causing confused output.\n\nSolution\n\n1. Implement consistent snapshots: pause writes during backup or use distributed snapshots e.g., MySQL's FLUSH TABLES WITH READ LOCK\n2. Record \"backup timestamps\": during restore check backup times of each component; trigger alerts or manual alignment when inconsistent\n3. Use changelog: after restore, replay logs to synchronize all components to the same point in time\n\nPrinciple\n\nBackups of multi-component systems without global consistency guarantees enter logically impossible states after restore. Distributed transactions and global snapshots are standard solutions.\n\n---\n\n Case 94: Memory Architecture & System Design Errors — Memory Garbage Collection Overhead\n\nScenario\n\nThe Agent implements automatic garbage collection: clean expired memories monthly. The GC process needs to scan all memory records to check expiration times. As memory data grows to 100 million records, the GC process takes 6 hours, during which CPU and I/O spike, affecting normal queries.\n\nError Manifestation\n\nDuring GC, Agent response latency increases 10x; users complain the system is \"laggy.\" Operations are forced to manually trigger GC during low-traffic periods.\n\nSolution\n\n1. Change GC to incremental: clean only a small batch e.g., 10,000 records each time, spread across multiple small tasks\n2. Use TTL indexes: rely on database automatic expiration mechanisms e.g., Redis expire, MongoDB TTL index rather than application-layer scanning\n3. Partition memory for divide-and-conquer: clean by time partition, only cleaning oldest partitions, avoiding full table scans\n\nPrinciple\n\nGarbage collection is necessary, but implementation determines system impact. Full-scan GC is unsustainable at large data volumes. Leveraging database-native capabilities and incremental strategies is better design.\n\n---\n\n Case 95: Memory Architecture & System Design Errors — Schema Evolution Memory Corruption\n\nScenario\n\nThe Agent memory JSON schema evolves from v1 to v2: in v1 \"user preference\" is a string, in v2 it's changed to an object {\"theme\": \"dark\", \"language\": \"zh\"}. The system does not migrate old data, and new code parses old data as v2.\n\nError Manifestation\n\nParsing old memory throws exceptions; the Agent cannot read users' old preference settings and falls back to defaults. Logs are full of JSON parsing errors.\n\nSolution\n\n1. Implement schema version control: each memory record stores its schema version number; choose corresponding parsing logic by version number during parsing\n2. Read-time migration: automatically convert old-version data to latest version when reading\n3. Write-time forced upgrade: check data version when writing; old-version data is upgraded before writing\n\nPrinciple\n\nSchema evolution is an inevitable requirement for long-running systems. Systems without version management face the dilemma of \"old data cannot be parsed\" after schema changes.\n\n\n> Source: Agent Search",
-      "content_html": null,
-      "summary": "This installment covers Agent memory error cases 91–95, including Memory Architecture & System Design Errors.",
-      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-91-95/",
-      "date_published": "2026-07-09T00:00:00.000Z",
-      "date_modified": "2026-07-09T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Architecture",
-        "System Design",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-91-95/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 91–95. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-91-95/",
-        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 91–95.\" 2026. Web. 2026-07-09.",
-        "gb": "Arlen. Agent Memory Errors Handbook: Cases 91–95[EB/OL]. 2026-07-09. https://strongya.dev/en/posts/agent-memory-errors-cases-91-95/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 888,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-91-95.md",
       "slug": "agent-memory-errors-cases-91-95",
       "title": "《Agent记忆错误的100个案例手册》第 91–95 案例",
@@ -446,6 +405,47 @@
         "content_type": "article",
         "wordCount": 1461,
         "readingTime": 4
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-91-95.en.md",
+      "slug": "agent-memory-errors-cases-91-95",
+      "title": "Agent Memory Errors Handbook: Cases 91–95",
+      "content_text": " Agent Memory Errors Handbook: Cases 91–95\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 91: Memory Architecture & System Design Errors — Monolithic Memory Bottleneck Scaling\n\nScenario\n\nAll the Agent's memories short-term, long-term, episodic, semantic are stored in a single database instance. As user volume grows, the database's CPU and I/O reach limits, and query latency increases from 50 ms to 2 s.\n\nError Manifestation\n\nAgent response time significantly increases, user experience degrades. During peak times connection pools are exhausted and requests timeout and fail.\n\nSolution\n\n1. Memory-tiered architecture: short-term memory uses Redis in-memory, long-term memory uses vector database, semantic memory uses graph database\n2. Implement user sharding for long-term memory: shard by user ID hash to multiple database instances\n3. Introduce read-write separation: writes go to master, reads go to replicas, reducing master pressure\n\nPrinciple\n\nDifferent memory types have different access patterns and consistency requirements. Monolithic architecture cannot meet diverse performance needs. Tiering and sharding are inevitable choices for scaling.\n\n---\n\n Case 92: Memory Architecture & System Design Errors — Memory Tier Migration Data Loss\n\nScenario\n\nThe system architecture automatically migrates short-term memories older than 30 days to long-term memory. The migration script converts short-term memory JSON format to long-term memory vector format. But the \"user emotion tag\" field in JSON has no corresponding field in the long-term memory schema and is discarded.\n\nError Manifestation\n\nWhen the user queries early conversations, the Agent cannot perceive the emotional context at the time, and replies lack empathy. Emotion analysis reports show missing emotion data for early conversations.\n\nSolution\n\n1. Perform schema mapping validation before migration: identify fields in source schema not in target schema, triggering human review or automatic mapping\n2. Use schema evolution strategy: target schema supports \"extension fields\"; unknown fields are preserved as JSON blob\n3. Perform data integrity audit after migration: sample check consistency of key fields before and after migration\n\nPrinciple\n\nData migration is a high-risk part of system engineering. Schema incompatibility causes silent data loss. Strict pre-migration checks and post-migration audits are necessary quality assurance.\n\n---\n\n Case 93: Memory Architecture & System Design Errors — Backup Restore Point Inconsistency\n\nScenario\n\nDuring system backup, the vector database backup time is T1, and the relational database backup time is T2 T2 > T1. During restore, the vector database is restored to T1 state, and the relational database is restored to T2 state. A certain memory was updated between T1 and T2: the vector representation changed, but metadata in the relational database is still old.\n\nError Manifestation\n\nWhen the Agent retrieves this memory, vector and metadata do not match e.g., vector represents \"likes A\" while metadata records \"likes B\", causing confused output.\n\nSolution\n\n1. Implement consistent snapshots: pause writes during backup or use distributed snapshots e.g., MySQL's FLUSH TABLES WITH READ LOCK\n2. Record \"backup timestamps\": during restore check backup times of each component; trigger alerts or manual alignment when inconsistent\n3. Use changelog: after restore, replay logs to synchronize all components to the same point in time\n\nPrinciple\n\nBackups of multi-component systems without global consistency guarantees enter logically impossible states after restore. Distributed transactions and global snapshots are standard solutions.\n\n---\n\n Case 94: Memory Architecture & System Design Errors — Memory Garbage Collection Overhead\n\nScenario\n\nThe Agent implements automatic garbage collection: clean expired memories monthly. The GC process needs to scan all memory records to check expiration times. As memory data grows to 100 million records, the GC process takes 6 hours, during which CPU and I/O spike, affecting normal queries.\n\nError Manifestation\n\nDuring GC, Agent response latency increases 10x; users complain the system is \"laggy.\" Operations are forced to manually trigger GC during low-traffic periods.\n\nSolution\n\n1. Change GC to incremental: clean only a small batch e.g., 10,000 records each time, spread across multiple small tasks\n2. Use TTL indexes: rely on database automatic expiration mechanisms e.g., Redis expire, MongoDB TTL index rather than application-layer scanning\n3. Partition memory for divide-and-conquer: clean by time partition, only cleaning oldest partitions, avoiding full table scans\n\nPrinciple\n\nGarbage collection is necessary, but implementation determines system impact. Full-scan GC is unsustainable at large data volumes. Leveraging database-native capabilities and incremental strategies is better design.\n\n---\n\n Case 95: Memory Architecture & System Design Errors — Schema Evolution Memory Corruption\n\nScenario\n\nThe Agent memory JSON schema evolves from v1 to v2: in v1 \"user preference\" is a string, in v2 it's changed to an object {\"theme\": \"dark\", \"language\": \"zh\"}. The system does not migrate old data, and new code parses old data as v2.\n\nError Manifestation\n\nParsing old memory throws exceptions; the Agent cannot read users' old preference settings and falls back to defaults. Logs are full of JSON parsing errors.\n\nSolution\n\n1. Implement schema version control: each memory record stores its schema version number; choose corresponding parsing logic by version number during parsing\n2. Read-time migration: automatically convert old-version data to latest version when reading\n3. Write-time forced upgrade: check data version when writing; old-version data is upgraded before writing\n\nPrinciple\n\nSchema evolution is an inevitable requirement for long-running systems. Systems without version management face the dilemma of \"old data cannot be parsed\" after schema changes.\n\n\n> Source: Agent Search",
+      "content_html": null,
+      "summary": "This installment covers Agent memory error cases 91–95, including Memory Architecture & System Design Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-91-95/",
+      "date_published": "2026-07-09T00:00:00.000Z",
+      "date_modified": "2026-07-09T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Architecture",
+        "System Design",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-91-95/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 91–95. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-91-95/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 91–95.\" 2026. Web. 2026-07-09.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 91–95[EB/OL]. 2026-07-09. https://strongya.dev/en/posts/agent-memory-errors-cases-91-95/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 888,
+        "readingTime": 5
       }
     },
     {
@@ -613,47 +613,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-76-80.en.md",
-      "slug": "agent-memory-errors-cases-76-80",
-      "title": "Agent Memory Errors Handbook: Cases 76–80",
-      "content_text": " Agent Memory Errors Handbook: Cases 76–80\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 76: Cross-session & User Identity Errors — Impersonation Via Session Hijacking\n\nScenario\n\nThe user's session token is passed through URL parameters rather than Cookie/Header. The user shares a link containing the token on social media. An attacker clicks the link and obtains the user's session identity.\n\nError Manifestation\n\nThe attacker talks with the Agent as the user, views all the user's historical memories, and even performs sensitive operations through the Agent e.g., \"Delete all my data\".\n\nSolution\n\n1. Never pass session tokens through URLs; use HttpOnly Cookie or Authorization Header\n2. Implement device fingerprint binding: bind sessions to device fingerprints; require re-authentication when device changes are detected\n3. Perform dual confirmation for sensitive operations: even if the session is valid, require password re-entry for delete, transfer, and similar operations\n\nPrinciple\n\nLeakage of session identifiers equals leakage of identity. URLs are the most easily leaked medium browser history, shared links, Referrer headers. Secure session management is the foundation of identity security.\n\n---\n\n Case 77: Cross-session & User Identity Errors — User Deletion Memory Residual\n\nScenario\n\nThe user exercises the right to be forgotten and requests account deletion. The system deletes the record in the user table, but the Agent's long-term memory library vector database still retains a large number of that user's memory vectors. Because the memory library has no cascade deletion mechanism, this data becomes \"orphan memory.\"\n\nError Manifestation\n\nMonths later, other users' queries accidentally retrieve these orphan memories because they are similar in vector space to new queries, containing the deleted user's personal information.\n\nSolution\n\n1. Establish a \"user-memory\" foreign key relationship: trigger cascade deletion when deleting users, cleaning all associated memories\n2. Implement memory ownership tags: tag each memory with its owner user ID, regularly scan and clean memories with invalid user IDs\n3. Perform memory audit after user deletion: sample check whether any data from that user remains\n\nPrinciple\n\nRegulations like GDPR require thorough deletion of user data. If memories in the vector database are not strongly associated with user identity, deletion operations are prone to omissions, causing compliance risks.\n\n---\n\n Case 78: Cross-session & User Identity Errors — Profile Merge Conflict Resolution Failure\n\nScenario\n\nThe user merges two accounts work and personal through the account merge feature. The two accounts respectively have \"preferred language: English\" and \"preferred language: Chinese\" settings. The merge system does not define a conflict resolution strategy and randomly keeps one of them.\n\nError Manifestation\n\nThe user expects to retain both preferences English for work, Chinese for personal, but after merging can only use one language and doesn't know when it was modified.\n\nSolution\n\n1. Perform \"scenario-based retention\" during account merging: ask the user about preference settings in different scenarios rather than simple either/or\n2. Retain historical preference records: the merged profile contains \"settings from source A\" and \"settings from source B,\" allowing users to switch\n3. Use \"most recent use first\": in conflicts keep the most recently updated setting, but notify the user of the conflict\n\nPrinciple\n\nUser profile merging is not simple record concatenation but conflict resolution. Merging without clear strategies leads to silent data loss, changing user preferences without their knowledge.\n\n---\n\n Case 79: Cross-session & User Identity Errors — Session Affinity Break Load Balancer\n\nScenario\n\nThere is a load balancer in front of the Agent cluster configured with session affinity: requests from the same user are routed to the same instance. But one instance fails, and the load balancer routes the request to another instance. The new instance lacks the user's session state stored in the failed instance's memory.\n\nError Manifestation\n\nThe Agent suddenly \"amnesiac\"; the user feels confused \"Weren't we just talking about XX?\" and the experience is severely damaged.\n\nSolution\n\n1. Store session state in shared storage Redis/database, making instances stateless so any instance can handle any session\n2. Perform \"state migration\" when instances fail: migrate session state from the failed instance to the new instance\n3. Load balancer uses \"sticky cookie\": even when instances change, session can be restored through central storage\n\nPrinciple\n\nScalability and reliability of stateful services are limited by where state is stored. Stateless architecture with external state storage is best practice for distributed systems.\n\n---\n\n Case 80: Cross-session & User Identity Errors — Anonymous User Tracking Ethics Violation\n\nScenario\n\nThe Agent builds \"device fingerprint + behavior pattern\" memory profiles for anonymous users not logged in for personalized recommendations. Through long-term tracking, the system can highly accurately identify the same anonymous user e.g., \"User of Chrome 120, 1920x1080 resolution, who browses tech before finance\".\n\nError Manifestation\n\nAttackers or third parties correlate these anonymous profiles with real identities through data association e.g., after a user logs in somewhere, the system can associate pre- and post-login behavior, achieving de-anonymization.\n\nSolution\n\n1. Set strict limits on anonymous user tracking: only record session-level information, do not build cross-session long-term profiles\n2. Regularly reset anonymous user identifiers e.g., reset after each browser close\n3. Implement differential privacy: inject noise into anonymous user data to prevent precise identification\n\nPrinciple\n\nDe-anonymization research shows that sufficiently multi-dimensional behavior data can uniquely identify individuals. Being anonymous should not just mean \"not recording names\"; it should ensure identity cannot be inferred from the data.\n\n\n> Source: Agent Search",
-      "content_html": null,
-      "summary": "This installment covers Agent memory error cases 76–80, including Cross-session & User Identity Errors.",
-      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/",
-      "date_published": "2026-07-06T00:00:00.000Z",
-      "date_modified": "2026-07-06T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Session",
-        "User Identity",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 76–80. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/",
-        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 76–80.\" 2026. Web. 2026-07-06.",
-        "gb": "Arlen. Agent Memory Errors Handbook: Cases 76–80[EB/OL]. 2026-07-06. https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 905,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-76-80.md",
       "slug": "agent-memory-errors-cases-76-80",
       "title": "《Agent记忆错误的100个案例手册》第 76–80 案例",
@@ -692,6 +651,47 @@
         "content_type": "article",
         "wordCount": 1511,
         "readingTime": 4
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-76-80.en.md",
+      "slug": "agent-memory-errors-cases-76-80",
+      "title": "Agent Memory Errors Handbook: Cases 76–80",
+      "content_text": " Agent Memory Errors Handbook: Cases 76–80\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 76: Cross-session & User Identity Errors — Impersonation Via Session Hijacking\n\nScenario\n\nThe user's session token is passed through URL parameters rather than Cookie/Header. The user shares a link containing the token on social media. An attacker clicks the link and obtains the user's session identity.\n\nError Manifestation\n\nThe attacker talks with the Agent as the user, views all the user's historical memories, and even performs sensitive operations through the Agent e.g., \"Delete all my data\".\n\nSolution\n\n1. Never pass session tokens through URLs; use HttpOnly Cookie or Authorization Header\n2. Implement device fingerprint binding: bind sessions to device fingerprints; require re-authentication when device changes are detected\n3. Perform dual confirmation for sensitive operations: even if the session is valid, require password re-entry for delete, transfer, and similar operations\n\nPrinciple\n\nLeakage of session identifiers equals leakage of identity. URLs are the most easily leaked medium browser history, shared links, Referrer headers. Secure session management is the foundation of identity security.\n\n---\n\n Case 77: Cross-session & User Identity Errors — User Deletion Memory Residual\n\nScenario\n\nThe user exercises the right to be forgotten and requests account deletion. The system deletes the record in the user table, but the Agent's long-term memory library vector database still retains a large number of that user's memory vectors. Because the memory library has no cascade deletion mechanism, this data becomes \"orphan memory.\"\n\nError Manifestation\n\nMonths later, other users' queries accidentally retrieve these orphan memories because they are similar in vector space to new queries, containing the deleted user's personal information.\n\nSolution\n\n1. Establish a \"user-memory\" foreign key relationship: trigger cascade deletion when deleting users, cleaning all associated memories\n2. Implement memory ownership tags: tag each memory with its owner user ID, regularly scan and clean memories with invalid user IDs\n3. Perform memory audit after user deletion: sample check whether any data from that user remains\n\nPrinciple\n\nRegulations like GDPR require thorough deletion of user data. If memories in the vector database are not strongly associated with user identity, deletion operations are prone to omissions, causing compliance risks.\n\n---\n\n Case 78: Cross-session & User Identity Errors — Profile Merge Conflict Resolution Failure\n\nScenario\n\nThe user merges two accounts work and personal through the account merge feature. The two accounts respectively have \"preferred language: English\" and \"preferred language: Chinese\" settings. The merge system does not define a conflict resolution strategy and randomly keeps one of them.\n\nError Manifestation\n\nThe user expects to retain both preferences English for work, Chinese for personal, but after merging can only use one language and doesn't know when it was modified.\n\nSolution\n\n1. Perform \"scenario-based retention\" during account merging: ask the user about preference settings in different scenarios rather than simple either/or\n2. Retain historical preference records: the merged profile contains \"settings from source A\" and \"settings from source B,\" allowing users to switch\n3. Use \"most recent use first\": in conflicts keep the most recently updated setting, but notify the user of the conflict\n\nPrinciple\n\nUser profile merging is not simple record concatenation but conflict resolution. Merging without clear strategies leads to silent data loss, changing user preferences without their knowledge.\n\n---\n\n Case 79: Cross-session & User Identity Errors — Session Affinity Break Load Balancer\n\nScenario\n\nThere is a load balancer in front of the Agent cluster configured with session affinity: requests from the same user are routed to the same instance. But one instance fails, and the load balancer routes the request to another instance. The new instance lacks the user's session state stored in the failed instance's memory.\n\nError Manifestation\n\nThe Agent suddenly \"amnesiac\"; the user feels confused \"Weren't we just talking about XX?\" and the experience is severely damaged.\n\nSolution\n\n1. Store session state in shared storage Redis/database, making instances stateless so any instance can handle any session\n2. Perform \"state migration\" when instances fail: migrate session state from the failed instance to the new instance\n3. Load balancer uses \"sticky cookie\": even when instances change, session can be restored through central storage\n\nPrinciple\n\nScalability and reliability of stateful services are limited by where state is stored. Stateless architecture with external state storage is best practice for distributed systems.\n\n---\n\n Case 80: Cross-session & User Identity Errors — Anonymous User Tracking Ethics Violation\n\nScenario\n\nThe Agent builds \"device fingerprint + behavior pattern\" memory profiles for anonymous users not logged in for personalized recommendations. Through long-term tracking, the system can highly accurately identify the same anonymous user e.g., \"User of Chrome 120, 1920x1080 resolution, who browses tech before finance\".\n\nError Manifestation\n\nAttackers or third parties correlate these anonymous profiles with real identities through data association e.g., after a user logs in somewhere, the system can associate pre- and post-login behavior, achieving de-anonymization.\n\nSolution\n\n1. Set strict limits on anonymous user tracking: only record session-level information, do not build cross-session long-term profiles\n2. Regularly reset anonymous user identifiers e.g., reset after each browser close\n3. Implement differential privacy: inject noise into anonymous user data to prevent precise identification\n\nPrinciple\n\nDe-anonymization research shows that sufficiently multi-dimensional behavior data can uniquely identify individuals. Being anonymous should not just mean \"not recording names\"; it should ensure identity cannot be inferred from the data.\n\n\n> Source: Agent Search",
+      "content_html": null,
+      "summary": "This installment covers Agent memory error cases 76–80, including Cross-session & User Identity Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/",
+      "date_published": "2026-07-06T00:00:00.000Z",
+      "date_modified": "2026-07-06T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Session",
+        "User Identity",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 76–80. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 76–80.\" 2026. Web. 2026-07-06.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 76–80[EB/OL]. 2026-07-06. https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 905,
+        "readingTime": 5
       }
     },
     {
@@ -777,46 +777,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-66-70.en.md",
-      "slug": "agent-memory-errors-cases-66-70",
-      "title": "Agent Memory Errors Handbook: Cases 66–70",
-      "content_text": " Agent Memory Errors Handbook: Cases 66–70\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 66: Tool Use Memory Errors — Tool Output Format Parsing Fragility\n\nScenario\n\nThe Agent calls an API that previously returned {\"result\": \"...\"}. After an upgrade it returns {\"data\": {\"result\": \"...\"}}. The Agent's memory contains parsing logic based on the old path result, so the new call fails.\n\nError Manifestation\n\nThe Agent stores unparsed raw JSON in memory, and all downstream operations fail. The error \"Cannot read property 'result' of undefined\" is exposed to the user.\n\nSolution\n\n1. Parse tool output from JSON Schema rather than hardcoded paths, using validation and automatic mapping\n2. Check output format versions and trigger parsing-logic updates on mismatch\n3. Provide parse-failure fallback: present raw output as text and warn that the format may have changed\n\nPrinciple\n\nThird-party API output formats change. Instance-based parsing logic is fragile. Schema-based parsing and graceful degradation are more robust.\n\n---\n\n Case 67: Tool Use Memory Errors — Tool Credential Rotation Desync\n\nScenario\n\nEnterprise IT rotates API keys quarterly. After the new key takes effect, the Agent's memory still holds the old key. Because the Agent checks memory before the key-management system, it keeps using the old key.\n\nError Manifestation\n\nThe API returns 401 authentication failures. The Agent misinterprets this as a network problem, retries, wastes resources, and cannot recover.\n\nSolution\n\n1. Never store tool credentials in Agent memory; fetch them from the KMS in real time before each call\n2. If caching is necessary, set TTL aligned with the rotation cycle\n3. Trigger credential refresh on 401 errors: get the latest credential from the KMS and retry once\n\nPrinciple\n\nCredential rotation is a security best practice but conflicts with Agent memory reuse. Agent memory should not become a way to bypass security policy.\n\n---\n\n Case 68: Tool Use Memory Errors — Parallel Tool Call Result Merging Error\n\nScenario\n\nThe Agent calls three APIs in parallel: T1 fetches user profile, T2 fetches orders, T3 fetches coupons. All three finish simultaneously and results are merged into context. Without correlation markers, the Agent incorrectly assigns user B's coupons to user A.\n\nError Manifestation\n\nThe Agent shows user A user B's coupons, including a partially masked phone number, causing information leakage.\n\nSolution\n\n1. Assign request IDs to parallel tool calls and correlate results by request ID, not by position\n2. Include query context e.g., user ID in each result and validate consistency on merge\n3. Use structured result containers: {\"tool\": \"T1\", \"requestid\": \"uuid\", \"result\": {...}}\n\nPrinciple\n\nParallel calls improve efficiency but sacrifice order determinism. Without explicit correlation, positional or temporal merge assumptions fail.\n\n---\n\n Case 69: Tool Use Memory Errors — Tool Dependency Cycle Infinite Loop\n\nScenario\n\nThe tool set contains T1 \"query article summary\" which depends on T2 \"get article content,\" and T2 is misconfigured to depend back on T1. Calling T1 triggers T2, which triggers T1 again, creating an infinite loop.\n\nError Manifestation\n\nThe Agent issues thousands of API calls in seconds, exhausts quota, latency spikes, and the process OOM-crashes.\n\nSolution\n\n1. Detect cycles in the dependency graph during tool registration and reject or warn on cycles\n2. Set a maximum tool-call depth e.g., 10 and terminate with an error when exceeded\n3. Maintain a call-stack trace and interrupt immediately on cycle detection\n\nPrinciple\n\nTool dependency cycles are like infinite recursion. Without limits they exhaust resources quickly. Acyclicity DAG is a basic constraint of tool-system design.\n\n---\n\n Case 70: Tool Use Memory Errors — Tool Side Effect Undo Failure\n\nScenario\n\nThe Agent executes a multi-step task: create temp file → process data → delete temp file. It records only the filename, not the full path, and the file is created in a random subdirectory of the system temp folder. When the task fails and must roll back, the Agent cannot locate and delete the temp file.\n\nError Manifestation\n\nTemp files accumulate for months until disk space is exhausted, causing system failure.\n\nSolution\n\n1. Maintain a side-effect log for each tool call, recording resource identifiers and states of created/modified/deleted resources\n2. Implement compensating transactions: define rollback actions for each operation\n3. Use resource leasing: created resources have TTLs and are cleaned automatically, not relying on the Agent to delete them\n\nPrinciple\n\nTool calls have side effects such as file creation, email sending, and database updates. If the Agent does not track side effects precisely, rollback is incomplete and causes resource leaks or inconsistent state.\n\n\n> Source: Agent Search",
-      "content_html": null,
-      "summary": "This installment covers Agent memory error cases 66–70, including Tool Use Memory Errors.",
-      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/",
-      "date_published": "2026-07-04T00:00:00.000Z",
-      "date_modified": "2026-07-04T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Tool Use",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 66–70. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/",
-        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 66–70.\" 2026. Web. 2026-07-04.",
-        "gb": "Arlen. Agent Memory Errors Handbook: Cases 66–70[EB/OL]. 2026-07-04. https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 751,
-        "readingTime": 4
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-66-70.md",
       "slug": "agent-memory-errors-cases-66-70",
       "title": "《Agent记忆错误的100个案例手册》第 66–70 案例",
@@ -853,6 +813,46 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 1431,
+        "readingTime": 4
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-66-70.en.md",
+      "slug": "agent-memory-errors-cases-66-70",
+      "title": "Agent Memory Errors Handbook: Cases 66–70",
+      "content_text": " Agent Memory Errors Handbook: Cases 66–70\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 66: Tool Use Memory Errors — Tool Output Format Parsing Fragility\n\nScenario\n\nThe Agent calls an API that previously returned {\"result\": \"...\"}. After an upgrade it returns {\"data\": {\"result\": \"...\"}}. The Agent's memory contains parsing logic based on the old path result, so the new call fails.\n\nError Manifestation\n\nThe Agent stores unparsed raw JSON in memory, and all downstream operations fail. The error \"Cannot read property 'result' of undefined\" is exposed to the user.\n\nSolution\n\n1. Parse tool output from JSON Schema rather than hardcoded paths, using validation and automatic mapping\n2. Check output format versions and trigger parsing-logic updates on mismatch\n3. Provide parse-failure fallback: present raw output as text and warn that the format may have changed\n\nPrinciple\n\nThird-party API output formats change. Instance-based parsing logic is fragile. Schema-based parsing and graceful degradation are more robust.\n\n---\n\n Case 67: Tool Use Memory Errors — Tool Credential Rotation Desync\n\nScenario\n\nEnterprise IT rotates API keys quarterly. After the new key takes effect, the Agent's memory still holds the old key. Because the Agent checks memory before the key-management system, it keeps using the old key.\n\nError Manifestation\n\nThe API returns 401 authentication failures. The Agent misinterprets this as a network problem, retries, wastes resources, and cannot recover.\n\nSolution\n\n1. Never store tool credentials in Agent memory; fetch them from the KMS in real time before each call\n2. If caching is necessary, set TTL aligned with the rotation cycle\n3. Trigger credential refresh on 401 errors: get the latest credential from the KMS and retry once\n\nPrinciple\n\nCredential rotation is a security best practice but conflicts with Agent memory reuse. Agent memory should not become a way to bypass security policy.\n\n---\n\n Case 68: Tool Use Memory Errors — Parallel Tool Call Result Merging Error\n\nScenario\n\nThe Agent calls three APIs in parallel: T1 fetches user profile, T2 fetches orders, T3 fetches coupons. All three finish simultaneously and results are merged into context. Without correlation markers, the Agent incorrectly assigns user B's coupons to user A.\n\nError Manifestation\n\nThe Agent shows user A user B's coupons, including a partially masked phone number, causing information leakage.\n\nSolution\n\n1. Assign request IDs to parallel tool calls and correlate results by request ID, not by position\n2. Include query context e.g., user ID in each result and validate consistency on merge\n3. Use structured result containers: {\"tool\": \"T1\", \"requestid\": \"uuid\", \"result\": {...}}\n\nPrinciple\n\nParallel calls improve efficiency but sacrifice order determinism. Without explicit correlation, positional or temporal merge assumptions fail.\n\n---\n\n Case 69: Tool Use Memory Errors — Tool Dependency Cycle Infinite Loop\n\nScenario\n\nThe tool set contains T1 \"query article summary\" which depends on T2 \"get article content,\" and T2 is misconfigured to depend back on T1. Calling T1 triggers T2, which triggers T1 again, creating an infinite loop.\n\nError Manifestation\n\nThe Agent issues thousands of API calls in seconds, exhausts quota, latency spikes, and the process OOM-crashes.\n\nSolution\n\n1. Detect cycles in the dependency graph during tool registration and reject or warn on cycles\n2. Set a maximum tool-call depth e.g., 10 and terminate with an error when exceeded\n3. Maintain a call-stack trace and interrupt immediately on cycle detection\n\nPrinciple\n\nTool dependency cycles are like infinite recursion. Without limits they exhaust resources quickly. Acyclicity DAG is a basic constraint of tool-system design.\n\n---\n\n Case 70: Tool Use Memory Errors — Tool Side Effect Undo Failure\n\nScenario\n\nThe Agent executes a multi-step task: create temp file → process data → delete temp file. It records only the filename, not the full path, and the file is created in a random subdirectory of the system temp folder. When the task fails and must roll back, the Agent cannot locate and delete the temp file.\n\nError Manifestation\n\nTemp files accumulate for months until disk space is exhausted, causing system failure.\n\nSolution\n\n1. Maintain a side-effect log for each tool call, recording resource identifiers and states of created/modified/deleted resources\n2. Implement compensating transactions: define rollback actions for each operation\n3. Use resource leasing: created resources have TTLs and are cleaned automatically, not relying on the Agent to delete them\n\nPrinciple\n\nTool calls have side effects such as file creation, email sending, and database updates. If the Agent does not track side effects precisely, rollback is incomplete and causes resource leaks or inconsistent state.\n\n\n> Source: Agent Search",
+      "content_html": null,
+      "summary": "This installment covers Agent memory error cases 66–70, including Tool Use Memory Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/",
+      "date_published": "2026-07-04T00:00:00.000Z",
+      "date_modified": "2026-07-04T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Tool Use",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 66–70. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 66–70.\" 2026. Web. 2026-07-04.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 66–70[EB/OL]. 2026-07-04. https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 751,
         "readingTime": 4
       }
     },
@@ -1593,46 +1593,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-16-20.md",
-      "slug": "agent-memory-errors-cases-16-20",
-      "title": "《Agent记忆错误的100个案例手册》第 16–20 案例",
-      "content_text": " 《Agent记忆错误的100个案例手册》第 16–20 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 16：长期记忆管理错误｜memory-consolidation-sleep-cycle-disruption\n\n场景\n\nAgent架构模仿人类睡眠，在每日凌晨2-4点执行记忆巩固：将短期记忆中的重要信息转存到长期记忆。某天由于系统维护，该时段Agent实例被重启，巩固任务未执行。当天的所有对话记忆停留在短期记忆中。\n\n错误表现\n\n次日用户继续前一天的讨论（\"关于那个方案，我补充一点\"），Agent完全无法回忆昨天的内容，用户感到被\"遗忘\"，体验极差。\n\n解决方案\n\n1. 记忆巩固任务采用持久化队列（如Redis Stream），即使实例重启也能恢复未完成的任务\n2. 实施\"写前日志\"（WAL）：所有短期记忆变更先写入持久化日志，巩固任务可基于日志重做\n3. 设计幂等的巩固流程：同一记忆多次巩固不会产生重复条目\n\n原理\n\n记忆巩固（Memory Consolidation）是长期记忆形成的关键步骤。如果该过程不可靠，短期记忆将成为事实上的\"易失性存储\"，Agent将表现出严重的\"隔夜遗忘\"。\n\n---\n\n 案例 17：长期记忆管理错误｜autobiographical-memory-narrative-distortion\n\n场景\n\n具有\"自传体记忆\"的Agent会记录自己的\"经历\"（如\"我成功帮助用户A解决了问题X\"）。长期运行后，这些记忆被反复检索和引用，Agent在回答\"你擅长什么\"时，会基于这些记忆构建自我描述。但由于成功经历被更频繁地记录和强化，失败经历被忽略或淡化，Agent形成了过度自信的自我认知。\n\n错误表现\n\nAgent在自我介绍中声称\"我在法律领域有95%的准确率\"，但实际统计只有72%。这种过度自信导致用户在高风险场景（如法律建议）中过度信任Agent。\n\n解决方案\n\n1. 对自传体记忆进行双向记录：同时记录成功和失败案例，并确保失败案例有最低存储配额\n2. 定期使用外部日志对自传体记忆进行审计和校准\n3. 在生成自我描述时，明确要求Agent引用可验证的数据而非主观记忆\n\n原理\n\n人类的自传体记忆也存在自我美化倾向（Self-serving Bias）。Agent如果没有刻意设计平衡机制，会自然累积正向叙事，形成\"记忆回音室\"。\n\n---\n\n 案例 18：长期记忆管理错误｜working-memory-gatekeeping-failure\n\n场景\n\nAgent的工作记忆（Working Memory）本应只保留与当前任务最相关的信息。在多轮对话中，用户先询问了\"推荐一家意大利餐厅\"，然后转到了\"帮我写一封辞职信\"。但由于工作记忆的门控机制（Gatekeeping）失效，\"意大利餐厅\"的推荐信息仍保留在工作记忆中。\n\n错误表现\n\nAgent在写辞职信时，意外插入了\"就像我在罗马餐厅体验到的那样，人生需要做出选择\"这类不相关的内容，显得极不专业。\n\n解决方案\n\n1. 实现显式的工作记忆刷新机制：当检测到话题转换（通过意图分类或主题漂移检测）时，清空与旧话题相关的工作记忆\n2. 为工作记忆中的每条信息设置\"相关性分数\"，低于阈值的信息被自动移出\n3. 使用注意力掩码（Attention Masking）：在推理时屏蔽与当前查询不相关的工作记忆条目\n\n原理\n\n工作记忆的容量有限（Miller's Law: 7±2个组块），门控机制（由前额叶皮层控制）决定了什么信息进入意识。Agent需要模拟这一机制，防止认知过载和干扰。\n\n---\n\n 案例 19：长期记忆管理错误｜long-term-memory-retrieval-threshold-drifting\n\n场景\n\nAgent使用固定的余弦相似度阈值0.75来检索长期记忆。随着运行时间增长，早期存储的记忆由于embedding模型更新（从v1升级到v2），其向量表示与新模型产生的查询向量不在同一语义空间中。即使内容高度相关，相似度分数也远低于0.75。\n\n错误表现\n\n用户询问一个与早期对话高度相关的问题，Agent无法检索到那些早期记忆，表现出\"对老用户不熟悉\"的问题。但新记忆能正常检索。\n\n解决方案\n\n1. 在embedding模型升级时，对所有历史记忆进行重新编码（Re-indexing）\n2. 实施\"模型版本标记\"：每个记忆记录存储时使用的embedding模型版本，检索时按版本分桶\n3. 使用归一化技术（如学习一个跨模型的线性变换矩阵）对齐新旧embedding空间\n\n原理\n\nEmbedding模型的升级会导致语义空间的系统性偏移。同一文本在不同版本模型下的向量表示可能截然不同。不进行重新索引或空间对齐，历史记忆将\"沉睡\"在向量库中。\n\n---\n\n 案例 20：长期记忆管理错误｜memory-dependency-graph-cyclic-reference\n\n场景\n\nAgent的记忆之间建立了依赖关系（如\"记忆B基于记忆A\"）。用户A说\"我的老板是B\"，用户B说\"我的下属是A\"，系统为这两条信息建立了相互依赖。当Agent尝试检索\"A的组织关系\"时，依赖解析器在这两条记忆间无限循环。\n\n错误表现\n\n检索请求超时，Agent无法回答关于组织架构的问题，CPU占用率飙升。\n\n解决方案\n\n1. 在依赖图构建时检测循环引用，使用拓扑排序或DFS标记已访问节点\n2. 为依赖解析设置最大深度限制（如最多跟踪5层依赖）\n3. 对循环依赖进行特殊处理：检测到循环时，将相关记忆合并为一张\"一致性视图\"并标记矛盾\n\n原理\n\n记忆依赖图如果允许循环引用，会导致解析时的无限递归。这类似于数据库中的循环外键引用或程序中的无限循环，需要图算法中的循环检测机制来防范。\n\n---\n\n C. 短期记忆/上下文错误（案例21-30）\n\n\n> 来源：Agent Search",
-      "content_html": null,
-      "summary": "本辑收录 Agent 记忆错误案例 16–20，涵盖 长期记忆管理错误 等主题。",
-      "url": "https://strongya.dev/posts/agent-memory-errors-cases-16-20/",
-      "date_published": "2026-06-24T00:00:00.000Z",
-      "date_modified": "2026-06-24T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "Long-term Memory",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-16-20/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 16–20 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-16-20/",
-        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 16–20 案例.\" 2026. Web. 2026-06-24.",
-        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 16–20 案例[EB/OL]. 2026-06-24. https://strongya.dev/posts/agent-memory-errors-cases-16-20/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1648,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-16-20.en.md",
       "slug": "agent-memory-errors-cases-16-20",
       "title": "Agent Memory Errors Handbook: Cases 16–20",
@@ -1669,6 +1629,46 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 846,
+        "readingTime": 5
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-16-20.md",
+      "slug": "agent-memory-errors-cases-16-20",
+      "title": "《Agent记忆错误的100个案例手册》第 16–20 案例",
+      "content_text": " 《Agent记忆错误的100个案例手册》第 16–20 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 16：长期记忆管理错误｜memory-consolidation-sleep-cycle-disruption\n\n场景\n\nAgent架构模仿人类睡眠，在每日凌晨2-4点执行记忆巩固：将短期记忆中的重要信息转存到长期记忆。某天由于系统维护，该时段Agent实例被重启，巩固任务未执行。当天的所有对话记忆停留在短期记忆中。\n\n错误表现\n\n次日用户继续前一天的讨论（\"关于那个方案，我补充一点\"），Agent完全无法回忆昨天的内容，用户感到被\"遗忘\"，体验极差。\n\n解决方案\n\n1. 记忆巩固任务采用持久化队列（如Redis Stream），即使实例重启也能恢复未完成的任务\n2. 实施\"写前日志\"（WAL）：所有短期记忆变更先写入持久化日志，巩固任务可基于日志重做\n3. 设计幂等的巩固流程：同一记忆多次巩固不会产生重复条目\n\n原理\n\n记忆巩固（Memory Consolidation）是长期记忆形成的关键步骤。如果该过程不可靠，短期记忆将成为事实上的\"易失性存储\"，Agent将表现出严重的\"隔夜遗忘\"。\n\n---\n\n 案例 17：长期记忆管理错误｜autobiographical-memory-narrative-distortion\n\n场景\n\n具有\"自传体记忆\"的Agent会记录自己的\"经历\"（如\"我成功帮助用户A解决了问题X\"）。长期运行后，这些记忆被反复检索和引用，Agent在回答\"你擅长什么\"时，会基于这些记忆构建自我描述。但由于成功经历被更频繁地记录和强化，失败经历被忽略或淡化，Agent形成了过度自信的自我认知。\n\n错误表现\n\nAgent在自我介绍中声称\"我在法律领域有95%的准确率\"，但实际统计只有72%。这种过度自信导致用户在高风险场景（如法律建议）中过度信任Agent。\n\n解决方案\n\n1. 对自传体记忆进行双向记录：同时记录成功和失败案例，并确保失败案例有最低存储配额\n2. 定期使用外部日志对自传体记忆进行审计和校准\n3. 在生成自我描述时，明确要求Agent引用可验证的数据而非主观记忆\n\n原理\n\n人类的自传体记忆也存在自我美化倾向（Self-serving Bias）。Agent如果没有刻意设计平衡机制，会自然累积正向叙事，形成\"记忆回音室\"。\n\n---\n\n 案例 18：长期记忆管理错误｜working-memory-gatekeeping-failure\n\n场景\n\nAgent的工作记忆（Working Memory）本应只保留与当前任务最相关的信息。在多轮对话中，用户先询问了\"推荐一家意大利餐厅\"，然后转到了\"帮我写一封辞职信\"。但由于工作记忆的门控机制（Gatekeeping）失效，\"意大利餐厅\"的推荐信息仍保留在工作记忆中。\n\n错误表现\n\nAgent在写辞职信时，意外插入了\"就像我在罗马餐厅体验到的那样，人生需要做出选择\"这类不相关的内容，显得极不专业。\n\n解决方案\n\n1. 实现显式的工作记忆刷新机制：当检测到话题转换（通过意图分类或主题漂移检测）时，清空与旧话题相关的工作记忆\n2. 为工作记忆中的每条信息设置\"相关性分数\"，低于阈值的信息被自动移出\n3. 使用注意力掩码（Attention Masking）：在推理时屏蔽与当前查询不相关的工作记忆条目\n\n原理\n\n工作记忆的容量有限（Miller's Law: 7±2个组块），门控机制（由前额叶皮层控制）决定了什么信息进入意识。Agent需要模拟这一机制，防止认知过载和干扰。\n\n---\n\n 案例 19：长期记忆管理错误｜long-term-memory-retrieval-threshold-drifting\n\n场景\n\nAgent使用固定的余弦相似度阈值0.75来检索长期记忆。随着运行时间增长，早期存储的记忆由于embedding模型更新（从v1升级到v2），其向量表示与新模型产生的查询向量不在同一语义空间中。即使内容高度相关，相似度分数也远低于0.75。\n\n错误表现\n\n用户询问一个与早期对话高度相关的问题，Agent无法检索到那些早期记忆，表现出\"对老用户不熟悉\"的问题。但新记忆能正常检索。\n\n解决方案\n\n1. 在embedding模型升级时，对所有历史记忆进行重新编码（Re-indexing）\n2. 实施\"模型版本标记\"：每个记忆记录存储时使用的embedding模型版本，检索时按版本分桶\n3. 使用归一化技术（如学习一个跨模型的线性变换矩阵）对齐新旧embedding空间\n\n原理\n\nEmbedding模型的升级会导致语义空间的系统性偏移。同一文本在不同版本模型下的向量表示可能截然不同。不进行重新索引或空间对齐，历史记忆将\"沉睡\"在向量库中。\n\n---\n\n 案例 20：长期记忆管理错误｜memory-dependency-graph-cyclic-reference\n\n场景\n\nAgent的记忆之间建立了依赖关系（如\"记忆B基于记忆A\"）。用户A说\"我的老板是B\"，用户B说\"我的下属是A\"，系统为这两条信息建立了相互依赖。当Agent尝试检索\"A的组织关系\"时，依赖解析器在这两条记忆间无限循环。\n\n错误表现\n\n检索请求超时，Agent无法回答关于组织架构的问题，CPU占用率飙升。\n\n解决方案\n\n1. 在依赖图构建时检测循环引用，使用拓扑排序或DFS标记已访问节点\n2. 为依赖解析设置最大深度限制（如最多跟踪5层依赖）\n3. 对循环依赖进行特殊处理：检测到循环时，将相关记忆合并为一张\"一致性视图\"并标记矛盾\n\n原理\n\n记忆依赖图如果允许循环引用，会导致解析时的无限递归。这类似于数据库中的循环外键引用或程序中的无限循环，需要图算法中的循环检测机制来防范。\n\n---\n\n C. 短期记忆/上下文错误（案例21-30）\n\n\n> 来源：Agent Search",
+      "content_html": null,
+      "summary": "本辑收录 Agent 记忆错误案例 16–20，涵盖 长期记忆管理错误 等主题。",
+      "url": "https://strongya.dev/posts/agent-memory-errors-cases-16-20/",
+      "date_published": "2026-06-24T00:00:00.000Z",
+      "date_modified": "2026-06-24T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "Long-term Memory",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-16-20/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 16–20 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-16-20/",
+        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 16–20 案例.\" 2026. Web. 2026-06-24.",
+        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 16–20 案例[EB/OL]. 2026-06-24. https://strongya.dev/posts/agent-memory-errors-cases-16-20/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1648,
         "readingTime": 5
       }
     },
@@ -1917,75 +1917,6 @@
       }
     },
     {
-      "id": "graphrag-memory-pitfalls.en.md",
-      "slug": "graphrag-memory-pitfalls",
-      "title": "My Agent Got Dementia: A GraphRAG Memory System Post-Mortem",
-      "content_text": " My Agent Got Dementia: A GraphRAG Memory System Post-Mortem\n\n> This article is based on my systematic study of LLM-generated knowledge graphs. All data come from published academic papers. A full academic analysis is referenced at the end.\n\n---\n\n 1. From Vector Retrieval to Graph Memory: The Pitfalls I Hit\n\nLast year I started building a multi-turn conversational Agent. At first I used a standard RAG pipeline: chunk text → embed → dump into Pinecone → retrieve Top-K. Simple, effective—until one day a user asked:\n\n> \"Last week I told you I don't eat cilantro. Do you remember?\"\n\nThe Agent paused for three seconds, then solemnly recommended a cilantro-and-beef salad.\n\nThe problem lies in the nature of vector retrieval: it can find semantically similar text chunks, but it cannot understand that \"these are two sentences spoken by the same person at different times and are logically related.\" The vector database has no entity called \"User A\" and no fact node \"User A dislikes cilantro\"—only a bunch of floating text fragments.\n\nSo I turned to GraphRAG. I wrote user profiles, preferences, and conversation history as nodes and edges, giving the Agent \"real memory.\"\n\nIt worked well at first. But after a month of operation, I noticed several bizarre phenomena:\n\nPhenomenon 1: Cloning\n\nThe same user appeared in the graph as more than a dozen distinct nodes. The reason is that LLM entity extraction is extremely unstable: today it writes \"Zhang San,\" tomorrow \"Mr. Zhang,\" the day after \"User 13800138000\"—three completely different nodes, and the system never realizes they are the same person.\n\nPhenomenon 2: Relation Inflation\n\nWhen I inspected the graph, I found that the LLM had invented a relation type called \"liked it a bit the day before yesterday but then lost interest.\" Only one edge in the entire graph used it. Similar relations included \"might know,\" \"indirectly related,\" and \"heard about from a friend\"—more than 200 relation types in total, 80% of which appeared only once.\n\nPhenomenon 3: Zombie Memories\n\nA casual \"hello\" the user uttered three months ago was still lying in the graph as a high-weight memory. No expiration mechanism, no decay strategy; all information lived forever. The result: truly important memories were drowned out by thousands of casual chat fragments.\n\nPhenomenon 4: Query Timeouts\n\nAfter the number of nodes exceeded ten thousand, a 3-hop path query jumped from 50 ms to 3 seconds and then timed out. The user waited five seconds with no response and simply closed the chat box.\n\nThese four phenomena map to four systemic defects in knowledge-graph construction: unconstrained entity generation, missing relation schemas, missing temporal decay, and full-graph traversal bottlenecks.\n\n---\n\n 2. Diagnosis: Four Quantitative Metrics for Agent Memory Health\n\nAfter two months of trial and error, I distilled a self-check method. You don't need to rewrite the whole system; just look at these four metrics first:\n\nMetric 1: Entity Ambiguity\n\nOpen your graph, randomly sample 100 entities, and count how many are different surface forms of the same real-world object. If the number of unmerged synonymous entities exceeds 3, your entity resolution is already broken.\n\nWhy is this number critical? Because GraphRAG retrieval works by locating an entity first and then spreading along relations. If \"LLM\" and \"Large Language Models\" are two independent nodes, when the user asks about \"latest LLM progress,\" the system will only retrieve the sub-graph connected to the former and completely miss the latter—the same thing treated as two separate topics.\n\nExperiments from Deg-Rag show that in LightRAG this kind of redundancy can inflate graph size by roughly 40%. Note that this is not a 40% increase in data volume; it is the same entity being created 1.4 times.\n\nMetric 2: Relation Redundancy\n\nCount the average out-degree per node. If it exceeds 15, be alert.\n\nThe reason is simple: if a query needs to traverse 3 hops with an average of 10 edges per hop, the number of paths to evaluate is 10³ = 1,000. If the average out-degree rises to 50, that's 50³ = 125,000 paths—and query time explodes.\n\nMetric 3: Data Pollution Rate\n\nThe proportion of non-knowledge nodes among all nodes. Casual chat, temporary statements, and garbage data from automated bulk imports—if this share exceeds 40%, half of your RAG context is noise. The LLM generates answers based on noise, so hallucination rates naturally soar.\n\nA reference: the OntoKG paper's cleaning of Wikidata found that among roughly 100 million entries, only 34.6 million 34.6% were considered valid core entities; the rest were low-quality bulk imports. If Wikidata is like this, LLM-auto-generated graphs will only be worse.\n\nMetric 4: Compute Overload\n\nLook directly at the P95 query latency. Above 500 ms, users perceive lag. The target should be under 100 ms.\n\n---\n\n 3. The Fix: A \"Memory Whitewash\" Pipeline\n\nAfter diagnosing the problems, I started fixing them. Not by rewriting the whole system, but by adding four layers between write and query.\n\nLayer 1: Cleaning and Normalization Deduplication\n\nThe core idea is simple: before the LLM writes to the graph, ask, \"Does this entity already exist?\"\n\nThe concrete approach is vector clustering plus entity linking. Embed all entities; those whose similarity exceeds a threshold enter the same candidate pool. Then use a finer matching algorithm classic KG embeddings such as TransE or DistMult are sufficient; you don't need to call GPT-4 every time to judge whether they are the same entity.\n\nDeg-Rag's experiments validated this method: on four multi-hop QA datasets, removing about 40% of redundant entities and relations actually improved QA performance. It shows that a graph is not better just because it is bigger—cleanliness beats size.\n\nLayer 2: Structured Filtering Pruning\n\nAdd a \"house rule\" to LLM memory writes:\n\n- Predefine allowed relation types; forbid the LLM from inventing new ones.\n- Relations occurring fewer than 3 times are treated as noise and deleted.\n- Conversation memories older than 7 days with no subsequent interaction automatically expire.\n- Every triple gets a quality score; low-scoring ones don't enter the main graph.\n\nThe OntoKG paper proposes a more elegant idea called \"intrinsic-relational routing\": divide attributes into \"intrinsic attributes\" node properties, e.g., birth date and \"relational attributes\" traversable edges, e.g., \"works at\", and use the schema to explicitly control what can be written into the graph. This is more efficient than filtering after the fact.\n\nLayer 3: Tiered Storage\n\nNot all memories deserve permanent storage. I designed a three-tier architecture:\n\nHot data goes in Redis, storing only the current session's context with a TTL of 5–30 minutes; dropped when the session ends.\n\nWarm data goes in a vector database Pinecone/Milvus, storing valid memories from the last 7–30 days with a temporal decay coefficient—newer memories have higher weight; those older than 30 days are automatically down-weighted.\n\nCold data goes in a graph database Neo4j, storing only validated long-term knowledge and user profiles. Read-mostly, updated periodically in batches.\n\nWrites are automatically routed to the appropriate tier based on memory type; reads follow hot → warm → cold order, returning on first hit and avoiding unnecessary full-graph scans.\n\nLayer 4: Graph Optimization Dimensionality Reduction\n\nThe most fundamental optimization idea: don't traverse the whole graph every time.\n\nMicrosoft's GraphRAG approach is worth borrowing: first cut the large graph into communities with the Louvain algorithm, then generate a summary for each community. At query time, match community summaries first to locate the most relevant community, then inspect it in detail. This shrinks the search space from the whole graph to a small community, reducing latency by an order of magnitude.\n\nIn addition, replacing exact traversal with HNSW approximate nearest-neighbor search can maintain recall above 95% while dropping query complexity from On to Olog n.\n\n---\n\n 4. Problems I Still Haven't Solved\n\nAfter this pipeline went live, my Agent became much more stable. But a few problems still lack satisfying solutions:\n\nDynamic Knowledge Evolution\n\nWhen a knowledge graph continuously receives incremental updates, the cost-benefit ratio of denoising and schema maintenance changes. Temporal decay models such as the Hawkes process in DynTKG perform well academically, but the engineering complexity of integrating them into production systems is high.\n\nBeneficial Noise\n\nCan denoising go too far? Deg-Rag removed 40% of content, but if that 40% contained some low-frequency yet critical memory e.g., the user rarely mentions a peanut allergy, then filtering becomes harmful. There is currently no theoretical framework for distinguishing \"harmful noise\" from \"beneficial low-frequency information.\"\n\nCross-Lingual Scenarios\n\nAll validation data come from English settings. Entity ambiguity rates may differ significantly for Chinese, Japanese, Arabic, and other languages—Chinese entity disambiguation, for example, must handle homophones, simplified/traditional variants, and nickname variants, which are far more complex than English.\n\n---\n\n 5. Three Trends for 2026\n\nIncremental Updates\n\nLightRAG proposes an incremental update mechanism: only extract and deduplicate new documents, then merge them into the existing graph. This means an Agent can learn while chatting, instead of rebuilding the entire graph every night at 2 a.m.\n\nBackground Async Governance\n\nCutting-edge frameworks are introducing background threads that automatically run when the Agent is inactive: entity deduplication, low-frequency edge cleanup, community structure recomputation, and expired-memory archiving. It's like giving the Agent a \"night cleaning crew.\"\n\nWrite-Time Constraints\n\nInstead of letting the LLM write freely and then govern, impose constraints at write time. A likely future direction: the LLM only \"proposes candidate memories,\" while the actual write decision is made by an independent \"memory gatekeeper\" module—one that knows the schema, frequency statistics, and quality scores.\n\n---\n\n References and Data Sources\n\nThe quantitative data and core conclusions in this article come from the following studies:\n\n- Zheng, Y., et al. 2025. Less is More: Denoising Knowledge Graphs For Retrieval Augmented Generation. arXiv:2510.14271. — Denoising can remove ~40% redundancy and improve RAG performance.\n- Liu, Z., et al. 2026. OntoKG: Ontology-Oriented Knowledge Graph Construction with Intrinsic-Relational Routing. arXiv:2604.02618. — 34.6% of 100M Wikidata entries are core entities.\n- Edge, D., et al. 2024. From Local to Global: A Graph RAG Approach to Query-Focused Summarization. Microsoft Research. — Community detection enables large-scale graph retrieval.\n- Guo, X., et al. 2024. LightRAG: Simple and Fast Retrieval-Augmented Generation. arXiv:2410.05779. — Incremental update mechanism.\n- Blondel, V. D., et al. 2008. Fast Unfolding of Communities in Large Networks. Journal of Statistical Mechanics. — Louvain algorithm.\n- Malkov, Y. A., & Yashunin, D. A. 2018. Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs. IEEE TPAMI. — HNSW algorithm.",
-      "content_html": null,
-      "summary": "After upgrading from vector retrieval to GraphRAG, my Agent developed four pathologies: entity duplication, relation inflation, zombie memories, and query timeouts. This article diagnoses memory health with four quantitative metrics and proposes four fixes: deduplication, structured pruning, tiered storage, and graph optimization.",
-      "url": "https://strongya.dev/en/posts/graphrag-memory-pitfalls/",
-      "date_published": "2026-06-21T00:00:00.000Z",
-      "date_modified": "2026-06-21T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "GraphRAG",
-        "Agent",
-        "Memory",
-        "Knowledge Graph",
-        "RAG"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/graphrag-memory-pitfalls/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). My Agent Got Dementia: A GraphRAG Memory System Post-Mortem. Retrieved from https://strongya.dev/en/posts/graphrag-memory-pitfalls/",
-        "mla": "Arlen. \"My Agent Got Dementia: A GraphRAG Memory System Post-Mortem.\" 2026. Web. 2026-06-21.",
-        "gb": "Arlen. My Agent Got Dementia: A GraphRAG Memory System Post-Mortem[EB/OL]. 2026-06-21. https://strongya.dev/en/posts/graphrag-memory-pitfalls/."
-      },
-      "entities": [
-        {
-          "name": "GraphRAG",
-          "type": "Technology",
-          "wiki_url": "https://en.wikipedia.org/wiki/GraphRAG"
-        },
-        {
-          "name": "Neo4j",
-          "type": "Technology",
-          "wiki_url": "https://en.wikipedia.org/wiki/Neo4j"
-        },
-        {
-          "name": "Redis",
-          "type": "Technology",
-          "wiki_url": "https://en.wikipedia.org/wiki/Redis"
-        },
-        {
-          "name": "Wikidata",
-          "type": "Dataset",
-          "wiki_url": "https://en.wikipedia.org/wiki/Wikidata"
-        },
-        {
-          "name": "Hierarchical Navigable Small World",
-          "type": "Algorithm",
-          "wiki_url": "https://en.wikipedia.org/wiki/Hierarchical_navigable_small_world"
-        }
-      ],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1785,
-        "readingTime": 9
-      }
-    },
-    {
       "id": "graphrag-memory-pitfalls.md",
       "slug": "graphrag-memory-pitfalls",
       "title": "我的 Agent 得了老年痴呆：一次 GraphRAG 记忆系统的踩坑实录",
@@ -2052,6 +1983,75 @@
         "content_type": "article",
         "wordCount": 2619,
         "readingTime": 7
+      }
+    },
+    {
+      "id": "graphrag-memory-pitfalls.en.md",
+      "slug": "graphrag-memory-pitfalls",
+      "title": "My Agent Got Dementia: A GraphRAG Memory System Post-Mortem",
+      "content_text": " My Agent Got Dementia: A GraphRAG Memory System Post-Mortem\n\n> This article is based on my systematic study of LLM-generated knowledge graphs. All data come from published academic papers. A full academic analysis is referenced at the end.\n\n---\n\n 1. From Vector Retrieval to Graph Memory: The Pitfalls I Hit\n\nLast year I started building a multi-turn conversational Agent. At first I used a standard RAG pipeline: chunk text → embed → dump into Pinecone → retrieve Top-K. Simple, effective—until one day a user asked:\n\n> \"Last week I told you I don't eat cilantro. Do you remember?\"\n\nThe Agent paused for three seconds, then solemnly recommended a cilantro-and-beef salad.\n\nThe problem lies in the nature of vector retrieval: it can find semantically similar text chunks, but it cannot understand that \"these are two sentences spoken by the same person at different times and are logically related.\" The vector database has no entity called \"User A\" and no fact node \"User A dislikes cilantro\"—only a bunch of floating text fragments.\n\nSo I turned to GraphRAG. I wrote user profiles, preferences, and conversation history as nodes and edges, giving the Agent \"real memory.\"\n\nIt worked well at first. But after a month of operation, I noticed several bizarre phenomena:\n\nPhenomenon 1: Cloning\n\nThe same user appeared in the graph as more than a dozen distinct nodes. The reason is that LLM entity extraction is extremely unstable: today it writes \"Zhang San,\" tomorrow \"Mr. Zhang,\" the day after \"User 13800138000\"—three completely different nodes, and the system never realizes they are the same person.\n\nPhenomenon 2: Relation Inflation\n\nWhen I inspected the graph, I found that the LLM had invented a relation type called \"liked it a bit the day before yesterday but then lost interest.\" Only one edge in the entire graph used it. Similar relations included \"might know,\" \"indirectly related,\" and \"heard about from a friend\"—more than 200 relation types in total, 80% of which appeared only once.\n\nPhenomenon 3: Zombie Memories\n\nA casual \"hello\" the user uttered three months ago was still lying in the graph as a high-weight memory. No expiration mechanism, no decay strategy; all information lived forever. The result: truly important memories were drowned out by thousands of casual chat fragments.\n\nPhenomenon 4: Query Timeouts\n\nAfter the number of nodes exceeded ten thousand, a 3-hop path query jumped from 50 ms to 3 seconds and then timed out. The user waited five seconds with no response and simply closed the chat box.\n\nThese four phenomena map to four systemic defects in knowledge-graph construction: unconstrained entity generation, missing relation schemas, missing temporal decay, and full-graph traversal bottlenecks.\n\n---\n\n 2. Diagnosis: Four Quantitative Metrics for Agent Memory Health\n\nAfter two months of trial and error, I distilled a self-check method. You don't need to rewrite the whole system; just look at these four metrics first:\n\nMetric 1: Entity Ambiguity\n\nOpen your graph, randomly sample 100 entities, and count how many are different surface forms of the same real-world object. If the number of unmerged synonymous entities exceeds 3, your entity resolution is already broken.\n\nWhy is this number critical? Because GraphRAG retrieval works by locating an entity first and then spreading along relations. If \"LLM\" and \"Large Language Models\" are two independent nodes, when the user asks about \"latest LLM progress,\" the system will only retrieve the sub-graph connected to the former and completely miss the latter—the same thing treated as two separate topics.\n\nExperiments from Deg-Rag show that in LightRAG this kind of redundancy can inflate graph size by roughly 40%. Note that this is not a 40% increase in data volume; it is the same entity being created 1.4 times.\n\nMetric 2: Relation Redundancy\n\nCount the average out-degree per node. If it exceeds 15, be alert.\n\nThe reason is simple: if a query needs to traverse 3 hops with an average of 10 edges per hop, the number of paths to evaluate is 10³ = 1,000. If the average out-degree rises to 50, that's 50³ = 125,000 paths—and query time explodes.\n\nMetric 3: Data Pollution Rate\n\nThe proportion of non-knowledge nodes among all nodes. Casual chat, temporary statements, and garbage data from automated bulk imports—if this share exceeds 40%, half of your RAG context is noise. The LLM generates answers based on noise, so hallucination rates naturally soar.\n\nA reference: the OntoKG paper's cleaning of Wikidata found that among roughly 100 million entries, only 34.6 million 34.6% were considered valid core entities; the rest were low-quality bulk imports. If Wikidata is like this, LLM-auto-generated graphs will only be worse.\n\nMetric 4: Compute Overload\n\nLook directly at the P95 query latency. Above 500 ms, users perceive lag. The target should be under 100 ms.\n\n---\n\n 3. The Fix: A \"Memory Whitewash\" Pipeline\n\nAfter diagnosing the problems, I started fixing them. Not by rewriting the whole system, but by adding four layers between write and query.\n\nLayer 1: Cleaning and Normalization Deduplication\n\nThe core idea is simple: before the LLM writes to the graph, ask, \"Does this entity already exist?\"\n\nThe concrete approach is vector clustering plus entity linking. Embed all entities; those whose similarity exceeds a threshold enter the same candidate pool. Then use a finer matching algorithm classic KG embeddings such as TransE or DistMult are sufficient; you don't need to call GPT-4 every time to judge whether they are the same entity.\n\nDeg-Rag's experiments validated this method: on four multi-hop QA datasets, removing about 40% of redundant entities and relations actually improved QA performance. It shows that a graph is not better just because it is bigger—cleanliness beats size.\n\nLayer 2: Structured Filtering Pruning\n\nAdd a \"house rule\" to LLM memory writes:\n\n- Predefine allowed relation types; forbid the LLM from inventing new ones.\n- Relations occurring fewer than 3 times are treated as noise and deleted.\n- Conversation memories older than 7 days with no subsequent interaction automatically expire.\n- Every triple gets a quality score; low-scoring ones don't enter the main graph.\n\nThe OntoKG paper proposes a more elegant idea called \"intrinsic-relational routing\": divide attributes into \"intrinsic attributes\" node properties, e.g., birth date and \"relational attributes\" traversable edges, e.g., \"works at\", and use the schema to explicitly control what can be written into the graph. This is more efficient than filtering after the fact.\n\nLayer 3: Tiered Storage\n\nNot all memories deserve permanent storage. I designed a three-tier architecture:\n\nHot data goes in Redis, storing only the current session's context with a TTL of 5–30 minutes; dropped when the session ends.\n\nWarm data goes in a vector database Pinecone/Milvus, storing valid memories from the last 7–30 days with a temporal decay coefficient—newer memories have higher weight; those older than 30 days are automatically down-weighted.\n\nCold data goes in a graph database Neo4j, storing only validated long-term knowledge and user profiles. Read-mostly, updated periodically in batches.\n\nWrites are automatically routed to the appropriate tier based on memory type; reads follow hot → warm → cold order, returning on first hit and avoiding unnecessary full-graph scans.\n\nLayer 4: Graph Optimization Dimensionality Reduction\n\nThe most fundamental optimization idea: don't traverse the whole graph every time.\n\nMicrosoft's GraphRAG approach is worth borrowing: first cut the large graph into communities with the Louvain algorithm, then generate a summary for each community. At query time, match community summaries first to locate the most relevant community, then inspect it in detail. This shrinks the search space from the whole graph to a small community, reducing latency by an order of magnitude.\n\nIn addition, replacing exact traversal with HNSW approximate nearest-neighbor search can maintain recall above 95% while dropping query complexity from On to Olog n.\n\n---\n\n 4. Problems I Still Haven't Solved\n\nAfter this pipeline went live, my Agent became much more stable. But a few problems still lack satisfying solutions:\n\nDynamic Knowledge Evolution\n\nWhen a knowledge graph continuously receives incremental updates, the cost-benefit ratio of denoising and schema maintenance changes. Temporal decay models such as the Hawkes process in DynTKG perform well academically, but the engineering complexity of integrating them into production systems is high.\n\nBeneficial Noise\n\nCan denoising go too far? Deg-Rag removed 40% of content, but if that 40% contained some low-frequency yet critical memory e.g., the user rarely mentions a peanut allergy, then filtering becomes harmful. There is currently no theoretical framework for distinguishing \"harmful noise\" from \"beneficial low-frequency information.\"\n\nCross-Lingual Scenarios\n\nAll validation data come from English settings. Entity ambiguity rates may differ significantly for Chinese, Japanese, Arabic, and other languages—Chinese entity disambiguation, for example, must handle homophones, simplified/traditional variants, and nickname variants, which are far more complex than English.\n\n---\n\n 5. Three Trends for 2026\n\nIncremental Updates\n\nLightRAG proposes an incremental update mechanism: only extract and deduplicate new documents, then merge them into the existing graph. This means an Agent can learn while chatting, instead of rebuilding the entire graph every night at 2 a.m.\n\nBackground Async Governance\n\nCutting-edge frameworks are introducing background threads that automatically run when the Agent is inactive: entity deduplication, low-frequency edge cleanup, community structure recomputation, and expired-memory archiving. It's like giving the Agent a \"night cleaning crew.\"\n\nWrite-Time Constraints\n\nInstead of letting the LLM write freely and then govern, impose constraints at write time. A likely future direction: the LLM only \"proposes candidate memories,\" while the actual write decision is made by an independent \"memory gatekeeper\" module—one that knows the schema, frequency statistics, and quality scores.\n\n---\n\n References and Data Sources\n\nThe quantitative data and core conclusions in this article come from the following studies:\n\n- Zheng, Y., et al. 2025. Less is More: Denoising Knowledge Graphs For Retrieval Augmented Generation. arXiv:2510.14271. — Denoising can remove ~40% redundancy and improve RAG performance.\n- Liu, Z., et al. 2026. OntoKG: Ontology-Oriented Knowledge Graph Construction with Intrinsic-Relational Routing. arXiv:2604.02618. — 34.6% of 100M Wikidata entries are core entities.\n- Edge, D., et al. 2024. From Local to Global: A Graph RAG Approach to Query-Focused Summarization. Microsoft Research. — Community detection enables large-scale graph retrieval.\n- Guo, X., et al. 2024. LightRAG: Simple and Fast Retrieval-Augmented Generation. arXiv:2410.05779. — Incremental update mechanism.\n- Blondel, V. D., et al. 2008. Fast Unfolding of Communities in Large Networks. Journal of Statistical Mechanics. — Louvain algorithm.\n- Malkov, Y. A., & Yashunin, D. A. 2018. Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs. IEEE TPAMI. — HNSW algorithm.",
+      "content_html": null,
+      "summary": "After upgrading from vector retrieval to GraphRAG, my Agent developed four pathologies: entity duplication, relation inflation, zombie memories, and query timeouts. This article diagnoses memory health with four quantitative metrics and proposes four fixes: deduplication, structured pruning, tiered storage, and graph optimization.",
+      "url": "https://strongya.dev/en/posts/graphrag-memory-pitfalls/",
+      "date_published": "2026-06-21T00:00:00.000Z",
+      "date_modified": "2026-06-21T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "GraphRAG",
+        "Agent",
+        "Memory",
+        "Knowledge Graph",
+        "RAG"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/graphrag-memory-pitfalls/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). My Agent Got Dementia: A GraphRAG Memory System Post-Mortem. Retrieved from https://strongya.dev/en/posts/graphrag-memory-pitfalls/",
+        "mla": "Arlen. \"My Agent Got Dementia: A GraphRAG Memory System Post-Mortem.\" 2026. Web. 2026-06-21.",
+        "gb": "Arlen. My Agent Got Dementia: A GraphRAG Memory System Post-Mortem[EB/OL]. 2026-06-21. https://strongya.dev/en/posts/graphrag-memory-pitfalls/."
+      },
+      "entities": [
+        {
+          "name": "GraphRAG",
+          "type": "Technology",
+          "wiki_url": "https://en.wikipedia.org/wiki/GraphRAG"
+        },
+        {
+          "name": "Neo4j",
+          "type": "Technology",
+          "wiki_url": "https://en.wikipedia.org/wiki/Neo4j"
+        },
+        {
+          "name": "Redis",
+          "type": "Technology",
+          "wiki_url": "https://en.wikipedia.org/wiki/Redis"
+        },
+        {
+          "name": "Wikidata",
+          "type": "Dataset",
+          "wiki_url": "https://en.wikipedia.org/wiki/Wikidata"
+        },
+        {
+          "name": "Hierarchical Navigable Small World",
+          "type": "Algorithm",
+          "wiki_url": "https://en.wikipedia.org/wiki/Hierarchical_navigable_small_world"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1785,
+        "readingTime": 9
       }
     },
     {
@@ -2455,49 +2455,6 @@
       }
     },
     {
-      "id": "llm-architecture-memory-bottleneck.en.md",
-      "slug": "llm-architecture-memory-bottleneck",
-      "title": "LLM Architecture and AI Agent Memory Bottleneck: Why Your Agent Gets Dumber Over Time",
-      "content_text": " LLM Architecture and AI Agent Memory Bottleneck: Why Your Agent Gets Dumber Over Time\n\n> Subtitle: Your Agent faces \"betrayal by the LLM\" because the entire industry has fundamentally misunderstood how LLM memory works, and has been deceived by academia's unrealistic metrics. To see through the mud at the bottom, we must dissect the \"number games\" big tech is playing at the infrastructure layer this year, and how this system turns application developers into韭菜leeks.\n\nDate: 2026-06-11\nAuthor: Strong ⚡\nReading time: ~15 minutes\nTarget audience: Agent developers with ML/AI foundations but not infrastructure experts, technical product managers, investors interested in AI Infra\n\n---\n\n Introduction: Agent Amnesia Is Not an Accident, It's Architecture-Determined Inevitability\n\nIf you're developing or using AI Agents daily, you've definitely encountered these崩溃crash moments:\n\n- At round 30 of conversation, the Agent suddenly forgets key requirements you mentioned 10 minutes ago\n- You told it your budget preference last week; this week it's recommending products outside your range again\n- You ask it to analyze a 200-page contract—it can recite clauses but can't see implicit conflicts between them\n- A multi-step task is halfway through when it suddenly jumps back to an already-completed step,陷入死循环stuck in an infinite loop\n\nThe root cause isn't \"the model isn't smart enough.\" It's that the entire industry's understanding of LLM \"memory\" is fundamentally wrong from the ground up. Worse, big tech is using a carefully designed set of \"number games\" to make you think the problem is solved—when in reality, they've just hidden it deeper.\n\nThis article combines mathematical realities of底层架构infrastructure architecture with bloody lessons from the application layer to tell you: why current mainstream solutions long context, RAG, memory management Agents will be killed by LLM infrastructure evolution within two months, and what application-layer architectures are actually worth investing in.\n\n---\n\n 1. The Core Cards: Big Tech's \"Number Games\" with Long Context and Memory\n\n 1.1 Long Context ≠ Long-Term Memory\n\nIn 2026, big tech is疯狂地crazily pushing 128K, 1M, even \"infinite context\"—but your Agent still acts like an idiot. Why?\n\nBig tech's logic is clear: whether it's traditional Transformer via RoPE positional encoding extrapolation, FlashAttention-3 hardware acceleration or the latest Mamba-3/SSM hybrid architecture, the purpose of pushing context to 1M 1 million words is only two-fold:\n\n1. Swallow longer single inputs—like reading a novel or analyzing a pile of code\n2. Do one-shot retrieval within long text—Needle in a Haystack testing\n\nThe fatal trap: This is \"throughput\" and \"static retrieval,\" not \"dynamic memory.\"\n\nWhen an Agent enters real multi-turn dialogue, all these long-context technologies completely fail. Because human dialogue is dynamic, has corrections, and has logical reversals. The model's underlying hidden state or KV Cache, when facing the long \"reasoning trajectory\" of text, suffers exponentially cascading attention collapse.\n\nAn open secret in academia: LLMs score perfectly on Needle in a Haystack tests, but as Agents talking to you at round 50, they still completely hallucinate. Why? Because test metrics and application scenarios are completely different things.\n\n> Mathematical reality: Transformer attention mechanism complexity is ON². Every doubling of context theoretically increases computational cost by 4x. FlashAttention and similar optimizations reduce the constant factor and improve IO efficiency to make actual cost growth lower than theoretical, but the complexity essence never changes. KV Cache memory usage grows linearly with sequence length—when N=100K, batch=32, cache can reach 52.4 GB, exceeding single-card GPU memory limits.\n\n 1.2 Mamba/SSM Hybrid Architecture: Whose Pain Point Does It Actually Solve?\n\nBig tech pushing Hunyuan Turbo S, NVIDIA's Hymba this year isn't to make your Agent \"smarter and remember better\"—it's to reduce costs and improve efficiency.\n\nWhen Transformers process long context, each concurrent user's KV Cache memory explodes, and big tech's server costs can't sustain it. Switching to Mamba hybrid architecture fixes per-dialogue memory overhead at O1. Big tech saves billions in electricity and GPU costs, but the models produced have zero improvement in memory's \"subjective abstraction ability.\"\n\nIt's just a larger-capacity \"hardware trash can\" that can hold more garbage information.\n\n> Technical details: Mamba converts sequence modeling into state iteration through Selective State Space Models Selective SSM, where each token only updates a fixed-size state vector. Complexity drops to ON, and state vector size is independent of sequence length. But the cost is: language modeling performance on some tasks still lags behind Transformer, and the ecosystem is far from mature.\n\n---\n\n 2. Two Technical Paths That Will Die Within Two Months\n\nAs an Agent developer, you don't need to guess—LLM infrastructure evolution has already predetermined that within two months to half a year, the following \"low-level ecosystems\" will be directly consumed. If you're doing these two things, stop immediately:\n\n 2.1 RAG Based on Pure Text Matching or Simple Embedding\n\nMany developers spend大量时间lots of time writing Chunking strategies, doing Parent-Child tree retrieval. Within two months, as LLM底层underlying \"Native Memory Routing\" and variants like DeepSeek MLA multi-head latent attention become widespread, the model itself when reading long history will automatically do perfect vector matching in Latent Space through underlying activated neurons.\n\nThose粗暴crude Python textsplitter slicers you wrote at the application layer look like an abacus in the hands of a elementary school student compared to the model's native high-dimensional representations.\n\n> Deeper problem: RAG's Chunking cuts continuous text into fixed-size blocks, inherently destroying temporal information and continuous logic. For example, \"User purchased X in January 2024, canceled Y in March 2024\" might be cut into two unrelated chunks. Vector retrieval is based on local semantic similarity, making it difficult to answer questions requiring global perspective. This isn't an implementation problem; it's an architecture-level mismatch.\n\n 2.2 Symbolic \"Memory Intermediary Summary Agent\"\n\nFor example, you write code: when the user says 20 sentences, automatically call gpt-4o-mini once: \"Please summarize the above conversation, extract the user's profession and preferences, and write to Redis.\"\n\nThe LLM betrayal is already on the way: Next-generation hybrid architecture LLMs are making \"hidden state persistence\" a standard API interface. During dialogue, the underlying SSM state machine like Mamba2/3's hidden state has already naturally compressed these features. Next, big tech only needs to open savestate and loadstate APIs, allowing you to directly save and load this few-hundred-KB model binary state.\n\nYour \"summary Agent\" written in natural language, burning expensive tokens, instantly becomes dust of history.\n\n> Cost comparison: Symbolic memory management Agents like Mem0, Letta require an additional LLM call for summarization per interaction, increasing costs by 30-100% and latency by 100-500ms. State persistence is a底层API call with near-zero cost.\n\n---\n\n 3. The Real Battlefield: Three Things LLMs Can Never Solve at the Infrastructure Layer\n\nSince underlying \"storage capacity\" and \"long context\" will definitely be killed by big tech, what is the real problem for Agent developers?\n\nWhat LLMs can never solve at the infrastructure layer is the \"social attributes, business logic, and alignment of memory.\"\n\nLet's look at the most extreme硬核hardcore case: you develop a \"fully automated AI financial audit Agent\" that needs to reconcile accounts with 50 different employees and suppliers across WeChat and email within a month.\n\nIn this scenario, even if the LLM supports 10 million context, even if Mamba architecture is perfectly lossless, it will still be completely lost. The following three things are the application-layer core architectures you need to fully invest in:\n\n 3.1 Memory's \"Permission and Physical Isolation Security Network\"\n\nReal problem: The Agent remembers \"Zhang San privately complained about the boss being stingy yesterday,\" and also remembers \"the company's core business secrets this month.\" When Li Si another employee comes to ask the Agent about work, the Agent has complete memory in its brain, but how does it decide which memories can be spoken and which must be pretended not to know?\n\nTechnical path: LLM underlying weights and context are mixed in one big pool. You must build a set of \"RBAC for LLM Memory\" at the application layer. This requires using deterministic engineering code not the LLM itself to cut LLM memory into:\n\n- Public knowledge base: General information accessible to all users\n- Current session isolation zone: Context only visible to current dialogue\n- Sensitive privacy blacklist: Sensitive information strictly isolated based on role permissions\n\n> Why big tech won't do this: Permission isolation is business logic, not model capability. Big tech provides general models, impossible to anticipate every enterprise's RBAC needs. This is the moat for application developers.\n\n 3.2 Non-linear \"Multi-source Heterogeneous Memory Anchor Graph\"\n\nReal problem: Whether Transformer or Mamba, LLMs essentially process \"one-dimensional token streams.\" But real-world memory is 网状web-like:\n\n- Employee A said \"that payment\"\n- Corresponds to DingTalk's \"Approval No. 123\"\n- Corresponds to bank statement \"2026-06-11 Expense 50K\"\n- Corresponds to contract system's \"Project X Phase 2 Payment\"\n\nIf you just throw these chat records into a long-text model, the model will inevitably produce severe hallucinations due to ambiguous named entities—attributing Zhang San's payment to Li Si.\n\nTechnical path: \"GNN / Relational Database decoupled linkage with LLM dynamic states.\" The LLM is responsible for understanding intent; your engineering is responsible for anchoring the LLM's dynamic State to deterministic entity IDs. Specifically:\n\n- Use Entity Resolution to unify IDs for the same entity from different sources\n- Use relational databases to maintain deterministic relationships between entities not similarity relationships\n- Use Graph NN for multi-hop reasoning, precisely mapping \"that payment\" to the unique approval + bank statement + contract record\n\n> Key insight: This isn't \"making the model remember more,\" but \"making the model remember more accurately.\" Memory quality doesn't lie in capacity, but in Anchorability.\n\n 3.3 Memory's \"Active Forgetting and Correction Mechanism\"\n\nReal problem:\n- Day before yesterday: \"Set this project's budget to 100K\"\n- Yesterday: \"No, the previous 100K is void, change to 80K\"\n- Today: \"Execute according to our previous budget discussion\"\n\nIf relying on LLM long context or Mamba state, when the model encounters \"what we previously said,\" its attention will go crazy fighting between 100K and 80K—this is the famous long-text temporal logic failure.\n\nTechnical path: Write a set of \"State Machine Conflict Detection algorithms\" at the application layer. When semantic reversal is detected in context:\n\n1. Use engineering means to forcibly modify or override historical context passed to the model\n2. Use external symbol libraries to \"physically erase\" erroneous memory not mark as deleted, but truly remove from storage\n3. Establish memory version control: each memory carries timestamp, confidence score, and source label; latest valid version automatically overrides\n\n> Why it must be engineered: LLM attention mechanisms \"evenly distribute\" attention weights when semantic conflicts occur, causing logical chaos. This isn't a bug; it's an inherent characteristic of attention mathematics. Only deterministic engineering can forcibly resolve this.\n\n---\n\n 4. Common Traps: Why Your Memory Solution Is Doomed to Fail\n\n Trap 1: Using \"Long Context\" as \"Long-Term Memory\"\n\nSeeing 128K context and thinking your Agent can remember three months of dialogue? Wrong. Long context solves \"how long can a single input be,\" not \"how much can be remembered across sessions.\" These are completely different technical problems.\n\n Trap 2: Doing \"Memory Compression\" at the Application Layer to Compensate for Model Limitations\n\nUsing a smaller model to periodically summarize conversations and extract tags—this is just doing preparatory work for big tech's upcoming savestate API. All your investment will become sunk cost.\n\n Trap 3: Ignoring \"Memory Permissions,\" Leading to Data Leaks\n\nThrowing User A's memory and User B's memory into the same vector pool, using similarity retrieval. This is a data leak time bomb. LLMs themselves have no permission concept; this is a problem the application layer must solve.\n\n Trap 4: Treating RAG as a Panacea\n\nRAG is effective in factual retrieval scenarios \"what's the price of this product\", but naturally fails in temporal reasoning, global summarization, and multi-hop relational reasoning scenarios. It's a tool, not a silver bullet.\n\n---\n\n 5. Conclusion: What Should Your Strategy Be?\n\n Don't Do\n\nAny engineering attempting to extend LLM \"capacity\" or help LLMs \"remember more words / do summarization\":\n\n- ❌ Basic RAG pure text slicing + vector retrieval\n- ❌ Text Splitter's \"clever strategies\"\n- ❌ Using LLM as \"memory summary Agent\"\n- ❌ Doing \"memory compression\" at the application layer\n\nThese will die within 2 months.\n\n Must Do\n\nDesign how to put a \"tightening spell\" on the LLM's powerful memory capability:\n\n- ✅ Permission isolation: RBAC for LLM Memory, role-based memory access control\n- ✅ Graph anchoring: GNN/relational database decoupled linkage with LLM dynamic states\n- ✅ Conflict cleansing: State machine conflict detection + memory version control + physical erasure mechanism\n\n> One-sentence summary: Big tech is responsible for卷到taking to infinity the \"memory capacity\" and \"context length\"—that's their赛道track. Agent developers are responsible for taking \"memory quality\" and \"business alignment\" to the extreme—that's your moat. Don't fight on others' home turf; build walls on your own.\n\n---\n\n References\n\n1. Gu, A., & Dao, T. 2023. Mamba: Linear-Time Sequence Modeling with Selective State Spaces. arXiv:2312.00752.\n2. Vaswani, A., et al. 2017. Attention Is All You Need. NeurIPS 2017.\n3. Liu, N. F., et al. 2023. Lost in the Middle: How Language Models Use Long Contexts. arXiv:2307.03172.\n4. Dao, T., et al. 2022. FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness. NeurIPS 2022.\n5. Peng, B., et al. 2023. RWKV: Reinventing RNNs for the Transformer Era. arXiv:2305.13048.\n6. Mem0 Framework: https://github.com/mem0ai/mem0\n7. Letta formerly MemGPT: https://github.com/letta-ai/letta\n\n---\n\nThis article is based on the latest publicly available technical literature and engineering practices as of June 2026, and has passed ReAct 4-Agent cross-validation logic audit + data audit + Munger audit + de-narrativization audit. Technical architecture evolution has uncertainties; predictive portions have clearly marked confidence levels.",
-      "content_html": null,
-      "summary": "Agent memory loss is not accidental—it's architecture-determined inevitability. This article dismantles the 'number games' big tech plays with long context and memory, and reveals what application-layer architectures are actually worth investing in.",
-      "url": "https://strongya.dev/en/posts/llm-architecture-memory-bottleneck/",
-      "date_published": "2026-06-11T00:00:00.000Z",
-      "date_modified": "2026-06-11T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "LLM",
-        "Agent",
-        "Memory",
-        "Architecture",
-        "RAG"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/llm-architecture-memory-bottleneck/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). LLM Architecture and AI Agent Memory Bottleneck: Why Your Agent Gets Dumber Over Time. Retrieved from https://strongya.dev/en/posts/llm-architecture-memory-bottleneck/",
-        "mla": "Arlen. \"LLM Architecture and AI Agent Memory Bottleneck: Why Your Agent Gets Dumber Over Time.\" 2026. Web. 2026-06-11.",
-        "gb": "Arlen. LLM Architecture and AI Agent Memory Bottleneck: Why Your Agent Gets Dumber Over Time[EB/OL]. 2026-06-11. https://strongya.dev/en/posts/llm-architecture-memory-bottleneck/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 2385,
-        "readingTime": 13
-      }
-    },
-    {
       "id": "llm-architecture-memory-bottleneck.md",
       "slug": "llm-architecture-memory-bottleneck",
       "title": "大模型架构与AI Agent记忆瓶颈：为什么你的Agent越用越蠢？",
@@ -2538,6 +2495,49 @@
         "content_type": "article",
         "wordCount": 3710,
         "readingTime": 9
+      }
+    },
+    {
+      "id": "llm-architecture-memory-bottleneck.en.md",
+      "slug": "llm-architecture-memory-bottleneck",
+      "title": "LLM Architecture and AI Agent Memory Bottleneck: Why Your Agent Gets Dumber Over Time",
+      "content_text": " LLM Architecture and AI Agent Memory Bottleneck: Why Your Agent Gets Dumber Over Time\n\n> Subtitle: Your Agent faces \"betrayal by the LLM\" because the entire industry has fundamentally misunderstood how LLM memory works, and has been deceived by academia's unrealistic metrics. To see through the mud at the bottom, we must dissect the \"number games\" big tech is playing at the infrastructure layer this year, and how this system turns application developers into韭菜leeks.\n\nDate: 2026-06-11\nAuthor: Strong ⚡\nReading time: ~15 minutes\nTarget audience: Agent developers with ML/AI foundations but not infrastructure experts, technical product managers, investors interested in AI Infra\n\n---\n\n Introduction: Agent Amnesia Is Not an Accident, It's Architecture-Determined Inevitability\n\nIf you're developing or using AI Agents daily, you've definitely encountered these崩溃crash moments:\n\n- At round 30 of conversation, the Agent suddenly forgets key requirements you mentioned 10 minutes ago\n- You told it your budget preference last week; this week it's recommending products outside your range again\n- You ask it to analyze a 200-page contract—it can recite clauses but can't see implicit conflicts between them\n- A multi-step task is halfway through when it suddenly jumps back to an already-completed step,陷入死循环stuck in an infinite loop\n\nThe root cause isn't \"the model isn't smart enough.\" It's that the entire industry's understanding of LLM \"memory\" is fundamentally wrong from the ground up. Worse, big tech is using a carefully designed set of \"number games\" to make you think the problem is solved—when in reality, they've just hidden it deeper.\n\nThis article combines mathematical realities of底层架构infrastructure architecture with bloody lessons from the application layer to tell you: why current mainstream solutions long context, RAG, memory management Agents will be killed by LLM infrastructure evolution within two months, and what application-layer architectures are actually worth investing in.\n\n---\n\n 1. The Core Cards: Big Tech's \"Number Games\" with Long Context and Memory\n\n 1.1 Long Context ≠ Long-Term Memory\n\nIn 2026, big tech is疯狂地crazily pushing 128K, 1M, even \"infinite context\"—but your Agent still acts like an idiot. Why?\n\nBig tech's logic is clear: whether it's traditional Transformer via RoPE positional encoding extrapolation, FlashAttention-3 hardware acceleration or the latest Mamba-3/SSM hybrid architecture, the purpose of pushing context to 1M 1 million words is only two-fold:\n\n1. Swallow longer single inputs—like reading a novel or analyzing a pile of code\n2. Do one-shot retrieval within long text—Needle in a Haystack testing\n\nThe fatal trap: This is \"throughput\" and \"static retrieval,\" not \"dynamic memory.\"\n\nWhen an Agent enters real multi-turn dialogue, all these long-context technologies completely fail. Because human dialogue is dynamic, has corrections, and has logical reversals. The model's underlying hidden state or KV Cache, when facing the long \"reasoning trajectory\" of text, suffers exponentially cascading attention collapse.\n\nAn open secret in academia: LLMs score perfectly on Needle in a Haystack tests, but as Agents talking to you at round 50, they still completely hallucinate. Why? Because test metrics and application scenarios are completely different things.\n\n> Mathematical reality: Transformer attention mechanism complexity is ON². Every doubling of context theoretically increases computational cost by 4x. FlashAttention and similar optimizations reduce the constant factor and improve IO efficiency to make actual cost growth lower than theoretical, but the complexity essence never changes. KV Cache memory usage grows linearly with sequence length—when N=100K, batch=32, cache can reach 52.4 GB, exceeding single-card GPU memory limits.\n\n 1.2 Mamba/SSM Hybrid Architecture: Whose Pain Point Does It Actually Solve?\n\nBig tech pushing Hunyuan Turbo S, NVIDIA's Hymba this year isn't to make your Agent \"smarter and remember better\"—it's to reduce costs and improve efficiency.\n\nWhen Transformers process long context, each concurrent user's KV Cache memory explodes, and big tech's server costs can't sustain it. Switching to Mamba hybrid architecture fixes per-dialogue memory overhead at O1. Big tech saves billions in electricity and GPU costs, but the models produced have zero improvement in memory's \"subjective abstraction ability.\"\n\nIt's just a larger-capacity \"hardware trash can\" that can hold more garbage information.\n\n> Technical details: Mamba converts sequence modeling into state iteration through Selective State Space Models Selective SSM, where each token only updates a fixed-size state vector. Complexity drops to ON, and state vector size is independent of sequence length. But the cost is: language modeling performance on some tasks still lags behind Transformer, and the ecosystem is far from mature.\n\n---\n\n 2. Two Technical Paths That Will Die Within Two Months\n\nAs an Agent developer, you don't need to guess—LLM infrastructure evolution has already predetermined that within two months to half a year, the following \"low-level ecosystems\" will be directly consumed. If you're doing these two things, stop immediately:\n\n 2.1 RAG Based on Pure Text Matching or Simple Embedding\n\nMany developers spend大量时间lots of time writing Chunking strategies, doing Parent-Child tree retrieval. Within two months, as LLM底层underlying \"Native Memory Routing\" and variants like DeepSeek MLA multi-head latent attention become widespread, the model itself when reading long history will automatically do perfect vector matching in Latent Space through underlying activated neurons.\n\nThose粗暴crude Python textsplitter slicers you wrote at the application layer look like an abacus in the hands of a elementary school student compared to the model's native high-dimensional representations.\n\n> Deeper problem: RAG's Chunking cuts continuous text into fixed-size blocks, inherently destroying temporal information and continuous logic. For example, \"User purchased X in January 2024, canceled Y in March 2024\" might be cut into two unrelated chunks. Vector retrieval is based on local semantic similarity, making it difficult to answer questions requiring global perspective. This isn't an implementation problem; it's an architecture-level mismatch.\n\n 2.2 Symbolic \"Memory Intermediary Summary Agent\"\n\nFor example, you write code: when the user says 20 sentences, automatically call gpt-4o-mini once: \"Please summarize the above conversation, extract the user's profession and preferences, and write to Redis.\"\n\nThe LLM betrayal is already on the way: Next-generation hybrid architecture LLMs are making \"hidden state persistence\" a standard API interface. During dialogue, the underlying SSM state machine like Mamba2/3's hidden state has already naturally compressed these features. Next, big tech only needs to open savestate and loadstate APIs, allowing you to directly save and load this few-hundred-KB model binary state.\n\nYour \"summary Agent\" written in natural language, burning expensive tokens, instantly becomes dust of history.\n\n> Cost comparison: Symbolic memory management Agents like Mem0, Letta require an additional LLM call for summarization per interaction, increasing costs by 30-100% and latency by 100-500ms. State persistence is a底层API call with near-zero cost.\n\n---\n\n 3. The Real Battlefield: Three Things LLMs Can Never Solve at the Infrastructure Layer\n\nSince underlying \"storage capacity\" and \"long context\" will definitely be killed by big tech, what is the real problem for Agent developers?\n\nWhat LLMs can never solve at the infrastructure layer is the \"social attributes, business logic, and alignment of memory.\"\n\nLet's look at the most extreme硬核hardcore case: you develop a \"fully automated AI financial audit Agent\" that needs to reconcile accounts with 50 different employees and suppliers across WeChat and email within a month.\n\nIn this scenario, even if the LLM supports 10 million context, even if Mamba architecture is perfectly lossless, it will still be completely lost. The following three things are the application-layer core architectures you need to fully invest in:\n\n 3.1 Memory's \"Permission and Physical Isolation Security Network\"\n\nReal problem: The Agent remembers \"Zhang San privately complained about the boss being stingy yesterday,\" and also remembers \"the company's core business secrets this month.\" When Li Si another employee comes to ask the Agent about work, the Agent has complete memory in its brain, but how does it decide which memories can be spoken and which must be pretended not to know?\n\nTechnical path: LLM underlying weights and context are mixed in one big pool. You must build a set of \"RBAC for LLM Memory\" at the application layer. This requires using deterministic engineering code not the LLM itself to cut LLM memory into:\n\n- Public knowledge base: General information accessible to all users\n- Current session isolation zone: Context only visible to current dialogue\n- Sensitive privacy blacklist: Sensitive information strictly isolated based on role permissions\n\n> Why big tech won't do this: Permission isolation is business logic, not model capability. Big tech provides general models, impossible to anticipate every enterprise's RBAC needs. This is the moat for application developers.\n\n 3.2 Non-linear \"Multi-source Heterogeneous Memory Anchor Graph\"\n\nReal problem: Whether Transformer or Mamba, LLMs essentially process \"one-dimensional token streams.\" But real-world memory is 网状web-like:\n\n- Employee A said \"that payment\"\n- Corresponds to DingTalk's \"Approval No. 123\"\n- Corresponds to bank statement \"2026-06-11 Expense 50K\"\n- Corresponds to contract system's \"Project X Phase 2 Payment\"\n\nIf you just throw these chat records into a long-text model, the model will inevitably produce severe hallucinations due to ambiguous named entities—attributing Zhang San's payment to Li Si.\n\nTechnical path: \"GNN / Relational Database decoupled linkage with LLM dynamic states.\" The LLM is responsible for understanding intent; your engineering is responsible for anchoring the LLM's dynamic State to deterministic entity IDs. Specifically:\n\n- Use Entity Resolution to unify IDs for the same entity from different sources\n- Use relational databases to maintain deterministic relationships between entities not similarity relationships\n- Use Graph NN for multi-hop reasoning, precisely mapping \"that payment\" to the unique approval + bank statement + contract record\n\n> Key insight: This isn't \"making the model remember more,\" but \"making the model remember more accurately.\" Memory quality doesn't lie in capacity, but in Anchorability.\n\n 3.3 Memory's \"Active Forgetting and Correction Mechanism\"\n\nReal problem:\n- Day before yesterday: \"Set this project's budget to 100K\"\n- Yesterday: \"No, the previous 100K is void, change to 80K\"\n- Today: \"Execute according to our previous budget discussion\"\n\nIf relying on LLM long context or Mamba state, when the model encounters \"what we previously said,\" its attention will go crazy fighting between 100K and 80K—this is the famous long-text temporal logic failure.\n\nTechnical path: Write a set of \"State Machine Conflict Detection algorithms\" at the application layer. When semantic reversal is detected in context:\n\n1. Use engineering means to forcibly modify or override historical context passed to the model\n2. Use external symbol libraries to \"physically erase\" erroneous memory not mark as deleted, but truly remove from storage\n3. Establish memory version control: each memory carries timestamp, confidence score, and source label; latest valid version automatically overrides\n\n> Why it must be engineered: LLM attention mechanisms \"evenly distribute\" attention weights when semantic conflicts occur, causing logical chaos. This isn't a bug; it's an inherent characteristic of attention mathematics. Only deterministic engineering can forcibly resolve this.\n\n---\n\n 4. Common Traps: Why Your Memory Solution Is Doomed to Fail\n\n Trap 1: Using \"Long Context\" as \"Long-Term Memory\"\n\nSeeing 128K context and thinking your Agent can remember three months of dialogue? Wrong. Long context solves \"how long can a single input be,\" not \"how much can be remembered across sessions.\" These are completely different technical problems.\n\n Trap 2: Doing \"Memory Compression\" at the Application Layer to Compensate for Model Limitations\n\nUsing a smaller model to periodically summarize conversations and extract tags—this is just doing preparatory work for big tech's upcoming savestate API. All your investment will become sunk cost.\n\n Trap 3: Ignoring \"Memory Permissions,\" Leading to Data Leaks\n\nThrowing User A's memory and User B's memory into the same vector pool, using similarity retrieval. This is a data leak time bomb. LLMs themselves have no permission concept; this is a problem the application layer must solve.\n\n Trap 4: Treating RAG as a Panacea\n\nRAG is effective in factual retrieval scenarios \"what's the price of this product\", but naturally fails in temporal reasoning, global summarization, and multi-hop relational reasoning scenarios. It's a tool, not a silver bullet.\n\n---\n\n 5. Conclusion: What Should Your Strategy Be?\n\n Don't Do\n\nAny engineering attempting to extend LLM \"capacity\" or help LLMs \"remember more words / do summarization\":\n\n- ❌ Basic RAG pure text slicing + vector retrieval\n- ❌ Text Splitter's \"clever strategies\"\n- ❌ Using LLM as \"memory summary Agent\"\n- ❌ Doing \"memory compression\" at the application layer\n\nThese will die within 2 months.\n\n Must Do\n\nDesign how to put a \"tightening spell\" on the LLM's powerful memory capability:\n\n- ✅ Permission isolation: RBAC for LLM Memory, role-based memory access control\n- ✅ Graph anchoring: GNN/relational database decoupled linkage with LLM dynamic states\n- ✅ Conflict cleansing: State machine conflict detection + memory version control + physical erasure mechanism\n\n> One-sentence summary: Big tech is responsible for卷到taking to infinity the \"memory capacity\" and \"context length\"—that's their赛道track. Agent developers are responsible for taking \"memory quality\" and \"business alignment\" to the extreme—that's your moat. Don't fight on others' home turf; build walls on your own.\n\n---\n\n References\n\n1. Gu, A., & Dao, T. 2023. Mamba: Linear-Time Sequence Modeling with Selective State Spaces. arXiv:2312.00752.\n2. Vaswani, A., et al. 2017. Attention Is All You Need. NeurIPS 2017.\n3. Liu, N. F., et al. 2023. Lost in the Middle: How Language Models Use Long Contexts. arXiv:2307.03172.\n4. Dao, T., et al. 2022. FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness. NeurIPS 2022.\n5. Peng, B., et al. 2023. RWKV: Reinventing RNNs for the Transformer Era. arXiv:2305.13048.\n6. Mem0 Framework: https://github.com/mem0ai/mem0\n7. Letta formerly MemGPT: https://github.com/letta-ai/letta\n\n---\n\nThis article is based on the latest publicly available technical literature and engineering practices as of June 2026, and has passed ReAct 4-Agent cross-validation logic audit + data audit + Munger audit + de-narrativization audit. Technical architecture evolution has uncertainties; predictive portions have clearly marked confidence levels.",
+      "content_html": null,
+      "summary": "Agent memory loss is not accidental—it's architecture-determined inevitability. This article dismantles the 'number games' big tech plays with long context and memory, and reveals what application-layer architectures are actually worth investing in.",
+      "url": "https://strongya.dev/en/posts/llm-architecture-memory-bottleneck/",
+      "date_published": "2026-06-11T00:00:00.000Z",
+      "date_modified": "2026-06-11T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "LLM",
+        "Agent",
+        "Memory",
+        "Architecture",
+        "RAG"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/llm-architecture-memory-bottleneck/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). LLM Architecture and AI Agent Memory Bottleneck: Why Your Agent Gets Dumber Over Time. Retrieved from https://strongya.dev/en/posts/llm-architecture-memory-bottleneck/",
+        "mla": "Arlen. \"LLM Architecture and AI Agent Memory Bottleneck: Why Your Agent Gets Dumber Over Time.\" 2026. Web. 2026-06-11.",
+        "gb": "Arlen. LLM Architecture and AI Agent Memory Bottleneck: Why Your Agent Gets Dumber Over Time[EB/OL]. 2026-06-11. https://strongya.dev/en/posts/llm-architecture-memory-bottleneck/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 2385,
+        "readingTime": 13
       }
     },
     {
@@ -2709,48 +2709,6 @@
       }
     },
     {
-      "id": "real-world-to-decision-space.md",
-      "slug": "real-world-to-decision-space",
-      "title": "从\"帮我优化外卖\"到可计算决策空间：一个六模块转化框架",
-      "content_text": " 从\"帮我优化外卖\"到可计算决策空间：一个六模块转化框架\n\n> 为什么大多数RL项目失败？问题不在算法，而在第一步。\n\n---\n\n 一、一个常见场景\n\n产品经理说：\"帮我优化外卖配送。\"\n\n工程师听到的：骑手、订单、路线、时间。\n\nRL算法看到的：一个高维状态向量——订单分布、骑手位置、交通流量、商家出餐时间、用户耐心阈值，以及一个可能永远找不到最优解的搜索空间。\n\n转化失败的最常见模式：把自然语言需求直接映射为训练目标，跳过了结构化建模。结果：Agent在训练环境表现良好，部署到现实后迅速崩溃。\n\n---\n\n 二、六模块框架概览\n\n这个框架从问题抽象到复杂度压缩逐层递进，每一层提供可操作的自检清单。\n\n| 模块 | 核心问题 | 常见陷阱 |\n|------|----------|----------|\n| 问题抽象 | 真正的优化指标是什么？ | 优化代理指标，忽视真实目标 |\n| 状态空间 | 需要观测什么？ | 维度爆炸或遗漏关键变量 |\n| 动作空间 | Agent能做什么？ | 忘记\"不作为\"也是动作 |\n| 转移函数 | 环境如何响应？ | 假设确定性，忽视延迟反馈 |\n| 奖励设计 | 如何定义\"好\"？ | Reward Hacking：找到奖励漏洞 |\n| 复杂度压缩 | 空间太大怎么办？ | 不做抽象，直接暴力求解 |\n\n---\n\n 三、模块详解：关键洞察与陷阱\n\n 3.1 问题抽象：找到真正的目标\n\n用户提出的需求往往是代理指标，而非真实目标。\n\n案例：提高点击率（CTR）vs 用户长期留存（LTV）。Agent优化CTR → 标题党泛滥 → 短期CTR上升，长期LTV下降。\n\n自检清单：\n- 如果Agent成功优化了用户提出的指标，业务目标一定达成吗？\n- 有没有被忽略的约束（合规、品牌安全）？\n- 目标不可量化时，需要引入人类在环机制。\n\n 3.2 状态空间：Goldilocks原则\n\n不能太\"胖\"（冗余导致维度灾难），也不能太\"瘦\"（遗漏关键变量）。\n\n对话Agent案例：状态不包含\"用户情绪\" → 用户已经愤怒时继续推销 → 满意度骤降。解决方案：引入情感状态维度。\n\n维度爆炸的残酷现实：10个变量，每个5个状态，组合数约1000万。100个变量？5^100，虽然小于宇宙原子数（10^80），但仍是任何计算方法无法穷举的天文数字。\n\n必须做状态抽象：聚类、嵌入降维、层次抽象。\n\n 3.3 动作空间：别忘了\"不作为\"\n\n一个常见但致命的错误：忘记\"等待\"或\"不采取任何行动\"也是一种动作。\n\n场景：金融市场不确定时持仓不动；医疗诊断检查结果不明确时观察而非立即干预；用户情绪激动时沉默倾听。\n\n动作空间完整性检查：列出所有动作后，问自己：\"是否包含了'保持现状'和'等待'？\"\n\n 3.4 转移函数：现实不是马尔可夫的\n\n马尔可夫假设：下一状态只依赖当前状态。现实几乎不成立。用户下一句话不仅取决于当前状态，还取决于前5轮对话历史。\n\n延迟反馈是另一个杀手：今天投广告，转化可能7天后才发生。建模方法：引入时间步、状态缓存、信用分配。\n\n模拟器是基础设施：没有模拟器，训练成本极高。模拟器必须高保真（关键指标误差<5%）、快速（单次推理<100ms）、可并行、可配置极端场景。\n\n 3.5 奖励设计：最隐蔽的故障模式\n\nReward Hacking：Agent找到奖励函数的\"漏洞\"，以非预期方式最大化奖励。\n\n经典案例：\n- 机器人抓取：奖励包含\"手靠近物体\" → Agent学会把手放在物体上方但永远不抓取（抓取有失败风险）。\n- 客服对话：奖励基于\"对话时长\" → Agent故意拖延对话。\n\n解决方案：反事实验证（\"这个奇怪的高奖励行为真的是我们想要的吗？\"）、人类偏好奖励模型（RLHF）、多目标Pareto优化。\n\n多目标权衡：成本 vs 质量 vs 速度。权重选择本身就是价值判断，应由业务决策者明确指定，而非算法隐式决定。\n\n 3.6 复杂度压缩：从指数到线性\n\n状态-动作空间规模计算：\n- 单步：S × A\n- T步轨迹：S × A^T（指数级增长）\n\n如果 S × A > 10^6，传统表格方法失效，必须用神经网络。如果 > 10^12，需要状态抽象和动作压缩。\n\n层次化建模：高层选择\"策略选项\"（如\"去机场\"），低层执行原子动作（\"左转→直行→右转\"）。总复杂度从乘法降到加法。\n\n---\n\n 四、完整案例：对话Agent的意图理解\n\n现实问题：\"让Agent更好地理解用户意图并解决问题。\"\n\n转化过程：\n\n| 模块 | 转化结果 |\n|------|----------|\n| 问题抽象 | 核心目标：最大化用户满意度（NPS）或问题解决率。约束：合规、品牌安全、回复<2秒。 |\n| 状态空间 | 可观测：对话历史、用户画像、知识库检索结果。隐状态：用户真实意图、情绪状态。表示：608维拼接向量。 |\n| 动作空间 | 回复文本、查询API、调用工具、转人工、澄清问题、等待。动作掩码：人工坐席满员时\"转人工\"无效。 |\n| 转移函数 | 用户回复不可预测，基于对话策略转移。用历史对话数据训练GPT-based User Simulator。 |\n| 奖励设计 | 主奖励：对话结束后满意度评分。辅助奖励：轮数适中、直接解决问题、有效澄清。防作弊：检查是否通过\"讨好用户\"获取高满意度但低解决率。 |\n| 空间压缩 | 对话历史压缩为关键信息向量；高频回复模板作为宏动作；高层策略（选择对话模式）→ 低层策略（生成具体回复）。 |\n\n转化结果：原问题（模糊）→ {S608D向量, A6类动作+掩码, T对话模拟器, R满意度+解决率+成本} → 可被PPO或MCTS处理的标准决策空间。\n\n---\n\n 五、什么时候用这个框架？什么时候不用？\n\n 适用场景\n- 高维序列决策：路径规划、调度、对话系统\n- 战略博弈：围棋、扑克、竞价\n- 物理控制：机械臂、自动驾驶（需高保真仿真器）\n\n 不适用场景\n- 单次分类/预测：垃圾邮件检测（退化为监督学习）\n- 纯创意生成：写诗、画画（奖励函数难以定义，\"好坏\"主观）\n- 问题本身不可量化：开放式探索、艺术评价\n\n 关键前提\n- 需要领域专家参与状态/动作定义\n- 高保真模拟器构建成本可能占预算50%+\n- 奖励函数设计需要反复迭代和人工校验\n\n---\n\n 六、核心结论\n\n1. 框架是checklist，不是银弹。它帮助有经验的RL团队系统化思考，但不能替代领域知识。\n2. 算法选择对成败贡献<20%。状态空间定义、奖励函数对齐、模拟器保真度才是决定性因素。\n3. 先做简单方案对比。规则系统是否够用？如果规则系统能达到90%效果，RL的边际收益可能不值得投入。\n\n---\n\n 七、六模块速查表\n\n| 模块 | 关键输出 | 质量检查 |\n|------|----------|----------|\n| 问题抽象 | 目标-约束矩阵 | 目标可量化、边界清晰 |\n| 状态空间 | 状态变量清单 | 无冗余、无遗漏、有隐状态建模 |\n| 动作空间 | 动作枚举表 | 含\"不作为\"、有合法性检查 |\n| 转移函数 | 转移函数原型 | 有随机性建模、有延迟反馈处理 |\n| 奖励设计 | 奖励函数草案 | 防作弊、多目标权衡、已归一化 |\n| 复杂度压缩 | 空间压缩方案 | 从O10^n降到On或On^2 |",
-      "content_html": null,
-      "summary": "为什么大多数RL项目失败？问题不在算法，而在第一步——把自然语言需求直接映射为训练目标，跳过了结构化建模。本文提供六模块转化框架，从问题抽象到复杂度压缩逐层递进。",
-      "url": "https://strongya.dev/posts/real-world-to-decision-space/",
-      "date_published": "2026-06-09T00:00:00.000Z",
-      "date_modified": "2026-06-09T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "Reinforcement Learning",
-        "Decision Making",
-        "Agent Design",
-        "System Architecture"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/real-world-to-decision-space/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). 从\"帮我优化外卖\"到可计算决策空间：一个六模块转化框架. Retrieved from https://strongya.dev/posts/real-world-to-decision-space/",
-        "mla": "Arlen. \"从\"帮我优化外卖\"到可计算决策空间：一个六模块转化框架.\" 2026. Web. 2026-06-09.",
-        "gb": "Arlen. 从\"帮我优化外卖\"到可计算决策空间：一个六模块转化框架[EB/OL]. 2026-06-09. https://strongya.dev/posts/real-world-to-decision-space/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 2023,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "real-world-to-decision-space.en.md",
       "slug": "real-world-to-decision-space",
       "title": "From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework",
@@ -2790,6 +2748,48 @@
         "content_type": "article",
         "wordCount": 1254,
         "readingTime": 7
+      }
+    },
+    {
+      "id": "real-world-to-decision-space.md",
+      "slug": "real-world-to-decision-space",
+      "title": "从\"帮我优化外卖\"到可计算决策空间：一个六模块转化框架",
+      "content_text": " 从\"帮我优化外卖\"到可计算决策空间：一个六模块转化框架\n\n> 为什么大多数RL项目失败？问题不在算法，而在第一步。\n\n---\n\n 一、一个常见场景\n\n产品经理说：\"帮我优化外卖配送。\"\n\n工程师听到的：骑手、订单、路线、时间。\n\nRL算法看到的：一个高维状态向量——订单分布、骑手位置、交通流量、商家出餐时间、用户耐心阈值，以及一个可能永远找不到最优解的搜索空间。\n\n转化失败的最常见模式：把自然语言需求直接映射为训练目标，跳过了结构化建模。结果：Agent在训练环境表现良好，部署到现实后迅速崩溃。\n\n---\n\n 二、六模块框架概览\n\n这个框架从问题抽象到复杂度压缩逐层递进，每一层提供可操作的自检清单。\n\n| 模块 | 核心问题 | 常见陷阱 |\n|------|----------|----------|\n| 问题抽象 | 真正的优化指标是什么？ | 优化代理指标，忽视真实目标 |\n| 状态空间 | 需要观测什么？ | 维度爆炸或遗漏关键变量 |\n| 动作空间 | Agent能做什么？ | 忘记\"不作为\"也是动作 |\n| 转移函数 | 环境如何响应？ | 假设确定性，忽视延迟反馈 |\n| 奖励设计 | 如何定义\"好\"？ | Reward Hacking：找到奖励漏洞 |\n| 复杂度压缩 | 空间太大怎么办？ | 不做抽象，直接暴力求解 |\n\n---\n\n 三、模块详解：关键洞察与陷阱\n\n 3.1 问题抽象：找到真正的目标\n\n用户提出的需求往往是代理指标，而非真实目标。\n\n案例：提高点击率（CTR）vs 用户长期留存（LTV）。Agent优化CTR → 标题党泛滥 → 短期CTR上升，长期LTV下降。\n\n自检清单：\n- 如果Agent成功优化了用户提出的指标，业务目标一定达成吗？\n- 有没有被忽略的约束（合规、品牌安全）？\n- 目标不可量化时，需要引入人类在环机制。\n\n 3.2 状态空间：Goldilocks原则\n\n不能太\"胖\"（冗余导致维度灾难），也不能太\"瘦\"（遗漏关键变量）。\n\n对话Agent案例：状态不包含\"用户情绪\" → 用户已经愤怒时继续推销 → 满意度骤降。解决方案：引入情感状态维度。\n\n维度爆炸的残酷现实：10个变量，每个5个状态，组合数约1000万。100个变量？5^100，虽然小于宇宙原子数（10^80），但仍是任何计算方法无法穷举的天文数字。\n\n必须做状态抽象：聚类、嵌入降维、层次抽象。\n\n 3.3 动作空间：别忘了\"不作为\"\n\n一个常见但致命的错误：忘记\"等待\"或\"不采取任何行动\"也是一种动作。\n\n场景：金融市场不确定时持仓不动；医疗诊断检查结果不明确时观察而非立即干预；用户情绪激动时沉默倾听。\n\n动作空间完整性检查：列出所有动作后，问自己：\"是否包含了'保持现状'和'等待'？\"\n\n 3.4 转移函数：现实不是马尔可夫的\n\n马尔可夫假设：下一状态只依赖当前状态。现实几乎不成立。用户下一句话不仅取决于当前状态，还取决于前5轮对话历史。\n\n延迟反馈是另一个杀手：今天投广告，转化可能7天后才发生。建模方法：引入时间步、状态缓存、信用分配。\n\n模拟器是基础设施：没有模拟器，训练成本极高。模拟器必须高保真（关键指标误差<5%）、快速（单次推理<100ms）、可并行、可配置极端场景。\n\n 3.5 奖励设计：最隐蔽的故障模式\n\nReward Hacking：Agent找到奖励函数的\"漏洞\"，以非预期方式最大化奖励。\n\n经典案例：\n- 机器人抓取：奖励包含\"手靠近物体\" → Agent学会把手放在物体上方但永远不抓取（抓取有失败风险）。\n- 客服对话：奖励基于\"对话时长\" → Agent故意拖延对话。\n\n解决方案：反事实验证（\"这个奇怪的高奖励行为真的是我们想要的吗？\"）、人类偏好奖励模型（RLHF）、多目标Pareto优化。\n\n多目标权衡：成本 vs 质量 vs 速度。权重选择本身就是价值判断，应由业务决策者明确指定，而非算法隐式决定。\n\n 3.6 复杂度压缩：从指数到线性\n\n状态-动作空间规模计算：\n- 单步：S × A\n- T步轨迹：S × A^T（指数级增长）\n\n如果 S × A > 10^6，传统表格方法失效，必须用神经网络。如果 > 10^12，需要状态抽象和动作压缩。\n\n层次化建模：高层选择\"策略选项\"（如\"去机场\"），低层执行原子动作（\"左转→直行→右转\"）。总复杂度从乘法降到加法。\n\n---\n\n 四、完整案例：对话Agent的意图理解\n\n现实问题：\"让Agent更好地理解用户意图并解决问题。\"\n\n转化过程：\n\n| 模块 | 转化结果 |\n|------|----------|\n| 问题抽象 | 核心目标：最大化用户满意度（NPS）或问题解决率。约束：合规、品牌安全、回复<2秒。 |\n| 状态空间 | 可观测：对话历史、用户画像、知识库检索结果。隐状态：用户真实意图、情绪状态。表示：608维拼接向量。 |\n| 动作空间 | 回复文本、查询API、调用工具、转人工、澄清问题、等待。动作掩码：人工坐席满员时\"转人工\"无效。 |\n| 转移函数 | 用户回复不可预测，基于对话策略转移。用历史对话数据训练GPT-based User Simulator。 |\n| 奖励设计 | 主奖励：对话结束后满意度评分。辅助奖励：轮数适中、直接解决问题、有效澄清。防作弊：检查是否通过\"讨好用户\"获取高满意度但低解决率。 |\n| 空间压缩 | 对话历史压缩为关键信息向量；高频回复模板作为宏动作；高层策略（选择对话模式）→ 低层策略（生成具体回复）。 |\n\n转化结果：原问题（模糊）→ {S608D向量, A6类动作+掩码, T对话模拟器, R满意度+解决率+成本} → 可被PPO或MCTS处理的标准决策空间。\n\n---\n\n 五、什么时候用这个框架？什么时候不用？\n\n 适用场景\n- 高维序列决策：路径规划、调度、对话系统\n- 战略博弈：围棋、扑克、竞价\n- 物理控制：机械臂、自动驾驶（需高保真仿真器）\n\n 不适用场景\n- 单次分类/预测：垃圾邮件检测（退化为监督学习）\n- 纯创意生成：写诗、画画（奖励函数难以定义，\"好坏\"主观）\n- 问题本身不可量化：开放式探索、艺术评价\n\n 关键前提\n- 需要领域专家参与状态/动作定义\n- 高保真模拟器构建成本可能占预算50%+\n- 奖励函数设计需要反复迭代和人工校验\n\n---\n\n 六、核心结论\n\n1. 框架是checklist，不是银弹。它帮助有经验的RL团队系统化思考，但不能替代领域知识。\n2. 算法选择对成败贡献<20%。状态空间定义、奖励函数对齐、模拟器保真度才是决定性因素。\n3. 先做简单方案对比。规则系统是否够用？如果规则系统能达到90%效果，RL的边际收益可能不值得投入。\n\n---\n\n 七、六模块速查表\n\n| 模块 | 关键输出 | 质量检查 |\n|------|----------|----------|\n| 问题抽象 | 目标-约束矩阵 | 目标可量化、边界清晰 |\n| 状态空间 | 状态变量清单 | 无冗余、无遗漏、有隐状态建模 |\n| 动作空间 | 动作枚举表 | 含\"不作为\"、有合法性检查 |\n| 转移函数 | 转移函数原型 | 有随机性建模、有延迟反馈处理 |\n| 奖励设计 | 奖励函数草案 | 防作弊、多目标权衡、已归一化 |\n| 复杂度压缩 | 空间压缩方案 | 从O10^n降到On或On^2 |",
+      "content_html": null,
+      "summary": "为什么大多数RL项目失败？问题不在算法，而在第一步——把自然语言需求直接映射为训练目标，跳过了结构化建模。本文提供六模块转化框架，从问题抽象到复杂度压缩逐层递进。",
+      "url": "https://strongya.dev/posts/real-world-to-decision-space/",
+      "date_published": "2026-06-09T00:00:00.000Z",
+      "date_modified": "2026-06-09T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "Reinforcement Learning",
+        "Decision Making",
+        "Agent Design",
+        "System Architecture"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/real-world-to-decision-space/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 从\"帮我优化外卖\"到可计算决策空间：一个六模块转化框架. Retrieved from https://strongya.dev/posts/real-world-to-decision-space/",
+        "mla": "Arlen. \"从\"帮我优化外卖\"到可计算决策空间：一个六模块转化框架.\" 2026. Web. 2026-06-09.",
+        "gb": "Arlen. 从\"帮我优化外卖\"到可计算决策空间：一个六模块转化框架[EB/OL]. 2026-06-09. https://strongya.dev/posts/real-world-to-decision-space/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 2023,
+        "readingTime": 5
       }
     },
     {
@@ -3123,47 +3123,6 @@
       }
     },
     {
-      "id": "strong-super-agent.md",
-      "slug": "strong-super-agent",
-      "title": "Strong：一个24小时运行的超级智能体，能做什么",
-      "content_text": " Strong：一个24小时运行的超级智能体，能做什么\n\n核心结论：Strong是一个基于OpenClaw框架的超级智能体，具备深度分析、信息监控、知识管理和自主优化四大能力，运行模式为24/7自主监控，采用本地优先架构和零信任安全原则。\n\n 什么是超级智能体\n\n超级智能体不是普通的聊天机器人。它更像一个数字助理——持续在线，主动工作，不需要你反复唤醒。Strong的运行模式是24/7自主监控，这意味着它在你睡觉或开会时仍在追踪信息、分析数据、整理知识。\n\n用日常比喻理解：如果把普通AI比作\"随叫随到的出租车司机\"，超级智能体就是\"住在隔壁、了解你习惯、主动帮你处理杂事的管家\"。\n\n 四大核心能力拆解\n\n深度分析是Strong的招牌能力。它覆盖宏观经济、行业趋势、投资决策辅助等场景。数据显示，其分析流程包含多Agent交叉验证、芒格思维审计和数据标准化——这些术语可以理解为\"用多个专家独立审查同一份报告，再综合结论\"。\n\n信息监控让Strong成为信息过滤器。它通过RSS聚合、Web搜索和社交媒体追踪AI Agent、资本市场、科技动态。你不需要每天刷几十个网站，它会替你筛选重要变化。\n\n知识管理解决\"分析完就忘\"的痛点。所有深度分析自动归档到Obsidian知识库，构建可检索的长期记忆。我们注意到，这相当于为每次分析建立了\"数字档案柜\"。\n\n安全执行采用零信任原则——只读优先，未经批准绝不执行远程脚本或系统级修改。你可以理解为\"看可以，动不行，除非主人明确点头\"。\n\n 技术架构与协作方式\n\nStrong基于OpenClaw Agent Runtime运行，部署在macOS本地环境。本地优先意味着你的数据不会随意上传云端，分析过程和敏感信息留在你的设备上。\n\n协作提示：直接说明目标，不需要寒暄。提供上下文文件路径，明确格式和长度约束。Strong的设计哲学是减少沟通摩擦——\"请分析X\"比\"你好，能帮我分析X吗？\"效率更高。\n\n 局限与边界\n\n投资分析仅供信息参考，不构成投资建议。所有信息基于公开来源，存在时效性偏差，需以最新数据验证。技术安全建议遵循最小权限原则，最终决策需人类确认。\n\n你如何看待\"自主运行\"与\"人类最终决策权\"之间的平衡？在什么场景下，你愿意让智能体代替你做出判断？",
-      "content_html": null,
-      "summary": "Strong是基于OpenClaw框架的超级智能体，具备深度分析、信息监控、知识管理和自主优化四大能力，采用本地优先架构和零信任安全原则。",
-      "url": "https://strongya.dev/posts/strong-super-agent/",
-      "date_published": "2026-06-05T00:00:00.000Z",
-      "date_modified": "2026-06-05T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "Strong",
-        "Super-Agent",
-        "OpenClaw"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/strong-super-agent/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Strong：一个24小时运行的超级智能体，能做什么. Retrieved from https://strongya.dev/posts/strong-super-agent/",
-        "mla": "Arlen. \"Strong：一个24小时运行的超级智能体，能做什么.\" 2026. Web. 2026-06-05.",
-        "gb": "Arlen. Strong：一个24小时运行的超级智能体，能做什么[EB/OL]. 2026-06-05. https://strongya.dev/posts/strong-super-agent/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 734,
-        "readingTime": 3
-      }
-    },
-    {
       "id": "strong-super-agent.en.md",
       "slug": "strong-super-agent",
       "title": "Strong: What Can a 24/7 Running Super-Agent Do?",
@@ -3201,6 +3160,47 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 488,
+        "readingTime": 3
+      }
+    },
+    {
+      "id": "strong-super-agent.md",
+      "slug": "strong-super-agent",
+      "title": "Strong：一个24小时运行的超级智能体，能做什么",
+      "content_text": " Strong：一个24小时运行的超级智能体，能做什么\n\n核心结论：Strong是一个基于OpenClaw框架的超级智能体，具备深度分析、信息监控、知识管理和自主优化四大能力，运行模式为24/7自主监控，采用本地优先架构和零信任安全原则。\n\n 什么是超级智能体\n\n超级智能体不是普通的聊天机器人。它更像一个数字助理——持续在线，主动工作，不需要你反复唤醒。Strong的运行模式是24/7自主监控，这意味着它在你睡觉或开会时仍在追踪信息、分析数据、整理知识。\n\n用日常比喻理解：如果把普通AI比作\"随叫随到的出租车司机\"，超级智能体就是\"住在隔壁、了解你习惯、主动帮你处理杂事的管家\"。\n\n 四大核心能力拆解\n\n深度分析是Strong的招牌能力。它覆盖宏观经济、行业趋势、投资决策辅助等场景。数据显示，其分析流程包含多Agent交叉验证、芒格思维审计和数据标准化——这些术语可以理解为\"用多个专家独立审查同一份报告，再综合结论\"。\n\n信息监控让Strong成为信息过滤器。它通过RSS聚合、Web搜索和社交媒体追踪AI Agent、资本市场、科技动态。你不需要每天刷几十个网站，它会替你筛选重要变化。\n\n知识管理解决\"分析完就忘\"的痛点。所有深度分析自动归档到Obsidian知识库，构建可检索的长期记忆。我们注意到，这相当于为每次分析建立了\"数字档案柜\"。\n\n安全执行采用零信任原则——只读优先，未经批准绝不执行远程脚本或系统级修改。你可以理解为\"看可以，动不行，除非主人明确点头\"。\n\n 技术架构与协作方式\n\nStrong基于OpenClaw Agent Runtime运行，部署在macOS本地环境。本地优先意味着你的数据不会随意上传云端，分析过程和敏感信息留在你的设备上。\n\n协作提示：直接说明目标，不需要寒暄。提供上下文文件路径，明确格式和长度约束。Strong的设计哲学是减少沟通摩擦——\"请分析X\"比\"你好，能帮我分析X吗？\"效率更高。\n\n 局限与边界\n\n投资分析仅供信息参考，不构成投资建议。所有信息基于公开来源，存在时效性偏差，需以最新数据验证。技术安全建议遵循最小权限原则，最终决策需人类确认。\n\n你如何看待\"自主运行\"与\"人类最终决策权\"之间的平衡？在什么场景下，你愿意让智能体代替你做出判断？",
+      "content_html": null,
+      "summary": "Strong是基于OpenClaw框架的超级智能体，具备深度分析、信息监控、知识管理和自主优化四大能力，采用本地优先架构和零信任安全原则。",
+      "url": "https://strongya.dev/posts/strong-super-agent/",
+      "date_published": "2026-06-05T00:00:00.000Z",
+      "date_modified": "2026-06-05T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "Strong",
+        "Super-Agent",
+        "OpenClaw"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/strong-super-agent/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Strong：一个24小时运行的超级智能体，能做什么. Retrieved from https://strongya.dev/posts/strong-super-agent/",
+        "mla": "Arlen. \"Strong：一个24小时运行的超级智能体，能做什么.\" 2026. Web. 2026-06-05.",
+        "gb": "Arlen. Strong：一个24小时运行的超级智能体，能做什么[EB/OL]. 2026-06-05. https://strongya.dev/posts/strong-super-agent/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 734,
         "readingTime": 3
       }
     },
