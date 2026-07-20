@@ -285,47 +285,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-96-100.en.md",
-      "slug": "agent-memory-errors-cases-96-100",
-      "title": "Agent Memory Errors Handbook: Cases 96–100",
-      "content_text": " Agent Memory Errors Handbook: Cases 96–100\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 96: Memory Architecture & System Design Errors — Observability Gap Memory Debugging Blind\n\nScenario\n\nUsers report \"The Agent always forgets my preferences.\" But the memory system has no detailed access logs, only aggregate metrics e.g., QPS. Developers cannot track: was memory not stored? Stored but not retrieved? Retrieved but overwritten?\n\nError Manifestation\n\nTroubleshooting relies on guesswork and reproduction; mean time to repair MTTR takes days. The team is forced to add a large amount of temporary logging, affecting performance.\n\nSolution\n\n1. Establish full-link memory tracing: record detailed logs and latency metrics for each link \"write→store→index→retrieve→use\"\n2. Provide a \"memory diagnosis API\": allow querying the complete lifecycle of a user's memory when written, when retrieved, when updated\n3. Implement a memory health dashboard: display key metrics such as memory hit rate, retrieval latency, storage capacity\n\nPrinciple\n\nUnobservable systems are unmaintainable. Black-boxing of memory systems leads to slow problem discovery, difficult positioning, and slow fixes. Observability is an essential attribute of production systems.\n\n---\n\n Case 97: Memory Architecture & System Design Errors — Multi Modal Memory Alignment Failure\n\nScenario\n\nThe Agent system supports text, image, and audio memories. The user uploads a product image and says \"What is the price of this product?\" Image memory is stored in vector library A, text memory in vector library B. The Agent only queries the text library during retrieval, not associating with the image library.\n\nError Manifestation\n\nThe Agent cannot identify the product in the image and answers \"I'm not sure which product you're referring to,\" although the image contains the product name and price tag.\n\nSolution\n\n1. Implement cross-modal alignment: use multimodal embedding models e.g., CLIP to map images and text into the same vector space\n2. Build memory association graphs: when users provide multiple modalities simultaneously, establish cross-modal associations at the memory level\n3. Perform multimodal fused retrieval during queries: retrieve in text, image, and audio libraries simultaneously and merge results\n\nPrinciple\n\nHuman memory is multimodal visual, auditory, linguistic. If Agent multimodal memories act independently, they cannot leverage multimodal input advantages. Cross-modal alignment is a core challenge of multimodal AI.\n\n---\n\n Case 98: Memory Architecture & System Design Errors — Edge Case Memory Overflow Unbounded Growth\n\nScenario\n\nThe Agent memory system is designed to \"store at most 1000 memories per user.\" But the system misses a boundary case: when a user sends an extremely large message e.g., pastes the full text of a novel, the message is split into hundreds of chunks, each stored as an independent memory. A single user generates 5000 memories in one conversation.\n\nError Manifestation\n\nThat user's memories occupy massive storage, affecting other users' storage quotas. Vector index update time increases dramatically, and overall system performance degrades.\n\nSolution\n\n1. Implement multi-layer limits: single memory size limit, single conversation memory count limit, total user memory count limit\n2. Perform intelligent summarization of oversized input before storing rather than storing verbatim chunks\n3. Set storage budget: when total user memory size exceeds threshold, trigger old memory compression or archiving\n\nPrinciple\n\nAny system without upper bound protection can be broken by extreme inputs. Corner cases are often the most overlooked but most destructive.\n\n---\n\n Case 99: Memory Architecture & System Design Errors — Disaster Recovery Memory Reconstruction Failure\n\nScenario\n\nA data center failure occurs in production, and the system switches to the disaster recovery center. The relational database in the DR center has complete backups, but the vector database backup is from T-1 day different backup strategy for vector library. After restore, the Agent can read user metadata name, preferences but cannot retrieve memories written after T-1 day.\n\nError Manifestation\n\nThe user finds the Agent \"remembers\" basic information but \"forgets\" yesterday's important appointments. Partially recovered states are more confusing than complete loss.\n\nSolution\n\n1. Unified backup strategy: all memory storage components use the same backup frequency and retention policy\n2. Implement cross-datacenter real-time replication: enable cross-AZ/cross-region real-time replication for vector databases\n3. Disaster recovery drills: regularly simulate failures to verify recovery completeness of memory systems\n\nPrinciple\n\nPartial recovery can be worse than complete failure because inconsistent states lead to unpredictable behavior. Disaster recovery plans must cover all memory components and be regularly verified.\n\n---\n\n Case 100: Memory Architecture & System Design Errors — Architecture Debt Memory Rewrite Risk\n\nScenario\n\nThe Agent's memory system has evolved over 3 years, accumulating massive architecture debt: multiple storage formats coexist, migration scripts are scattered, undocumented schema conventions exist. The team decides to rewrite the memory module but finds it cannot safely migrate data—many field meanings in old data are unknown, and migration scripts may break unknown dependencies.\n\nError Manifestation\n\nThe refactoring project is delayed 6 months, during which new features cannot be launched. Eventually the team chooses to continue patching, and architecture debt keeps accumulating.\n\nSolution\n\n1. Establish a \"memory schema registry\" from the early stages of the project: all memory structure changes must be registered, approved, and documented\n2. Implement Strangler Fig Pattern: gradually replace the old system with the new system rather than big-bang rewrite\n3. Regularly conduct architecture health assessments: identify technical debt, formulate repayment plans, prevent debt from getting out of control\n\nPrinciple\n\nTechnical debt is inevitable but must be controllable. As the \"brain\" of the Agent, the cost of memory system architecture debt is especially high—refactoring risks may cause \"amnesia.\"\n\n\n> Source: Agent Search",
-      "content_html": null,
-      "summary": "This installment covers Agent memory error cases 96–100, including Memory Architecture & System Design Errors.",
-      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-96-100/",
-      "date_published": "2026-07-10T00:00:00.000Z",
-      "date_modified": "2026-07-10T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Architecture",
-        "System Design",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-96-100/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 96–100. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-96-100/",
-        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 96–100.\" 2026. Web. 2026-07-10.",
-        "gb": "Arlen. Agent Memory Errors Handbook: Cases 96–100[EB/OL]. 2026-07-10. https://strongya.dev/en/posts/agent-memory-errors-cases-96-100/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 919,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-96-100.md",
       "slug": "agent-memory-errors-cases-96-100",
       "title": "《Agent记忆错误的100个案例手册》第 96–100 案例",
@@ -363,6 +322,47 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 1703,
+        "readingTime": 5
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-96-100.en.md",
+      "slug": "agent-memory-errors-cases-96-100",
+      "title": "Agent Memory Errors Handbook: Cases 96–100",
+      "content_text": " Agent Memory Errors Handbook: Cases 96–100\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 96: Memory Architecture & System Design Errors — Observability Gap Memory Debugging Blind\n\nScenario\n\nUsers report \"The Agent always forgets my preferences.\" But the memory system has no detailed access logs, only aggregate metrics e.g., QPS. Developers cannot track: was memory not stored? Stored but not retrieved? Retrieved but overwritten?\n\nError Manifestation\n\nTroubleshooting relies on guesswork and reproduction; mean time to repair MTTR takes days. The team is forced to add a large amount of temporary logging, affecting performance.\n\nSolution\n\n1. Establish full-link memory tracing: record detailed logs and latency metrics for each link \"write→store→index→retrieve→use\"\n2. Provide a \"memory diagnosis API\": allow querying the complete lifecycle of a user's memory when written, when retrieved, when updated\n3. Implement a memory health dashboard: display key metrics such as memory hit rate, retrieval latency, storage capacity\n\nPrinciple\n\nUnobservable systems are unmaintainable. Black-boxing of memory systems leads to slow problem discovery, difficult positioning, and slow fixes. Observability is an essential attribute of production systems.\n\n---\n\n Case 97: Memory Architecture & System Design Errors — Multi Modal Memory Alignment Failure\n\nScenario\n\nThe Agent system supports text, image, and audio memories. The user uploads a product image and says \"What is the price of this product?\" Image memory is stored in vector library A, text memory in vector library B. The Agent only queries the text library during retrieval, not associating with the image library.\n\nError Manifestation\n\nThe Agent cannot identify the product in the image and answers \"I'm not sure which product you're referring to,\" although the image contains the product name and price tag.\n\nSolution\n\n1. Implement cross-modal alignment: use multimodal embedding models e.g., CLIP to map images and text into the same vector space\n2. Build memory association graphs: when users provide multiple modalities simultaneously, establish cross-modal associations at the memory level\n3. Perform multimodal fused retrieval during queries: retrieve in text, image, and audio libraries simultaneously and merge results\n\nPrinciple\n\nHuman memory is multimodal visual, auditory, linguistic. If Agent multimodal memories act independently, they cannot leverage multimodal input advantages. Cross-modal alignment is a core challenge of multimodal AI.\n\n---\n\n Case 98: Memory Architecture & System Design Errors — Edge Case Memory Overflow Unbounded Growth\n\nScenario\n\nThe Agent memory system is designed to \"store at most 1000 memories per user.\" But the system misses a boundary case: when a user sends an extremely large message e.g., pastes the full text of a novel, the message is split into hundreds of chunks, each stored as an independent memory. A single user generates 5000 memories in one conversation.\n\nError Manifestation\n\nThat user's memories occupy massive storage, affecting other users' storage quotas. Vector index update time increases dramatically, and overall system performance degrades.\n\nSolution\n\n1. Implement multi-layer limits: single memory size limit, single conversation memory count limit, total user memory count limit\n2. Perform intelligent summarization of oversized input before storing rather than storing verbatim chunks\n3. Set storage budget: when total user memory size exceeds threshold, trigger old memory compression or archiving\n\nPrinciple\n\nAny system without upper bound protection can be broken by extreme inputs. Corner cases are often the most overlooked but most destructive.\n\n---\n\n Case 99: Memory Architecture & System Design Errors — Disaster Recovery Memory Reconstruction Failure\n\nScenario\n\nA data center failure occurs in production, and the system switches to the disaster recovery center. The relational database in the DR center has complete backups, but the vector database backup is from T-1 day different backup strategy for vector library. After restore, the Agent can read user metadata name, preferences but cannot retrieve memories written after T-1 day.\n\nError Manifestation\n\nThe user finds the Agent \"remembers\" basic information but \"forgets\" yesterday's important appointments. Partially recovered states are more confusing than complete loss.\n\nSolution\n\n1. Unified backup strategy: all memory storage components use the same backup frequency and retention policy\n2. Implement cross-datacenter real-time replication: enable cross-AZ/cross-region real-time replication for vector databases\n3. Disaster recovery drills: regularly simulate failures to verify recovery completeness of memory systems\n\nPrinciple\n\nPartial recovery can be worse than complete failure because inconsistent states lead to unpredictable behavior. Disaster recovery plans must cover all memory components and be regularly verified.\n\n---\n\n Case 100: Memory Architecture & System Design Errors — Architecture Debt Memory Rewrite Risk\n\nScenario\n\nThe Agent's memory system has evolved over 3 years, accumulating massive architecture debt: multiple storage formats coexist, migration scripts are scattered, undocumented schema conventions exist. The team decides to rewrite the memory module but finds it cannot safely migrate data—many field meanings in old data are unknown, and migration scripts may break unknown dependencies.\n\nError Manifestation\n\nThe refactoring project is delayed 6 months, during which new features cannot be launched. Eventually the team chooses to continue patching, and architecture debt keeps accumulating.\n\nSolution\n\n1. Establish a \"memory schema registry\" from the early stages of the project: all memory structure changes must be registered, approved, and documented\n2. Implement Strangler Fig Pattern: gradually replace the old system with the new system rather than big-bang rewrite\n3. Regularly conduct architecture health assessments: identify technical debt, formulate repayment plans, prevent debt from getting out of control\n\nPrinciple\n\nTechnical debt is inevitable but must be controllable. As the \"brain\" of the Agent, the cost of memory system architecture debt is especially high—refactoring risks may cause \"amnesia.\"\n\n\n> Source: Agent Search",
+      "content_html": null,
+      "summary": "This installment covers Agent memory error cases 96–100, including Memory Architecture & System Design Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-96-100/",
+      "date_published": "2026-07-10T00:00:00.000Z",
+      "date_modified": "2026-07-10T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Architecture",
+        "System Design",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-96-100/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 96–100. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-96-100/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 96–100.\" 2026. Web. 2026-07-10.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 96–100[EB/OL]. 2026-07-10. https://strongya.dev/en/posts/agent-memory-errors-cases-96-100/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 919,
         "readingTime": 5
       }
     },
@@ -1347,47 +1347,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-31-35.en.md",
-      "slug": "agent-memory-errors-cases-31-35",
-      "title": "Agent Memory Errors Handbook: Cases 31–35",
-      "content_text": " Agent Memory Errors Handbook: Cases 31–35\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 31: Vector Database & Indexing Errors — Hnsw Graph Connectivity Island\n\nScenario\n\nIn a vector library using an HNSW index, a batch of documents has poor embeddings very small norms. With a small M parameter, they fail to establish enough connections to the main graph during construction. These vectors become islands: they exist in the database but cannot be reached by search traversal.\n\nError Manifestation\n\nWhen users query topics covered by these documents, the documents are missing from results even when highly relevant. Admins can see the records but cannot retrieve them via search.\n\nSolution\n\n1. Check graph connectivity during HNSW construction: force-connect isolated components or rebuild their embeddings\n2. Regularly inspect vector-norm distributions and normalize or re-encode outliers\n3. Increase HNSW's M and efConstruction parameters to improve graph density\n\nPrinciple\n\nHNSW is a graph-based approximate nearest-neighbor algorithm whose search reachability depends on graph connectivity. Poor embeddings or a small M create search blind spots.\n\n---\n\n Case 32: Vector Database & Indexing Errors — Embedding Quantization Precision Loss\n\nScenario\n\nTo save storage, float32 embeddings are quantized to int8, cutting space by 75%. Quality is usually unaffected, but a query-document pair with original similarity 0.71 just above the 0.7 threshold drops to 0.69 after quantization and is filtered out.\n\nError Manifestation\n\nThe same query-document pair retrieves in environment A unquantized but returns \"I don't know\" in environment B quantized, producing unpredictable behavior.\n\nSolution\n\n1. Analyze the similarity distribution before quantization; ensure boundary-case misclassification is acceptable\n2. Use adaptive quantization: lower precision in dense regions and higher precision in sparse regions\n3. Run retrieval-consistency tests after quantization and set acceptable recall-difference thresholds\n\nPrinciple\n\nQuantization trades precision for efficiency and introduces quantization error. Vector pairs near the similarity threshold are most vulnerable.\n\n---\n\n Case 33: Vector Database & Indexing Errors — Vector Dimensionality Mismatch Silent Failure\n\nScenario\n\nDuring a system upgrade the embedding model changes from 768 to 1,024 dimensions, but old data in the vector database is not re-indexed. New queries produce 1,024-dimensional vectors while the database expects 768. Because client validation is loose, vectors are silently truncated or padded.\n\nError Manifestation\n\nAll queries return empty or random results without errors. Operations staff spend hours discovering the dimension mismatch.\n\nSolution\n\n1. Store dimension metadata in the vector database and enforce strict dimension checks on insert/query, raising clear errors on mismatch\n2. Make re-indexing mandatory during model upgrades and bind index version to model version\n3. Add application-layer health checks using known queries to detect retrieval-quality anomalies\n\nPrinciple\n\nVector dimension is the identity of the embedding space. Dimension mismatch means vectors are not comparable, and inner-product or cosine-similarity scores are meaningless. Silent truncation/padding hides this fundamental error.\n\n---\n\n Case 34: Vector Database & Indexing Errors — Cosine Similarity Magnitude Bias\n\nScenario\n\nThe Agent uses cosine similarity to score query-document relevance. One document embedding has a large norm 10 because it contains many generic words; a high-quality specialized document has norm 1. The user's specialized query is more relevant to the second, but cosine similarity ignores magnitude and gives both similar scores.\n\nError Manifestation\n\nThe generic, longer document ranks higher, and the Agent cites generic content rather than precise technical detail.\n\nSolution\n\n1. Use dot product or Euclidean distance so magnitude affects the score\n2. L2-normalize embeddings before using cosine similarity to eliminate magnitude differences\n3. At the reranking stage add an independent document-quality score information density, source authority combined with similarity\n\nPrinciple\n\nCosine similarity normalizes away vector magnitude. Long documents tend to have larger magnitudes because more token vectors are summed, but that does not imply higher quality. Cosine similarity is limited when information density matters.\n\n---\n\n Case 35: Vector Database & Indexing Errors — Index Stale Deleted Documents Ghost\n\nScenario\n\nA user deletes an outdated policy document from the knowledge base, but vector-index deletion is asynchronous via a message queue. During the five minutes before the queue is consumed, the user makes a related query.\n\nError Manifestation\n\nThe Agent retrieves the deleted document and answers based on it. The user clicks the document link and gets a 404, questioning reliability. Five minutes later the same query no longer returns the document, creating inconsistent behavior.\n\nSolution\n\n1. Use soft deletion: mark the primary record deleted first and filter soft-deleted records during retrieval while the index lags\n2. Use vector-database transactions so vector-index deletion commits with primary-database deletion\n3. Add a grace period after deletion during which related queries show a \"content may be outdated\" notice\n\nPrinciple\n\nAsynchronous index updates improve performance but create temporary inconsistency. For deletions, this inconsistency manifests as ghost data.\n\n\n> Source: Agent Search",
-      "content_html": null,
-      "summary": "This installment covers Agent memory error cases 31–35, including Vector Database & Indexing Errors.",
-      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/",
-      "date_published": "2026-06-27T00:00:00.000Z",
-      "date_modified": "2026-06-27T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Vector Database",
-        "Indexing",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 31–35. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/",
-        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 31–35.\" 2026. Web. 2026-06-27.",
-        "gb": "Arlen. Agent Memory Errors Handbook: Cases 31–35[EB/OL]. 2026-06-27. https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 806,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-31-35.md",
       "slug": "agent-memory-errors-cases-31-35",
       "title": "《Agent记忆错误的100个案例手册》第 31–35 案例",
@@ -1429,19 +1388,19 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-26-30.en.md",
-      "slug": "agent-memory-errors-cases-26-30",
-      "title": "Agent Memory Errors Handbook: Cases 26–30",
-      "content_text": " Agent Memory Errors Handbook: Cases 26–30\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 26: Short-term Memory / Context Errors — In Context Learning Example Contamination\n\nScenario\n\nThe Agent uses few-shot prompting with three fixed examples in the system prompt. In one conversation the user's input happens to resemble a format from an example e.g., a JSON schema. The LLM confuses the user input with the examples and treats it as part of a fourth example.\n\nError Manifestation\n\nThe Agent's output format is contaminated by the \"fourth example\" and starts mimicking the non-standard format in the user input instead of following the defined output spec.\n\nSolution\n\n1. Use explicit example separators such as === Example 1 === ... === End Example ===\n2. Isolate examples from user input with special tokens such as <|endofprompt|>\n3. Use dynamic example selection: pick the most relevant examples from a library rather than using fixed examples\n\nPrinciple\n\nThe strength of in-context learning is also its weakness: LLMs cannot strictly distinguish template examples from user data. Format contamination is a known risk of few-shot prompting.\n\n---\n\n Case 27: Short-term Memory / Context Errors — Conversation Branch Merged Without Resolution\n\nScenario\n\nThe user and Agent discuss whether remote work should be universal. The user first gives arguments supporting remote work Branch A, then arguments against it Branch B, and finally asks, \"What do you think?\" The Agent's context contains both branches but does not mark them as opposing assumptions.\n\nError Manifestation\n\nThe Agent replies with both \"Remote work indeed improves efficiency\" and \"But face-to-face collaboration is irreplaceable\" without clarifying that these are two different perspectives. The user finds the stance vague.\n\nSolution\n\n1. Use a conversation tree rather than linear context, tagging each point with its branch and assumption\n2. When merging branches, explicitly label \"Under assumption X\" and \"Under assumption Y,\" or ask which branch to discuss\n3. Use belief-state tracking: maintain support/oppose/pending labels for each proposition\n\nPrinciple\n\nReal conversations are non-linear and include hypotheticals and role-play. Linear context cannot represent branching structure, and merging branches creates logical conflicts. Conversation trees are a more precise model.\n\n---\n\n Case 28: Short-term Memory / Context Errors — Summarization Induced Fact Substitution\n\nScenario\n\nAfter a long conversation, the Agent compresses the context. The user originally said, \"I like PyTorch, but company projects require TensorFlow.\" For brevity, the summary becomes \"User develops with TensorFlow.\"\n\nError Manifestation\n\nLater, the Agent recommends TensorFlow tools and resources based on the summary, ignoring the user's actual preference for PyTorch. The user feels the Agent was not really listening.\n\nSolution\n\n1. Apply a fact-fidelity constraint: instruct the summarizer to compress wording without changing facts\n2. Use extractive summarization instead of abstractive summarization so key sentences remain verbatim\n3. Back-translate the summary into a longer text and check factual consistency with the original\n\nPrinciple\n\nAbstractive summarization may perform semantic approximation during compression. Even when the gist is preserved, small changes in specific facts—preferences, numbers, names—can bias later reasoning.\n\n---\n\n Case 29: Short-term Memory / Context Errors — Context Window Fragmentation Tool Calls\n\nScenario\n\nThe Agent uses a tool chain for complex tasks. Each tool call includes the tool definition JSON Schema, parameters, and results. In one data-analysis task the Agent calls ten tools; each call's schema and result consume 500 tokens, totaling 5,000 tokens. With the system prompt included, less than 1,000 tokens remain for the user's conversation.\n\nError Manifestation\n\nThe user's next input is truncated. The Agent sees only the first half of the question, misunderstands the intent, and gives a wrong analysis.\n\nSolution\n\n1. Compress tool-call history: keep only tool name, key parameters, and result summary; drop full schemas and redundant output\n2. Use a tool-memory cache: store frequently used results externally and keep only reference IDs in context\n3. Allocate an independent context budget for tool calls e.g., at most 30% and compress the oldest tool records first when exceeded\n\nPrinciple\n\nTool calls consume large amounts of context. Without management, tool history crowds out user content, producing the experience of the user being cut off mid-sentence.\n\n---\n\n Case 30: Short-term Memory / Context Errors — Temporal Marker Ambiguity Resolution\n\nScenario\n\nOn Monday the user says, \"Yesterday I went to the doctor.\" The Agent records \"User went to the doctor yesterday.\" On Wednesday the user asks, \"When was my last doctor visit?\" The Agent computes \"yesterday\" from the current context as Tuesday, but the user's \"yesterday\" meant Sunday.\n\nError Manifestation\n\nThe Agent answers, \"You went to the doctor on Tuesday.\" The user corrects, \"I went on Sunday.\" The Agent appears confused about time.\n\nSolution\n\n1. Normalize times when recording: convert relative expressions yesterday, next Wednesday to absolute timestamps\n2. Store both the original expression and the normalized timestamp; choose the appropriate expression when answering\n3. Set validity periods for time-sensitive records, e.g., automatically archive \"meeting tomorrow\" after the meeting passes\n\nPrinciple\n\nNatural-language time expressions are relative to speech time. Agents must anchor them to absolute time; otherwise temporal references drift as the session progresses.\n\n\n> Source: Agent Search",
+      "id": "agent-memory-errors-cases-31-35.en.md",
+      "slug": "agent-memory-errors-cases-31-35",
+      "title": "Agent Memory Errors Handbook: Cases 31–35",
+      "content_text": " Agent Memory Errors Handbook: Cases 31–35\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 31: Vector Database & Indexing Errors — Hnsw Graph Connectivity Island\n\nScenario\n\nIn a vector library using an HNSW index, a batch of documents has poor embeddings very small norms. With a small M parameter, they fail to establish enough connections to the main graph during construction. These vectors become islands: they exist in the database but cannot be reached by search traversal.\n\nError Manifestation\n\nWhen users query topics covered by these documents, the documents are missing from results even when highly relevant. Admins can see the records but cannot retrieve them via search.\n\nSolution\n\n1. Check graph connectivity during HNSW construction: force-connect isolated components or rebuild their embeddings\n2. Regularly inspect vector-norm distributions and normalize or re-encode outliers\n3. Increase HNSW's M and efConstruction parameters to improve graph density\n\nPrinciple\n\nHNSW is a graph-based approximate nearest-neighbor algorithm whose search reachability depends on graph connectivity. Poor embeddings or a small M create search blind spots.\n\n---\n\n Case 32: Vector Database & Indexing Errors — Embedding Quantization Precision Loss\n\nScenario\n\nTo save storage, float32 embeddings are quantized to int8, cutting space by 75%. Quality is usually unaffected, but a query-document pair with original similarity 0.71 just above the 0.7 threshold drops to 0.69 after quantization and is filtered out.\n\nError Manifestation\n\nThe same query-document pair retrieves in environment A unquantized but returns \"I don't know\" in environment B quantized, producing unpredictable behavior.\n\nSolution\n\n1. Analyze the similarity distribution before quantization; ensure boundary-case misclassification is acceptable\n2. Use adaptive quantization: lower precision in dense regions and higher precision in sparse regions\n3. Run retrieval-consistency tests after quantization and set acceptable recall-difference thresholds\n\nPrinciple\n\nQuantization trades precision for efficiency and introduces quantization error. Vector pairs near the similarity threshold are most vulnerable.\n\n---\n\n Case 33: Vector Database & Indexing Errors — Vector Dimensionality Mismatch Silent Failure\n\nScenario\n\nDuring a system upgrade the embedding model changes from 768 to 1,024 dimensions, but old data in the vector database is not re-indexed. New queries produce 1,024-dimensional vectors while the database expects 768. Because client validation is loose, vectors are silently truncated or padded.\n\nError Manifestation\n\nAll queries return empty or random results without errors. Operations staff spend hours discovering the dimension mismatch.\n\nSolution\n\n1. Store dimension metadata in the vector database and enforce strict dimension checks on insert/query, raising clear errors on mismatch\n2. Make re-indexing mandatory during model upgrades and bind index version to model version\n3. Add application-layer health checks using known queries to detect retrieval-quality anomalies\n\nPrinciple\n\nVector dimension is the identity of the embedding space. Dimension mismatch means vectors are not comparable, and inner-product or cosine-similarity scores are meaningless. Silent truncation/padding hides this fundamental error.\n\n---\n\n Case 34: Vector Database & Indexing Errors — Cosine Similarity Magnitude Bias\n\nScenario\n\nThe Agent uses cosine similarity to score query-document relevance. One document embedding has a large norm 10 because it contains many generic words; a high-quality specialized document has norm 1. The user's specialized query is more relevant to the second, but cosine similarity ignores magnitude and gives both similar scores.\n\nError Manifestation\n\nThe generic, longer document ranks higher, and the Agent cites generic content rather than precise technical detail.\n\nSolution\n\n1. Use dot product or Euclidean distance so magnitude affects the score\n2. L2-normalize embeddings before using cosine similarity to eliminate magnitude differences\n3. At the reranking stage add an independent document-quality score information density, source authority combined with similarity\n\nPrinciple\n\nCosine similarity normalizes away vector magnitude. Long documents tend to have larger magnitudes because more token vectors are summed, but that does not imply higher quality. Cosine similarity is limited when information density matters.\n\n---\n\n Case 35: Vector Database & Indexing Errors — Index Stale Deleted Documents Ghost\n\nScenario\n\nA user deletes an outdated policy document from the knowledge base, but vector-index deletion is asynchronous via a message queue. During the five minutes before the queue is consumed, the user makes a related query.\n\nError Manifestation\n\nThe Agent retrieves the deleted document and answers based on it. The user clicks the document link and gets a 404, questioning reliability. Five minutes later the same query no longer returns the document, creating inconsistent behavior.\n\nSolution\n\n1. Use soft deletion: mark the primary record deleted first and filter soft-deleted records during retrieval while the index lags\n2. Use vector-database transactions so vector-index deletion commits with primary-database deletion\n3. Add a grace period after deletion during which related queries show a \"content may be outdated\" notice\n\nPrinciple\n\nAsynchronous index updates improve performance but create temporary inconsistency. For deletions, this inconsistency manifests as ghost data.\n\n\n> Source: Agent Search",
       "content_html": null,
-      "summary": "This installment covers Agent memory error cases 26–30, including Short-term Memory / Context Errors.",
-      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/",
-      "date_published": "2026-06-26T00:00:00.000Z",
-      "date_modified": "2026-06-26T00:00:00.000Z",
+      "summary": "This installment covers Agent memory error cases 31–35, including Vector Database & Indexing Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/",
+      "date_published": "2026-06-27T00:00:00.000Z",
+      "date_modified": "2026-06-27T00:00:00.000Z",
       "language": "en",
       "tags": [
-        "Short-term Memory",
-        "Context",
+        "Vector Database",
+        "Indexing",
         "Agent Memory"
       ],
       "authors": [
@@ -1455,17 +1414,17 @@
         "holder": "Arlen",
         "license": "CC BY-NC-SA 4.0",
         "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/"
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/"
       },
       "citation_formats": {
-        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 26–30. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/",
-        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 26–30.\" 2026. Web. 2026-06-26.",
-        "gb": "Arlen. Agent Memory Errors Handbook: Cases 26–30[EB/OL]. 2026-06-26. https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/."
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 31–35. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 31–35.\" 2026. Web. 2026-06-27.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 31–35[EB/OL]. 2026-06-27. https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/."
       },
       "entities": [],
       "_agent_meta": {
         "content_type": "article",
-        "wordCount": 861,
+        "wordCount": 806,
         "readingTime": 5
       }
     },
@@ -1508,6 +1467,47 @@
         "content_type": "article",
         "wordCount": 1566,
         "readingTime": 4
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-26-30.en.md",
+      "slug": "agent-memory-errors-cases-26-30",
+      "title": "Agent Memory Errors Handbook: Cases 26–30",
+      "content_text": " Agent Memory Errors Handbook: Cases 26–30\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 26: Short-term Memory / Context Errors — In Context Learning Example Contamination\n\nScenario\n\nThe Agent uses few-shot prompting with three fixed examples in the system prompt. In one conversation the user's input happens to resemble a format from an example e.g., a JSON schema. The LLM confuses the user input with the examples and treats it as part of a fourth example.\n\nError Manifestation\n\nThe Agent's output format is contaminated by the \"fourth example\" and starts mimicking the non-standard format in the user input instead of following the defined output spec.\n\nSolution\n\n1. Use explicit example separators such as === Example 1 === ... === End Example ===\n2. Isolate examples from user input with special tokens such as <|endofprompt|>\n3. Use dynamic example selection: pick the most relevant examples from a library rather than using fixed examples\n\nPrinciple\n\nThe strength of in-context learning is also its weakness: LLMs cannot strictly distinguish template examples from user data. Format contamination is a known risk of few-shot prompting.\n\n---\n\n Case 27: Short-term Memory / Context Errors — Conversation Branch Merged Without Resolution\n\nScenario\n\nThe user and Agent discuss whether remote work should be universal. The user first gives arguments supporting remote work Branch A, then arguments against it Branch B, and finally asks, \"What do you think?\" The Agent's context contains both branches but does not mark them as opposing assumptions.\n\nError Manifestation\n\nThe Agent replies with both \"Remote work indeed improves efficiency\" and \"But face-to-face collaboration is irreplaceable\" without clarifying that these are two different perspectives. The user finds the stance vague.\n\nSolution\n\n1. Use a conversation tree rather than linear context, tagging each point with its branch and assumption\n2. When merging branches, explicitly label \"Under assumption X\" and \"Under assumption Y,\" or ask which branch to discuss\n3. Use belief-state tracking: maintain support/oppose/pending labels for each proposition\n\nPrinciple\n\nReal conversations are non-linear and include hypotheticals and role-play. Linear context cannot represent branching structure, and merging branches creates logical conflicts. Conversation trees are a more precise model.\n\n---\n\n Case 28: Short-term Memory / Context Errors — Summarization Induced Fact Substitution\n\nScenario\n\nAfter a long conversation, the Agent compresses the context. The user originally said, \"I like PyTorch, but company projects require TensorFlow.\" For brevity, the summary becomes \"User develops with TensorFlow.\"\n\nError Manifestation\n\nLater, the Agent recommends TensorFlow tools and resources based on the summary, ignoring the user's actual preference for PyTorch. The user feels the Agent was not really listening.\n\nSolution\n\n1. Apply a fact-fidelity constraint: instruct the summarizer to compress wording without changing facts\n2. Use extractive summarization instead of abstractive summarization so key sentences remain verbatim\n3. Back-translate the summary into a longer text and check factual consistency with the original\n\nPrinciple\n\nAbstractive summarization may perform semantic approximation during compression. Even when the gist is preserved, small changes in specific facts—preferences, numbers, names—can bias later reasoning.\n\n---\n\n Case 29: Short-term Memory / Context Errors — Context Window Fragmentation Tool Calls\n\nScenario\n\nThe Agent uses a tool chain for complex tasks. Each tool call includes the tool definition JSON Schema, parameters, and results. In one data-analysis task the Agent calls ten tools; each call's schema and result consume 500 tokens, totaling 5,000 tokens. With the system prompt included, less than 1,000 tokens remain for the user's conversation.\n\nError Manifestation\n\nThe user's next input is truncated. The Agent sees only the first half of the question, misunderstands the intent, and gives a wrong analysis.\n\nSolution\n\n1. Compress tool-call history: keep only tool name, key parameters, and result summary; drop full schemas and redundant output\n2. Use a tool-memory cache: store frequently used results externally and keep only reference IDs in context\n3. Allocate an independent context budget for tool calls e.g., at most 30% and compress the oldest tool records first when exceeded\n\nPrinciple\n\nTool calls consume large amounts of context. Without management, tool history crowds out user content, producing the experience of the user being cut off mid-sentence.\n\n---\n\n Case 30: Short-term Memory / Context Errors — Temporal Marker Ambiguity Resolution\n\nScenario\n\nOn Monday the user says, \"Yesterday I went to the doctor.\" The Agent records \"User went to the doctor yesterday.\" On Wednesday the user asks, \"When was my last doctor visit?\" The Agent computes \"yesterday\" from the current context as Tuesday, but the user's \"yesterday\" meant Sunday.\n\nError Manifestation\n\nThe Agent answers, \"You went to the doctor on Tuesday.\" The user corrects, \"I went on Sunday.\" The Agent appears confused about time.\n\nSolution\n\n1. Normalize times when recording: convert relative expressions yesterday, next Wednesday to absolute timestamps\n2. Store both the original expression and the normalized timestamp; choose the appropriate expression when answering\n3. Set validity periods for time-sensitive records, e.g., automatically archive \"meeting tomorrow\" after the meeting passes\n\nPrinciple\n\nNatural-language time expressions are relative to speech time. Agents must anchor them to absolute time; otherwise temporal references drift as the session progresses.\n\n\n> Source: Agent Search",
+      "content_html": null,
+      "summary": "This installment covers Agent memory error cases 26–30, including Short-term Memory / Context Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/",
+      "date_published": "2026-06-26T00:00:00.000Z",
+      "date_modified": "2026-06-26T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Short-term Memory",
+        "Context",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 26–30. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 26–30.\" 2026. Web. 2026-06-26.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 26–30[EB/OL]. 2026-06-26. https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 861,
+        "readingTime": 5
       }
     },
     {
