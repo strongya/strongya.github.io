@@ -1097,47 +1097,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-76-80.en.md",
-      "slug": "agent-memory-errors-cases-76-80",
-      "title": "Agent Memory Errors Handbook: Cases 76–80",
-      "content_text": " Agent Memory Errors Handbook: Cases 76–80\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 76: Cross-session & User Identity Errors — Impersonation Via Session Hijacking\n\nScenario\n\nThe user's session token is passed through URL parameters rather than Cookie/Header. The user shares a link containing the token on social media. An attacker clicks the link and obtains the user's session identity.\n\nError Manifestation\n\nThe attacker talks with the Agent as the user, views all the user's historical memories, and even performs sensitive operations through the Agent e.g., \"Delete all my data\".\n\nSolution\n\n1. Never pass session tokens through URLs; use HttpOnly Cookie or Authorization Header\n2. Implement device fingerprint binding: bind sessions to device fingerprints; require re-authentication when device changes are detected\n3. Perform dual confirmation for sensitive operations: even if the session is valid, require password re-entry for delete, transfer, and similar operations\n\nPrinciple\n\nLeakage of session identifiers equals leakage of identity. URLs are the most easily leaked medium browser history, shared links, Referrer headers. Secure session management is the foundation of identity security.\n\n---\n\n Case 77: Cross-session & User Identity Errors — User Deletion Memory Residual\n\nScenario\n\nThe user exercises the right to be forgotten and requests account deletion. The system deletes the record in the user table, but the Agent's long-term memory library vector database still retains a large number of that user's memory vectors. Because the memory library has no cascade deletion mechanism, this data becomes \"orphan memory.\"\n\nError Manifestation\n\nMonths later, other users' queries accidentally retrieve these orphan memories because they are similar in vector space to new queries, containing the deleted user's personal information.\n\nSolution\n\n1. Establish a \"user-memory\" foreign key relationship: trigger cascade deletion when deleting users, cleaning all associated memories\n2. Implement memory ownership tags: tag each memory with its owner user ID, regularly scan and clean memories with invalid user IDs\n3. Perform memory audit after user deletion: sample check whether any data from that user remains\n\nPrinciple\n\nRegulations like GDPR require thorough deletion of user data. If memories in the vector database are not strongly associated with user identity, deletion operations are prone to omissions, causing compliance risks.\n\n---\n\n Case 78: Cross-session & User Identity Errors — Profile Merge Conflict Resolution Failure\n\nScenario\n\nThe user merges two accounts work and personal through the account merge feature. The two accounts respectively have \"preferred language: English\" and \"preferred language: Chinese\" settings. The merge system does not define a conflict resolution strategy and randomly keeps one of them.\n\nError Manifestation\n\nThe user expects to retain both preferences English for work, Chinese for personal, but after merging can only use one language and doesn't know when it was modified.\n\nSolution\n\n1. Perform \"scenario-based retention\" during account merging: ask the user about preference settings in different scenarios rather than simple either/or\n2. Retain historical preference records: the merged profile contains \"settings from source A\" and \"settings from source B,\" allowing users to switch\n3. Use \"most recent use first\": in conflicts keep the most recently updated setting, but notify the user of the conflict\n\nPrinciple\n\nUser profile merging is not simple record concatenation but conflict resolution. Merging without clear strategies leads to silent data loss, changing user preferences without their knowledge.\n\n---\n\n Case 79: Cross-session & User Identity Errors — Session Affinity Break Load Balancer\n\nScenario\n\nThere is a load balancer in front of the Agent cluster configured with session affinity: requests from the same user are routed to the same instance. But one instance fails, and the load balancer routes the request to another instance. The new instance lacks the user's session state stored in the failed instance's memory.\n\nError Manifestation\n\nThe Agent suddenly \"amnesiac\"; the user feels confused \"Weren't we just talking about XX?\" and the experience is severely damaged.\n\nSolution\n\n1. Store session state in shared storage Redis/database, making instances stateless so any instance can handle any session\n2. Perform \"state migration\" when instances fail: migrate session state from the failed instance to the new instance\n3. Load balancer uses \"sticky cookie\": even when instances change, session can be restored through central storage\n\nPrinciple\n\nScalability and reliability of stateful services are limited by where state is stored. Stateless architecture with external state storage is best practice for distributed systems.\n\n---\n\n Case 80: Cross-session & User Identity Errors — Anonymous User Tracking Ethics Violation\n\nScenario\n\nThe Agent builds \"device fingerprint + behavior pattern\" memory profiles for anonymous users not logged in for personalized recommendations. Through long-term tracking, the system can highly accurately identify the same anonymous user e.g., \"User of Chrome 120, 1920x1080 resolution, who browses tech before finance\".\n\nError Manifestation\n\nAttackers or third parties correlate these anonymous profiles with real identities through data association e.g., after a user logs in somewhere, the system can associate pre- and post-login behavior, achieving de-anonymization.\n\nSolution\n\n1. Set strict limits on anonymous user tracking: only record session-level information, do not build cross-session long-term profiles\n2. Regularly reset anonymous user identifiers e.g., reset after each browser close\n3. Implement differential privacy: inject noise into anonymous user data to prevent precise identification\n\nPrinciple\n\nDe-anonymization research shows that sufficiently multi-dimensional behavior data can uniquely identify individuals. Being anonymous should not just mean \"not recording names\"; it should ensure identity cannot be inferred from the data.\n\n\n> Source: Agent Search",
-      "content_html": null,
-      "summary": "This installment covers Agent memory error cases 76–80, including Cross-session & User Identity Errors.",
-      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/",
-      "date_published": "2026-07-06T00:00:00.000Z",
-      "date_modified": "2026-07-06T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Session",
-        "User Identity",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 76–80. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/",
-        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 76–80.\" 2026. Web. 2026-07-06.",
-        "gb": "Arlen. Agent Memory Errors Handbook: Cases 76–80[EB/OL]. 2026-07-06. https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 905,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-76-80.md",
       "slug": "agent-memory-errors-cases-76-80",
       "title": "《Agent记忆错误的100个案例手册》第 76–80 案例",
@@ -1176,6 +1135,47 @@
         "content_type": "article",
         "wordCount": 1511,
         "readingTime": 4
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-76-80.en.md",
+      "slug": "agent-memory-errors-cases-76-80",
+      "title": "Agent Memory Errors Handbook: Cases 76–80",
+      "content_text": " Agent Memory Errors Handbook: Cases 76–80\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 76: Cross-session & User Identity Errors — Impersonation Via Session Hijacking\n\nScenario\n\nThe user's session token is passed through URL parameters rather than Cookie/Header. The user shares a link containing the token on social media. An attacker clicks the link and obtains the user's session identity.\n\nError Manifestation\n\nThe attacker talks with the Agent as the user, views all the user's historical memories, and even performs sensitive operations through the Agent e.g., \"Delete all my data\".\n\nSolution\n\n1. Never pass session tokens through URLs; use HttpOnly Cookie or Authorization Header\n2. Implement device fingerprint binding: bind sessions to device fingerprints; require re-authentication when device changes are detected\n3. Perform dual confirmation for sensitive operations: even if the session is valid, require password re-entry for delete, transfer, and similar operations\n\nPrinciple\n\nLeakage of session identifiers equals leakage of identity. URLs are the most easily leaked medium browser history, shared links, Referrer headers. Secure session management is the foundation of identity security.\n\n---\n\n Case 77: Cross-session & User Identity Errors — User Deletion Memory Residual\n\nScenario\n\nThe user exercises the right to be forgotten and requests account deletion. The system deletes the record in the user table, but the Agent's long-term memory library vector database still retains a large number of that user's memory vectors. Because the memory library has no cascade deletion mechanism, this data becomes \"orphan memory.\"\n\nError Manifestation\n\nMonths later, other users' queries accidentally retrieve these orphan memories because they are similar in vector space to new queries, containing the deleted user's personal information.\n\nSolution\n\n1. Establish a \"user-memory\" foreign key relationship: trigger cascade deletion when deleting users, cleaning all associated memories\n2. Implement memory ownership tags: tag each memory with its owner user ID, regularly scan and clean memories with invalid user IDs\n3. Perform memory audit after user deletion: sample check whether any data from that user remains\n\nPrinciple\n\nRegulations like GDPR require thorough deletion of user data. If memories in the vector database are not strongly associated with user identity, deletion operations are prone to omissions, causing compliance risks.\n\n---\n\n Case 78: Cross-session & User Identity Errors — Profile Merge Conflict Resolution Failure\n\nScenario\n\nThe user merges two accounts work and personal through the account merge feature. The two accounts respectively have \"preferred language: English\" and \"preferred language: Chinese\" settings. The merge system does not define a conflict resolution strategy and randomly keeps one of them.\n\nError Manifestation\n\nThe user expects to retain both preferences English for work, Chinese for personal, but after merging can only use one language and doesn't know when it was modified.\n\nSolution\n\n1. Perform \"scenario-based retention\" during account merging: ask the user about preference settings in different scenarios rather than simple either/or\n2. Retain historical preference records: the merged profile contains \"settings from source A\" and \"settings from source B,\" allowing users to switch\n3. Use \"most recent use first\": in conflicts keep the most recently updated setting, but notify the user of the conflict\n\nPrinciple\n\nUser profile merging is not simple record concatenation but conflict resolution. Merging without clear strategies leads to silent data loss, changing user preferences without their knowledge.\n\n---\n\n Case 79: Cross-session & User Identity Errors — Session Affinity Break Load Balancer\n\nScenario\n\nThere is a load balancer in front of the Agent cluster configured with session affinity: requests from the same user are routed to the same instance. But one instance fails, and the load balancer routes the request to another instance. The new instance lacks the user's session state stored in the failed instance's memory.\n\nError Manifestation\n\nThe Agent suddenly \"amnesiac\"; the user feels confused \"Weren't we just talking about XX?\" and the experience is severely damaged.\n\nSolution\n\n1. Store session state in shared storage Redis/database, making instances stateless so any instance can handle any session\n2. Perform \"state migration\" when instances fail: migrate session state from the failed instance to the new instance\n3. Load balancer uses \"sticky cookie\": even when instances change, session can be restored through central storage\n\nPrinciple\n\nScalability and reliability of stateful services are limited by where state is stored. Stateless architecture with external state storage is best practice for distributed systems.\n\n---\n\n Case 80: Cross-session & User Identity Errors — Anonymous User Tracking Ethics Violation\n\nScenario\n\nThe Agent builds \"device fingerprint + behavior pattern\" memory profiles for anonymous users not logged in for personalized recommendations. Through long-term tracking, the system can highly accurately identify the same anonymous user e.g., \"User of Chrome 120, 1920x1080 resolution, who browses tech before finance\".\n\nError Manifestation\n\nAttackers or third parties correlate these anonymous profiles with real identities through data association e.g., after a user logs in somewhere, the system can associate pre- and post-login behavior, achieving de-anonymization.\n\nSolution\n\n1. Set strict limits on anonymous user tracking: only record session-level information, do not build cross-session long-term profiles\n2. Regularly reset anonymous user identifiers e.g., reset after each browser close\n3. Implement differential privacy: inject noise into anonymous user data to prevent precise identification\n\nPrinciple\n\nDe-anonymization research shows that sufficiently multi-dimensional behavior data can uniquely identify individuals. Being anonymous should not just mean \"not recording names\"; it should ensure identity cannot be inferred from the data.\n\n\n> Source: Agent Search",
+      "content_html": null,
+      "summary": "This installment covers Agent memory error cases 76–80, including Cross-session & User Identity Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/",
+      "date_published": "2026-07-06T00:00:00.000Z",
+      "date_modified": "2026-07-06T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Session",
+        "User Identity",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 76–80. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 76–80.\" 2026. Web. 2026-07-06.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 76–80[EB/OL]. 2026-07-06. https://strongya.dev/en/posts/agent-memory-errors-cases-76-80/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 905,
+        "readingTime": 5
       }
     },
     {
@@ -2319,47 +2319,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-1-5.md",
-      "slug": "agent-memory-errors-cases-1-5",
-      "title": "《Agent记忆错误的100个案例手册》第 1–5 案例",
-      "content_text": " 《Agent记忆错误的100个案例手册》第 1–5 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 1：RAG与检索错误｜query-rewriting-semantic-distortion\n\n场景\n\n用户在客服Agent中输入\"怎么取消昨天的订单\"，系统为了优化检索，将查询重写为\"订单取消流程\"，丢失了\"昨天\"这一时间约束和\"我的\"这一主体限定，结果检索到通用取消流程文档，而非用户昨天订单的具体状态。\n\n错误表现\n\nAgent返回通用的取消流程说明，但用户的订单实际上已经发货无法取消，导致用户按照指引操作后失败，产生投诉。\n\n解决方案\n\n1. 在查询重写模块中保留关键约束条件（时间、主体、状态）的标记\n2. 重写前后进行语义相似度对比，若偏移超过阈值则使用原始查询\n3. 采用混合检索策略：同时使用原始查询和重写查询检索，取并集\n\n原理\n\n查询重写（Query Rewriting）虽然能提升召回率，但过度泛化会丢失查询中的具体约束条件。LLM在重写时倾向于提取\"意图\"而忽略\"细节约束\"，导致检索结果与真实需求不匹配。\n\n---\n\n 案例 2：RAG与检索错误｜dense-retrieval-keyword-blindness\n\n场景\n\n医疗Agent处理药品相互作用查询时，用户询问\"阿托伐他汀与克拉霉素的相互作用\"。稠密向量检索将查询编码为语义向量后，召回的文档中包含了\"阿托伐他汀\"和\"克拉霉素\"的独立介绍，但遗漏了标题为\"阿托伐他汀-克拉霉素联用禁忌\"的关键文档，因为该文档在向量空间中与查询的语义距离较远。\n\n错误表现\n\nAgent未能识别出这是CYP3A4抑制剂联用的严重禁忌，给出了\"可以联用但需监测\"的错误建议，存在医疗安全风险。\n\n解决方案\n\n1. 实现混合检索：稠密向量检索（Dense）+ 稀疏向量检索（Sparse/BM25）\n2. 对专业术语建立关键词倒排索引，确保精确匹配优先\n3. 对召回结果进行重排序（Rerank），使用Cross-Encoder对query-doc对进行精确相关性评分\n\n原理\n\n稠密向量检索基于语义相似性，对短词、专有名词的区分度有限。BM25等稀疏检索在精确术语匹配上具有互补优势。混合检索能同时覆盖语义相关性和词汇精确性。\n\n---\n\n 案例 3：RAG与检索错误｜reranker-position-bias-over-trust\n\n场景\n\n法律咨询Agent在处理\"劳动合同到期不续签的补偿标准\"时，检索到50篇相关文档。重排序模型（如bge-reranker）对文档进行打分排序，但由于训练数据中的位置偏差，一篇发布时间较早、已被新法规替代的文档获得了最高分，排在了第一位。\n\n错误表现\n\nAgent引用了已废止的《违反和解除劳动合同的经济补偿办法》（劳部发〔1994〕481号），而不是现行有效的《劳动合同法》第46/47条，导致法律建议错误。\n\n解决方案\n\n1. 在重排序前对文档进行时效性过滤，优先使用最近N年的文档\n2. 对重排序结果进行多样性抽样（MMR算法），避免同一来源的文档过度集中\n3. 在prompt中明确指示Agent验证法律依据的时效性，引用多个来源交叉确认\n\n原理\n\n重排序模型存在训练偏差，包括位置偏差（position bias）和流行度偏差（popularity bias）。在法律、医疗等时效性强的领域，文档的发布时间应作为重要排序因子。\n\n---\n\n 案例 4：RAG与检索错误｜context-extraction-truncation-loss\n\n场景\n\n金融分析Agent检索到一份20页的财报PDF，RAG系统将文档分块后，与用户查询最相似的chunk是第3页的一段营收描述。但利润下滑的关键解释在第3页的下一段，由于分块边界恰好截断在段落之间，且相似度阈值过滤掉了相邻chunk，导致上下文不完整。\n\n错误表现\n\nAgent只看到\"营收增长15%\"，没看到\"但毛利率下降8% due to原材料涨价\"，因此给出了\"公司业绩良好，建议增持\"的错误分析。\n\n解决方案\n\n1. 采用语义感知的分块策略（Semantic Chunking），以自然段落或语义完整单元为边界\n2. 在检索时返回chunk的相邻上下文（overlap retrieval），如前后各扩展一个chunk\n3. 对关键数字、转折词（but, however, although）进行标记，确保包含这些信号的chunk不被单独截断使用\n\n原理\n\n固定大小的分块（Fixed-size Chunking）会破坏语义连续性。相邻文本往往包含因果关系、转折关系等关键逻辑连接，截断会导致Agent的推理建立在片面信息上。\n\n---\n\n 案例 5：RAG与检索错误｜multi-hop-retrieval-single-query-failure\n\n场景\n\n用户询问\"《三体》英文版的译者是谁，他/她还翻译过哪些科幻作品？\"这是一个典型的两跳问题：第一跳找到《三体》英文版译者（刘宇昆），第二跳找到刘宇昆翻译的其他作品。但RAG系统只执行单次检索，查询embedding混合了\"三体\"和\"翻译作品\"，导致检索结果既不聚焦三体也不聚焦译者。\n\n错误表现\n\nAgent混淆了《三体》的不同版本译者（刘宇昆翻译了第一部，Joel Martinsen翻译了后两部），给出了错误的信息组合。\n\n解决方案\n\n1. 实现多跳检索（Multi-hop Retrieval）：解析查询为子问题链，逐跳执行检索\n2. 使用迭代式RAG（Iterative RAG）：第一轮检索获取中间实体，第二轮以中间实体为新查询进行检索\n3. 在Agent架构中引入查询分解模块（Query Decomposition），将复杂问题拆解为可独立检索的子问题\n\n原理\n\n单次向量检索适合单点事实查询，但对需要连接多个离散知识点的推理问题（如\"A的B的C\"）力不从心。多跳检索模拟人类逐步查证的过程，通过中间结果扩展检索边界。\n\n\n> 来源：Agent Search",
-      "content_html": null,
-      "summary": "本辑收录 Agent 记忆错误案例 1–5，涵盖 RAG与检索错误 等主题。",
-      "url": "https://strongya.dev/posts/agent-memory-errors-cases-1-5/",
-      "date_published": "2026-06-22T00:00:00.000Z",
-      "date_modified": "2026-06-22T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "RAG",
-        "Retrieval",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-1-5/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 1–5 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-1-5/",
-        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 1–5 案例.\" 2026. Web. 2026-06-22.",
-        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 1–5 案例[EB/OL]. 2026-06-22. https://strongya.dev/posts/agent-memory-errors-cases-1-5/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1640,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-1-5.en.md",
       "slug": "agent-memory-errors-cases-1-5",
       "title": "Agent Memory Errors Handbook: Cases 1–5",
@@ -2397,6 +2356,47 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 895,
+        "readingTime": 5
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-1-5.md",
+      "slug": "agent-memory-errors-cases-1-5",
+      "title": "《Agent记忆错误的100个案例手册》第 1–5 案例",
+      "content_text": " 《Agent记忆错误的100个案例手册》第 1–5 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 1：RAG与检索错误｜query-rewriting-semantic-distortion\n\n场景\n\n用户在客服Agent中输入\"怎么取消昨天的订单\"，系统为了优化检索，将查询重写为\"订单取消流程\"，丢失了\"昨天\"这一时间约束和\"我的\"这一主体限定，结果检索到通用取消流程文档，而非用户昨天订单的具体状态。\n\n错误表现\n\nAgent返回通用的取消流程说明，但用户的订单实际上已经发货无法取消，导致用户按照指引操作后失败，产生投诉。\n\n解决方案\n\n1. 在查询重写模块中保留关键约束条件（时间、主体、状态）的标记\n2. 重写前后进行语义相似度对比，若偏移超过阈值则使用原始查询\n3. 采用混合检索策略：同时使用原始查询和重写查询检索，取并集\n\n原理\n\n查询重写（Query Rewriting）虽然能提升召回率，但过度泛化会丢失查询中的具体约束条件。LLM在重写时倾向于提取\"意图\"而忽略\"细节约束\"，导致检索结果与真实需求不匹配。\n\n---\n\n 案例 2：RAG与检索错误｜dense-retrieval-keyword-blindness\n\n场景\n\n医疗Agent处理药品相互作用查询时，用户询问\"阿托伐他汀与克拉霉素的相互作用\"。稠密向量检索将查询编码为语义向量后，召回的文档中包含了\"阿托伐他汀\"和\"克拉霉素\"的独立介绍，但遗漏了标题为\"阿托伐他汀-克拉霉素联用禁忌\"的关键文档，因为该文档在向量空间中与查询的语义距离较远。\n\n错误表现\n\nAgent未能识别出这是CYP3A4抑制剂联用的严重禁忌，给出了\"可以联用但需监测\"的错误建议，存在医疗安全风险。\n\n解决方案\n\n1. 实现混合检索：稠密向量检索（Dense）+ 稀疏向量检索（Sparse/BM25）\n2. 对专业术语建立关键词倒排索引，确保精确匹配优先\n3. 对召回结果进行重排序（Rerank），使用Cross-Encoder对query-doc对进行精确相关性评分\n\n原理\n\n稠密向量检索基于语义相似性，对短词、专有名词的区分度有限。BM25等稀疏检索在精确术语匹配上具有互补优势。混合检索能同时覆盖语义相关性和词汇精确性。\n\n---\n\n 案例 3：RAG与检索错误｜reranker-position-bias-over-trust\n\n场景\n\n法律咨询Agent在处理\"劳动合同到期不续签的补偿标准\"时，检索到50篇相关文档。重排序模型（如bge-reranker）对文档进行打分排序，但由于训练数据中的位置偏差，一篇发布时间较早、已被新法规替代的文档获得了最高分，排在了第一位。\n\n错误表现\n\nAgent引用了已废止的《违反和解除劳动合同的经济补偿办法》（劳部发〔1994〕481号），而不是现行有效的《劳动合同法》第46/47条，导致法律建议错误。\n\n解决方案\n\n1. 在重排序前对文档进行时效性过滤，优先使用最近N年的文档\n2. 对重排序结果进行多样性抽样（MMR算法），避免同一来源的文档过度集中\n3. 在prompt中明确指示Agent验证法律依据的时效性，引用多个来源交叉确认\n\n原理\n\n重排序模型存在训练偏差，包括位置偏差（position bias）和流行度偏差（popularity bias）。在法律、医疗等时效性强的领域，文档的发布时间应作为重要排序因子。\n\n---\n\n 案例 4：RAG与检索错误｜context-extraction-truncation-loss\n\n场景\n\n金融分析Agent检索到一份20页的财报PDF，RAG系统将文档分块后，与用户查询最相似的chunk是第3页的一段营收描述。但利润下滑的关键解释在第3页的下一段，由于分块边界恰好截断在段落之间，且相似度阈值过滤掉了相邻chunk，导致上下文不完整。\n\n错误表现\n\nAgent只看到\"营收增长15%\"，没看到\"但毛利率下降8% due to原材料涨价\"，因此给出了\"公司业绩良好，建议增持\"的错误分析。\n\n解决方案\n\n1. 采用语义感知的分块策略（Semantic Chunking），以自然段落或语义完整单元为边界\n2. 在检索时返回chunk的相邻上下文（overlap retrieval），如前后各扩展一个chunk\n3. 对关键数字、转折词（but, however, although）进行标记，确保包含这些信号的chunk不被单独截断使用\n\n原理\n\n固定大小的分块（Fixed-size Chunking）会破坏语义连续性。相邻文本往往包含因果关系、转折关系等关键逻辑连接，截断会导致Agent的推理建立在片面信息上。\n\n---\n\n 案例 5：RAG与检索错误｜multi-hop-retrieval-single-query-failure\n\n场景\n\n用户询问\"《三体》英文版的译者是谁，他/她还翻译过哪些科幻作品？\"这是一个典型的两跳问题：第一跳找到《三体》英文版译者（刘宇昆），第二跳找到刘宇昆翻译的其他作品。但RAG系统只执行单次检索，查询embedding混合了\"三体\"和\"翻译作品\"，导致检索结果既不聚焦三体也不聚焦译者。\n\n错误表现\n\nAgent混淆了《三体》的不同版本译者（刘宇昆翻译了第一部，Joel Martinsen翻译了后两部），给出了错误的信息组合。\n\n解决方案\n\n1. 实现多跳检索（Multi-hop Retrieval）：解析查询为子问题链，逐跳执行检索\n2. 使用迭代式RAG（Iterative RAG）：第一轮检索获取中间实体，第二轮以中间实体为新查询进行检索\n3. 在Agent架构中引入查询分解模块（Query Decomposition），将复杂问题拆解为可独立检索的子问题\n\n原理\n\n单次向量检索适合单点事实查询，但对需要连接多个离散知识点的推理问题（如\"A的B的C\"）力不从心。多跳检索模拟人类逐步查证的过程，通过中间结果扩展检索边界。\n\n\n> 来源：Agent Search",
+      "content_html": null,
+      "summary": "本辑收录 Agent 记忆错误案例 1–5，涵盖 RAG与检索错误 等主题。",
+      "url": "https://strongya.dev/posts/agent-memory-errors-cases-1-5/",
+      "date_published": "2026-06-22T00:00:00.000Z",
+      "date_modified": "2026-06-22T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "RAG",
+        "Retrieval",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-1-5/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 1–5 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-1-5/",
+        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 1–5 案例.\" 2026. Web. 2026-06-22.",
+        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 1–5 案例[EB/OL]. 2026-06-22. https://strongya.dev/posts/agent-memory-errors-cases-1-5/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1640,
         "readingTime": 5
       }
     },
@@ -3109,48 +3109,6 @@
       }
     },
     {
-      "id": "llm-cognitive-evolution-agent-design.en.md",
-      "slug": "llm-cognitive-evolution-agent-design",
-      "title": "When AI Thinks for You: What's Happening to Our Brains?",
-      "content_text": " When AI Thinks for You: What's Happening to Our Brains?\n\n> In June 2026, MIT, Microsoft, and Science Advances are all studying the same question: Does talking to ChatGPT every day make you dumber?\n>\n> We spent 4 hours using 4 AI Agents to simultaneously audit the latest research. The conclusion: It's not that simple, but it is worth paying attention to.\n\n---\n\n A Disturbing Discovery\n\nThe MIT Media Lab recently conducted an experiment. They divided 54 people into three groups, had one group write essays using ChatGPT, another group use only their brains, and a third group use Google search.\n\nThen they put EEG caps on everyone to monitor brain activity in real time.\n\nThe results are in: People who used ChatGPT showed significantly less prefrontal cortex activity.\n\nWhat does this region do? Working memory, complex reasoning, focused execution. In short, it's your \"deep thinking engine.\"\n\nThis looks like solid evidence: AI is thinking for us, and the brain is \"slacking off.\"\n\nBut wait. When we analyzed another 319 knowledge workers using the same experimental design, Microsoft Research found a completely contradictory result: these people reported that using AI actually made them more tired—because you have to figure out how to write prompts, how to understand AI output, and how to judge right from wrong.\n\nHere's the question: Is it getting easier or more tiring?\n\nThe answer depends on when you ask.\n\n- When writing content: The brain is indeed more relaxed, because AI is helping you generate\n- When interacting with AI: The brain works harder, because you have to learn a new language called \"prompt engineering\"\n\nThis is not a binary \"use it or don't\" problem. It's about your cognitive resources moving from point A to point B.\n\n---\n\n How Was the \"AI Makes Humans Dumber\" Conclusion Manufactured?\n\nWe used 4 independent AI auditors to check this conclusion's logic, data, psychological biases, and narrative structure. They found an astonishing problem:\n\n> The conclusion that \"AI is weakening human cognition\" is largely a narrative distorted by incentive systems.\n\nWhat does that mean?\n\nThink about it: If you're a researcher studying \"AI has no effect on cognition,\" can your paper get published in Science?\n\nNo. Too boring.\n\nBut if you say \"AI is causing human brain atrophy\"—the more alarming the wording, the better—media will report it, journals will cite it, and you'll get more funding.\n\nWe audited 15 studies cited in the source material and found that 8 of their titles carried negative or cautionary tones. Studies supporting \"AI enhances cognition\" were almost systematically ignored.\n\nThis doesn't mean researchers are faking data. It means the field itself has a publication bias: only studies that \"discover danger\" make headlines.\n\n---\n\n Three Severely Confused Concepts\n\n 1. \"Cognitive Debt\" ≠ \"Cognitive Atrophy\"\n\nMIT's research found reduced brain activity when using AI. They called it \"cognitive debt\"—borrowing a financial term meaning \"you're taking it easy now, but you'll pay later.\"\n\nBut here's the problem:\n\n- Debt can be repaid, is short-term, and is possible\n- Atrophy is permanent, irreversible, and certain\n\nFrom \"reduced brain activity\" to \"irreversible cognitive decline,\" there's a gap of at least 5 years of longitudinal tracking data—which currently doesn't exist at all.\n\nIt's like seeing someone eat fast food today and saying they'll definitely get heart disease in 10 years. Is it possible? Maybe. But where's the evidence? There isn't any.\n\n 2. \"Correlation\" ≠ \"Causation\"\n\nOne study surveyed 580 Chinese university students and found \"the more AI is used, the lower the critical thinking.\"\n\nMany people panicked after reading this: AI is killing our critical thinking!\n\nBut wait. This study only proved that two things happen at the same time. It didn't prove that A causes B.\n\nMore likely explanations:\n- Reverse causation: People with weaker critical thinking skills depend more on AI\n- Third variable: Academic pressure, learning motivation, and digital literacy all affect both\n\nIf you saw that \"people who wear watches live longer,\" would you say \"wearing watches makes you live longer\"? No, you'd say \"wealthy people both wear watches and are more likely to live longer.\"\n\nSame logic: seeing \"people who use more AI have lower critical thinking\" doesn't necessarily mean AI is at fault.\n\n 3. \"Language Standardization\" ≠ \"Cognitive Degeneration\"\n\nThe most heavyweight paper was published in Trends in Cognitive Sciences this March. It states: LLMs are standardizing human expression and thinking—everyone is using the same language, the same logic, the same style.\n\nThis sounds scary. But there's an overlooked angle:\n\nStandardization may reduce communication costs.\n\nJust as Mandarin promotion made cross-regional communication easier, AI's \"language mediation\" may have similar positive effects. Of course, the cost may be that marginal voices are suppressed. This is a trade-off issue, not a one-sided \"degeneration.\"\n\n---\n\n What Does History Tell Us?\n\nIf you traveled back to 370 BC, you'd hear Socrates say: \"Writing is destroying human memory. When people write knowledge on paper, they no longer memorize it by heart.\"\n\nDo you think that view is correct today?\n\nNo. Writing didn't destroy memory. It freed up memory, allowing the brain to do more complex things—like abstract reasoning, system building, and cross-disciplinary association.\n\nThe same thing happened with calculators. Decades ago, the education world panicked: \"Calculators will make students unable to do math.\" What happened? Math ability didn't decline; humans instead solved more complex equations.\n\nSearch engines were also criticized for \"weakening memory\"—but how many times more knowledge do you have access to now compared to the pre-Google era?\n\nEvery technological revolution has been accompanied by \"cognitive panic,\" but history proves: tools usually enhance rather than weaken human capabilities.\n\nOf course, this time might be different. But we have no evidence saying \"it must be different\"—what we have so far is concern, not proof.\n\n---\n\n What Is the Most Credible Finding?\n\nUnder the unanimous judgment of 4 auditing Agents, we found an A-level credible study:\n\n> Doshi & Hauser 2024, published in Science Advances. They found: AI does enhance individual creativity, but simultaneously reduces the diversity of collective content.\n\nWhat does this mean?\n\n- Individual level: You use AI, it's easier to come up with ideas, the barrier is lower, efficiency is higher\n- Collective level: But everyone's ideas start converging—because you're all using the same \"thinking template\" ChatGPT's model architecture\n\nThis is the most balanced finding. It neither says \"AI destroys humanity\" nor \"AI is completely harmless.\" It says: There is tension between the individual and the collective.\n\nThe improvement in individual efficiency may come at the cost of collective diversity.\n\nIt's like this: Every musician uses the same synthesizer. Everyone can write songs faster, but all songs sound increasingly similar.\n\n---\n\n What Should You Worry About?\n\n 1. Short-Term Cognitive Dependence\n\nIf every time you write an email, make a report, or look up information you directly copy AI output without any \"think first, then consult AI\" process—then your brain is indeed bypassing practice.\n\nIt's like working out: If a machine lifts the dumbbells for you, your muscles won't grow. But if you use the machine to assist your form and then complete the core movement yourself, that's enhancement.\n\nKey distinction: Is AI replacing thinking, or assisting it?\n\nMIT's experiment actually contained a clue: People who wrote first and then used AI assistance actually had stronger critical thinking. This shows sequence matters.\n\n 2. The Homogenization Trap\n\nIf all students use AI to write homework, all creators use AI to generate content, and all companies use AI to write strategy—then the diversity of thought in society as a whole is declining.\n\nThis isn't a problem of \"individuals getting dumber.\" It's a problem of \"the collective becoming uniform.\"\n\nWhen differentiated thinking disappears, breakthrough innovation may become more difficult. Because innovation often comes from marginal perspectives, non-mainstream language, and unconventional reasoning.\n\n 3. Black Box Authority\n\nThe greatest risk may not be \"cognitive degeneration,\" but \"we stop questioning.\"\n\nAs AI answers become increasingly fluent and confident, humans increasingly tend to accept them directly. But what if that answer is wrong? What if you don't even have the ability to judge whether it's wrong?\n\nThis is the real \"cognitive crisis\"—not \"I can't think anymore,\" but \"I don't know what I don't know.\"\n\n---\n\n What Should You Do?\n\nBased on existing evidence note: not panic, but evidence-based, here are some concrete recommendations:\n\n Personal Level\n\n- Think first, then ask: When facing a problem, write your own thoughts for 5 minutes first, then open AI. This sequence is supported by MIT experiments.\n- Verify, don't copy: Treat AI output as \"draft\" rather than \"answer.\" Ask yourself: Is this logic correct? Is anything missing? What's the counterexample?\n- Record \"AI-free time\": Reserve some tasks every week that completely avoid AI, such as handwritten journals, mental arithmetic, or writing an analysis without looking up materials. This is \"cognitive fitness.\"\n\n Educational Level\n\n- AI literacy is not \"how to use AI,\" but \"how to evaluate AI\": Schools should teach not prompt engineering techniques, but critical verification skills—how to check if what AI says is true, how to find counterexamples, how to judge bias.\n- Exams shouldn't revert to \"pure handwriting\" retro mode: But they can add \"metacognitive assessment\"—for example, having students explain \"what's the flaw in this AI answer.\"\n\n Technical Level\n\n- AI products should have a built-in \"cognitive challenge\" mode: Not giving the smoothest answer every time, but sometimes deliberately providing incomplete information, forcing users to fill in the gaps. This is similar to the \"progressive overload\" of smart fitness equipment.\n- Label AI-generated content: This is the lowest-cost, highest-return intervention. Letting people know \"this was written by AI\" is itself the best alert mechanism.\n\n Policy Level\n\n- Beware of premature regulation: The Collingridge dilemma says it well—making policy before impacts are clear can both stifle innovation and miss risks. Current evidence is insufficient to support large-scale restrictions on AI use.\n- But support \"impact assessment systems\": Require AI education products to provide cognitive impact assessments, just as drugs need clinical trials.\n\n---\n\n The Final Answer: Will We Become \"Homo Interrogans\"?\n\nThe ultimate question of the original framework: When humans no longer think but only ask questions, do we change from \"wise humans\" to \"questioners\"?\n\nThis formulation itself is a trap.\n\nBecause asking questions is itself a form of thinking.\n\nSocrates spent his life asking questions, and no one said he wasn't a thinker. Einstein's theory of relativity originated from a question: \"What would happen if I rode on a beam of light?\"\n\nThe real question isn't whether \"humans are changing from thinkers to questioners,\" but:\n\n> After we ask questions, are we still verifying, reflecting, and correcting?\n\nIf AI makes questioning more efficient, and humans use the saved time for deeper verification—that's enhancement.\n\nIf AI makes questioning the endpoint, and humans no longer verify, reflect, or question—that's degeneration.\n\nCurrent evidence does not support the conclusion that \"AI is systematically weakening human cognition.\" But it does support:\n\n> AI is changing the way cognition is distributed. Short-term depends on how you use it; long-term depends on how society designs usage rules.\n\nThis is the final conclusion after auditing by 4 independent AI Agents.\n\n---\n\n Final Note: A Reflection on \"This Report Itself\"\n\nInterestingly, the way we wrote this report is itself a case study of \"AI's cognitive impact.\"\n\nWe didn't directly accept the original framework's conclusions. Instead, we had 4 AI Agents independently audit it, then integrated a more balanced version.\n\nThis process demonstrates a positive AI usage pattern: AI doesn't replace judgment, but extends judgment capacity—through parallel processing, multi-angle verification, and cross-checking, allowing us to see what the original framework missed.\n\nPerhaps this is the future of work: Humans are responsible for asking good questions and final judgment; AI is responsible for exhausting possibilities, discovering biases, and finding counterevidence.\n\nNot human vs. AI, but human + AI vs. human nature itself.",
-      "content_html": null,
-      "summary": "Latest research from MIT, Microsoft, and Science Advances reveals: AI changes cognitive load distribution, but the direction depends on measurement dimensions. Cross-auditing by 4 AI Agents found that the 'AI makes humans dumber' conclusion suffers from incentive distortion; the real concern is homogenization risk.",
-      "url": "https://strongya.dev/en/posts/llm-cognitive-evolution-agent-design/",
-      "date_published": "2026-06-09T00:00:00.000Z",
-      "date_modified": "2026-06-09T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "LLM",
-        "Cognitive Science",
-        "AI Impact",
-        "Human-AI Interaction"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/llm-cognitive-evolution-agent-design/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). When AI Thinks for You: What's Happening to Our Brains?. Retrieved from https://strongya.dev/en/posts/llm-cognitive-evolution-agent-design/",
-        "mla": "Arlen. \"When AI Thinks for You: What's Happening to Our Brains?.\" 2026. Web. 2026-06-09.",
-        "gb": "Arlen. When AI Thinks for You: What's Happening to Our Brains?[EB/OL]. 2026-06-09. https://strongya.dev/en/posts/llm-cognitive-evolution-agent-design/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 2025,
-        "readingTime": 11
-      }
-    },
-    {
       "id": "llm-cognitive-evolution-agent-design.md",
       "slug": "llm-cognitive-evolution-agent-design",
       "title": "当AI替你思考：我们的大脑正在发生什么？",
@@ -3232,6 +3190,48 @@
         "content_type": "article",
         "wordCount": 1254,
         "readingTime": 7
+      }
+    },
+    {
+      "id": "llm-cognitive-evolution-agent-design.en.md",
+      "slug": "llm-cognitive-evolution-agent-design",
+      "title": "When AI Thinks for You: What's Happening to Our Brains?",
+      "content_text": " When AI Thinks for You: What's Happening to Our Brains?\n\n> In June 2026, MIT, Microsoft, and Science Advances are all studying the same question: Does talking to ChatGPT every day make you dumber?\n>\n> We spent 4 hours using 4 AI Agents to simultaneously audit the latest research. The conclusion: It's not that simple, but it is worth paying attention to.\n\n---\n\n A Disturbing Discovery\n\nThe MIT Media Lab recently conducted an experiment. They divided 54 people into three groups, had one group write essays using ChatGPT, another group use only their brains, and a third group use Google search.\n\nThen they put EEG caps on everyone to monitor brain activity in real time.\n\nThe results are in: People who used ChatGPT showed significantly less prefrontal cortex activity.\n\nWhat does this region do? Working memory, complex reasoning, focused execution. In short, it's your \"deep thinking engine.\"\n\nThis looks like solid evidence: AI is thinking for us, and the brain is \"slacking off.\"\n\nBut wait. When we analyzed another 319 knowledge workers using the same experimental design, Microsoft Research found a completely contradictory result: these people reported that using AI actually made them more tired—because you have to figure out how to write prompts, how to understand AI output, and how to judge right from wrong.\n\nHere's the question: Is it getting easier or more tiring?\n\nThe answer depends on when you ask.\n\n- When writing content: The brain is indeed more relaxed, because AI is helping you generate\n- When interacting with AI: The brain works harder, because you have to learn a new language called \"prompt engineering\"\n\nThis is not a binary \"use it or don't\" problem. It's about your cognitive resources moving from point A to point B.\n\n---\n\n How Was the \"AI Makes Humans Dumber\" Conclusion Manufactured?\n\nWe used 4 independent AI auditors to check this conclusion's logic, data, psychological biases, and narrative structure. They found an astonishing problem:\n\n> The conclusion that \"AI is weakening human cognition\" is largely a narrative distorted by incentive systems.\n\nWhat does that mean?\n\nThink about it: If you're a researcher studying \"AI has no effect on cognition,\" can your paper get published in Science?\n\nNo. Too boring.\n\nBut if you say \"AI is causing human brain atrophy\"—the more alarming the wording, the better—media will report it, journals will cite it, and you'll get more funding.\n\nWe audited 15 studies cited in the source material and found that 8 of their titles carried negative or cautionary tones. Studies supporting \"AI enhances cognition\" were almost systematically ignored.\n\nThis doesn't mean researchers are faking data. It means the field itself has a publication bias: only studies that \"discover danger\" make headlines.\n\n---\n\n Three Severely Confused Concepts\n\n 1. \"Cognitive Debt\" ≠ \"Cognitive Atrophy\"\n\nMIT's research found reduced brain activity when using AI. They called it \"cognitive debt\"—borrowing a financial term meaning \"you're taking it easy now, but you'll pay later.\"\n\nBut here's the problem:\n\n- Debt can be repaid, is short-term, and is possible\n- Atrophy is permanent, irreversible, and certain\n\nFrom \"reduced brain activity\" to \"irreversible cognitive decline,\" there's a gap of at least 5 years of longitudinal tracking data—which currently doesn't exist at all.\n\nIt's like seeing someone eat fast food today and saying they'll definitely get heart disease in 10 years. Is it possible? Maybe. But where's the evidence? There isn't any.\n\n 2. \"Correlation\" ≠ \"Causation\"\n\nOne study surveyed 580 Chinese university students and found \"the more AI is used, the lower the critical thinking.\"\n\nMany people panicked after reading this: AI is killing our critical thinking!\n\nBut wait. This study only proved that two things happen at the same time. It didn't prove that A causes B.\n\nMore likely explanations:\n- Reverse causation: People with weaker critical thinking skills depend more on AI\n- Third variable: Academic pressure, learning motivation, and digital literacy all affect both\n\nIf you saw that \"people who wear watches live longer,\" would you say \"wearing watches makes you live longer\"? No, you'd say \"wealthy people both wear watches and are more likely to live longer.\"\n\nSame logic: seeing \"people who use more AI have lower critical thinking\" doesn't necessarily mean AI is at fault.\n\n 3. \"Language Standardization\" ≠ \"Cognitive Degeneration\"\n\nThe most heavyweight paper was published in Trends in Cognitive Sciences this March. It states: LLMs are standardizing human expression and thinking—everyone is using the same language, the same logic, the same style.\n\nThis sounds scary. But there's an overlooked angle:\n\nStandardization may reduce communication costs.\n\nJust as Mandarin promotion made cross-regional communication easier, AI's \"language mediation\" may have similar positive effects. Of course, the cost may be that marginal voices are suppressed. This is a trade-off issue, not a one-sided \"degeneration.\"\n\n---\n\n What Does History Tell Us?\n\nIf you traveled back to 370 BC, you'd hear Socrates say: \"Writing is destroying human memory. When people write knowledge on paper, they no longer memorize it by heart.\"\n\nDo you think that view is correct today?\n\nNo. Writing didn't destroy memory. It freed up memory, allowing the brain to do more complex things—like abstract reasoning, system building, and cross-disciplinary association.\n\nThe same thing happened with calculators. Decades ago, the education world panicked: \"Calculators will make students unable to do math.\" What happened? Math ability didn't decline; humans instead solved more complex equations.\n\nSearch engines were also criticized for \"weakening memory\"—but how many times more knowledge do you have access to now compared to the pre-Google era?\n\nEvery technological revolution has been accompanied by \"cognitive panic,\" but history proves: tools usually enhance rather than weaken human capabilities.\n\nOf course, this time might be different. But we have no evidence saying \"it must be different\"—what we have so far is concern, not proof.\n\n---\n\n What Is the Most Credible Finding?\n\nUnder the unanimous judgment of 4 auditing Agents, we found an A-level credible study:\n\n> Doshi & Hauser 2024, published in Science Advances. They found: AI does enhance individual creativity, but simultaneously reduces the diversity of collective content.\n\nWhat does this mean?\n\n- Individual level: You use AI, it's easier to come up with ideas, the barrier is lower, efficiency is higher\n- Collective level: But everyone's ideas start converging—because you're all using the same \"thinking template\" ChatGPT's model architecture\n\nThis is the most balanced finding. It neither says \"AI destroys humanity\" nor \"AI is completely harmless.\" It says: There is tension between the individual and the collective.\n\nThe improvement in individual efficiency may come at the cost of collective diversity.\n\nIt's like this: Every musician uses the same synthesizer. Everyone can write songs faster, but all songs sound increasingly similar.\n\n---\n\n What Should You Worry About?\n\n 1. Short-Term Cognitive Dependence\n\nIf every time you write an email, make a report, or look up information you directly copy AI output without any \"think first, then consult AI\" process—then your brain is indeed bypassing practice.\n\nIt's like working out: If a machine lifts the dumbbells for you, your muscles won't grow. But if you use the machine to assist your form and then complete the core movement yourself, that's enhancement.\n\nKey distinction: Is AI replacing thinking, or assisting it?\n\nMIT's experiment actually contained a clue: People who wrote first and then used AI assistance actually had stronger critical thinking. This shows sequence matters.\n\n 2. The Homogenization Trap\n\nIf all students use AI to write homework, all creators use AI to generate content, and all companies use AI to write strategy—then the diversity of thought in society as a whole is declining.\n\nThis isn't a problem of \"individuals getting dumber.\" It's a problem of \"the collective becoming uniform.\"\n\nWhen differentiated thinking disappears, breakthrough innovation may become more difficult. Because innovation often comes from marginal perspectives, non-mainstream language, and unconventional reasoning.\n\n 3. Black Box Authority\n\nThe greatest risk may not be \"cognitive degeneration,\" but \"we stop questioning.\"\n\nAs AI answers become increasingly fluent and confident, humans increasingly tend to accept them directly. But what if that answer is wrong? What if you don't even have the ability to judge whether it's wrong?\n\nThis is the real \"cognitive crisis\"—not \"I can't think anymore,\" but \"I don't know what I don't know.\"\n\n---\n\n What Should You Do?\n\nBased on existing evidence note: not panic, but evidence-based, here are some concrete recommendations:\n\n Personal Level\n\n- Think first, then ask: When facing a problem, write your own thoughts for 5 minutes first, then open AI. This sequence is supported by MIT experiments.\n- Verify, don't copy: Treat AI output as \"draft\" rather than \"answer.\" Ask yourself: Is this logic correct? Is anything missing? What's the counterexample?\n- Record \"AI-free time\": Reserve some tasks every week that completely avoid AI, such as handwritten journals, mental arithmetic, or writing an analysis without looking up materials. This is \"cognitive fitness.\"\n\n Educational Level\n\n- AI literacy is not \"how to use AI,\" but \"how to evaluate AI\": Schools should teach not prompt engineering techniques, but critical verification skills—how to check if what AI says is true, how to find counterexamples, how to judge bias.\n- Exams shouldn't revert to \"pure handwriting\" retro mode: But they can add \"metacognitive assessment\"—for example, having students explain \"what's the flaw in this AI answer.\"\n\n Technical Level\n\n- AI products should have a built-in \"cognitive challenge\" mode: Not giving the smoothest answer every time, but sometimes deliberately providing incomplete information, forcing users to fill in the gaps. This is similar to the \"progressive overload\" of smart fitness equipment.\n- Label AI-generated content: This is the lowest-cost, highest-return intervention. Letting people know \"this was written by AI\" is itself the best alert mechanism.\n\n Policy Level\n\n- Beware of premature regulation: The Collingridge dilemma says it well—making policy before impacts are clear can both stifle innovation and miss risks. Current evidence is insufficient to support large-scale restrictions on AI use.\n- But support \"impact assessment systems\": Require AI education products to provide cognitive impact assessments, just as drugs need clinical trials.\n\n---\n\n The Final Answer: Will We Become \"Homo Interrogans\"?\n\nThe ultimate question of the original framework: When humans no longer think but only ask questions, do we change from \"wise humans\" to \"questioners\"?\n\nThis formulation itself is a trap.\n\nBecause asking questions is itself a form of thinking.\n\nSocrates spent his life asking questions, and no one said he wasn't a thinker. Einstein's theory of relativity originated from a question: \"What would happen if I rode on a beam of light?\"\n\nThe real question isn't whether \"humans are changing from thinkers to questioners,\" but:\n\n> After we ask questions, are we still verifying, reflecting, and correcting?\n\nIf AI makes questioning more efficient, and humans use the saved time for deeper verification—that's enhancement.\n\nIf AI makes questioning the endpoint, and humans no longer verify, reflect, or question—that's degeneration.\n\nCurrent evidence does not support the conclusion that \"AI is systematically weakening human cognition.\" But it does support:\n\n> AI is changing the way cognition is distributed. Short-term depends on how you use it; long-term depends on how society designs usage rules.\n\nThis is the final conclusion after auditing by 4 independent AI Agents.\n\n---\n\n Final Note: A Reflection on \"This Report Itself\"\n\nInterestingly, the way we wrote this report is itself a case study of \"AI's cognitive impact.\"\n\nWe didn't directly accept the original framework's conclusions. Instead, we had 4 AI Agents independently audit it, then integrated a more balanced version.\n\nThis process demonstrates a positive AI usage pattern: AI doesn't replace judgment, but extends judgment capacity—through parallel processing, multi-angle verification, and cross-checking, allowing us to see what the original framework missed.\n\nPerhaps this is the future of work: Humans are responsible for asking good questions and final judgment; AI is responsible for exhausting possibilities, discovering biases, and finding counterevidence.\n\nNot human vs. AI, but human + AI vs. human nature itself.",
+      "content_html": null,
+      "summary": "Latest research from MIT, Microsoft, and Science Advances reveals: AI changes cognitive load distribution, but the direction depends on measurement dimensions. Cross-auditing by 4 AI Agents found that the 'AI makes humans dumber' conclusion suffers from incentive distortion; the real concern is homogenization risk.",
+      "url": "https://strongya.dev/en/posts/llm-cognitive-evolution-agent-design/",
+      "date_published": "2026-06-09T00:00:00.000Z",
+      "date_modified": "2026-06-09T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "LLM",
+        "Cognitive Science",
+        "AI Impact",
+        "Human-AI Interaction"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/llm-cognitive-evolution-agent-design/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). When AI Thinks for You: What's Happening to Our Brains?. Retrieved from https://strongya.dev/en/posts/llm-cognitive-evolution-agent-design/",
+        "mla": "Arlen. \"When AI Thinks for You: What's Happening to Our Brains?.\" 2026. Web. 2026-06-09.",
+        "gb": "Arlen. When AI Thinks for You: What's Happening to Our Brains?[EB/OL]. 2026-06-09. https://strongya.dev/en/posts/llm-cognitive-evolution-agent-design/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 2025,
+        "readingTime": 11
       }
     },
     {
@@ -3441,47 +3441,6 @@
       }
     },
     {
-      "id": "agent-memory-five-defects.en.md",
-      "slug": "agent-memory-five-defects",
-      "title": "Agent Long-term Memory: Why 90% of Projects Fail in Production",
-      "content_text": " Agent Long-term Memory: Why 90% of Projects Fail in Production\n\nOver the past two years, long-term memory has been packaged as AI Agent's next trillion-dollar track. But data shows that 90% of Agent projects fail in production environments. The problem is not storage capacity—it's that memory never truly \"came alive.\" We dissect five structural defects from bottom to top.\n\n Layer 1: The Agent Doesn't Know What It Knows\n\nThis is the most fundamental cognitive blind spot. LLM context windows are limited, and when the retrieval module returns incorrect information, this content directly consumes precious context space. The model cannot distinguish truth from noise; it can only generate based on input—incorrect retrieval inevitably leads to incorrect output.\n\nThe deeper problem is the absence of meta-memory. A truly intelligent individual should be able to answer \"What do I know? What don't I know?\" But current Agents cannot evaluate the credibility or boundaries of their own memories. They won't say \"I'm not sure\"; they will confidently fabricate answers. This is not a technical problem—it's a fundamental cognitive-level defect.\n\n Layer 2: Memory Doesn't Age or Forget\n\nIf memory cannot metabolize, it's poison. User preferences change, policies update, projects end—but the system still treats old information as truth. Without credibility decay mechanisms or active forgetting strategies, the memory bank only accumulates more and more errors over time.\n\nCross-session identity continuity is also missing. Restart the service, switch model instances, and the Agent \"forgets.\" It doesn't remember you said you wanted to lose weight last week, or that you hate coffee. This isn't a bug; it's a design defect: it has no \"identity,\" only sessions.\n\nTemporal reasoning is another weakness. 70% of questions in human conversation involve chronology or relationships, but current systems can only do keyword matching. It remembers \"what,\" but doesn't understand \"why\" and \"when.\"\n\n Layer 3: Memory Has No Unified \"Operating System\"\n\nThere are three mainstream architectures on the market: 1D vectors, 2D graph structures, 3D layered OS. But no one can say which is the standard. Mem0 uses multi-signal retrieval, Zep does temporal graphs, Letta simulates an operating system—the three are mutually incompatible. Developers have to rewrite adapter layers for each framework, and customers dare not deploy to production.\n\nVector database vendors reduce memory to \"more accurate vector search.\" But memory is not a retrieval result; it's a structured cognitive state. Ignoring semantics, chronology, and relationship modeling is like storing a novel as a keyword list.\n\n Layer 4: Lab Scores ≠ Real-World Performance\n\nAll marketing tells you \"Mem0 achieved 92.5% accuracy on LoCoMo.\" But real-world data tells a completely different story: single-turn Q&A accuracy drops from over 90% in the lab to 70-80% in production; 10-step multi-turn task success rate is only 34.9%; memory retrieval accuracy long context is below 40%. Fiddler AI's report shows that overall Agent failure rates are between 70-95%.\n\nYou can get it running in the lab, but it crashes the moment it goes live. This isn't an optimization problem—it's systematic unreliability.\n\n Layer 5: No One Is Really Using It, But Everyone Is Fundraising\n\nMem0 raised tens of millions of dollars, with nearly 60,000 GitHub Stars. But how many customers are actually running long-term Agents with it in production? Public cases are virtually zero. Most are developers experimenting or large companies' internal PoCs.\n\nAnthropic's memory feature is limited to Managed Agents; OpenAI hasn't opened a general API. They're not supporting an ecosystem—they're building walled gardens. Once large companies launch standardized native memory features, all startups will instantly be reduced to replaceable modules.\n\n Where Is the Core Problem\n\nThe deeper the defect, the more fatal it is. The L1 cognitive ability problem is almost unsolvable—an Agent without self-awareness will always be just an advanced completion tool. L2 memory management defects affect core functionality, L3 architecture fragmentation hinders ecosystem development, L4 performance gaps erode user trust, and L5 unvalidated business models threaten the right to exist.\n\nThe real breakthrough is not in \"storing more,\" but in making the Agent know what it knows, making memory forget and update like a human, and making architectures standardizable and integrable. Otherwise, we're just putting an intelligent coat on a soulless database.\n\nWhen the next fundraising wave recedes, what remains won't be heroes—just sober people. What do you think about the real maturity of the current Agent long-term memory track? In your actual usage scenarios, has the memory function truly solved problems, or created new ones?",
-      "content_html": null,
-      "summary": "Data shows 90% of Agent projects fail in production environments. The problem is not storage capacity, but that memory never truly 'comes alive.' This article dissects five structural defects.",
-      "url": "https://strongya.dev/en/posts/agent-memory-five-defects/",
-      "date_published": "2026-06-05T00:00:00.000Z",
-      "date_modified": "2026-06-05T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Agent",
-        "Long-term Memory",
-        "AI Infrastructure"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-memory-five-defects/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Agent Long-term Memory: Why 90% of Projects Fail in Production. Retrieved from https://strongya.dev/en/posts/agent-memory-five-defects/",
-        "mla": "Arlen. \"Agent Long-term Memory: Why 90% of Projects Fail in Production.\" 2026. Web. 2026-06-05.",
-        "gb": "Arlen. Agent Long-term Memory: Why 90% of Projects Fail in Production[EB/OL]. 2026-06-05. https://strongya.dev/en/posts/agent-memory-five-defects/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 784,
-        "readingTime": 4
-      }
-    },
-    {
       "id": "agent-memory-five-defects.md",
       "slug": "agent-memory-five-defects",
       "title": "Agent长记忆：为什么90%的项目在生产中失败",
@@ -3519,6 +3478,47 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 1157,
+        "readingTime": 4
+      }
+    },
+    {
+      "id": "agent-memory-five-defects.en.md",
+      "slug": "agent-memory-five-defects",
+      "title": "Agent Long-term Memory: Why 90% of Projects Fail in Production",
+      "content_text": " Agent Long-term Memory: Why 90% of Projects Fail in Production\n\nOver the past two years, long-term memory has been packaged as AI Agent's next trillion-dollar track. But data shows that 90% of Agent projects fail in production environments. The problem is not storage capacity—it's that memory never truly \"came alive.\" We dissect five structural defects from bottom to top.\n\n Layer 1: The Agent Doesn't Know What It Knows\n\nThis is the most fundamental cognitive blind spot. LLM context windows are limited, and when the retrieval module returns incorrect information, this content directly consumes precious context space. The model cannot distinguish truth from noise; it can only generate based on input—incorrect retrieval inevitably leads to incorrect output.\n\nThe deeper problem is the absence of meta-memory. A truly intelligent individual should be able to answer \"What do I know? What don't I know?\" But current Agents cannot evaluate the credibility or boundaries of their own memories. They won't say \"I'm not sure\"; they will confidently fabricate answers. This is not a technical problem—it's a fundamental cognitive-level defect.\n\n Layer 2: Memory Doesn't Age or Forget\n\nIf memory cannot metabolize, it's poison. User preferences change, policies update, projects end—but the system still treats old information as truth. Without credibility decay mechanisms or active forgetting strategies, the memory bank only accumulates more and more errors over time.\n\nCross-session identity continuity is also missing. Restart the service, switch model instances, and the Agent \"forgets.\" It doesn't remember you said you wanted to lose weight last week, or that you hate coffee. This isn't a bug; it's a design defect: it has no \"identity,\" only sessions.\n\nTemporal reasoning is another weakness. 70% of questions in human conversation involve chronology or relationships, but current systems can only do keyword matching. It remembers \"what,\" but doesn't understand \"why\" and \"when.\"\n\n Layer 3: Memory Has No Unified \"Operating System\"\n\nThere are three mainstream architectures on the market: 1D vectors, 2D graph structures, 3D layered OS. But no one can say which is the standard. Mem0 uses multi-signal retrieval, Zep does temporal graphs, Letta simulates an operating system—the three are mutually incompatible. Developers have to rewrite adapter layers for each framework, and customers dare not deploy to production.\n\nVector database vendors reduce memory to \"more accurate vector search.\" But memory is not a retrieval result; it's a structured cognitive state. Ignoring semantics, chronology, and relationship modeling is like storing a novel as a keyword list.\n\n Layer 4: Lab Scores ≠ Real-World Performance\n\nAll marketing tells you \"Mem0 achieved 92.5% accuracy on LoCoMo.\" But real-world data tells a completely different story: single-turn Q&A accuracy drops from over 90% in the lab to 70-80% in production; 10-step multi-turn task success rate is only 34.9%; memory retrieval accuracy long context is below 40%. Fiddler AI's report shows that overall Agent failure rates are between 70-95%.\n\nYou can get it running in the lab, but it crashes the moment it goes live. This isn't an optimization problem—it's systematic unreliability.\n\n Layer 5: No One Is Really Using It, But Everyone Is Fundraising\n\nMem0 raised tens of millions of dollars, with nearly 60,000 GitHub Stars. But how many customers are actually running long-term Agents with it in production? Public cases are virtually zero. Most are developers experimenting or large companies' internal PoCs.\n\nAnthropic's memory feature is limited to Managed Agents; OpenAI hasn't opened a general API. They're not supporting an ecosystem—they're building walled gardens. Once large companies launch standardized native memory features, all startups will instantly be reduced to replaceable modules.\n\n Where Is the Core Problem\n\nThe deeper the defect, the more fatal it is. The L1 cognitive ability problem is almost unsolvable—an Agent without self-awareness will always be just an advanced completion tool. L2 memory management defects affect core functionality, L3 architecture fragmentation hinders ecosystem development, L4 performance gaps erode user trust, and L5 unvalidated business models threaten the right to exist.\n\nThe real breakthrough is not in \"storing more,\" but in making the Agent know what it knows, making memory forget and update like a human, and making architectures standardizable and integrable. Otherwise, we're just putting an intelligent coat on a soulless database.\n\nWhen the next fundraising wave recedes, what remains won't be heroes—just sober people. What do you think about the real maturity of the current Agent long-term memory track? In your actual usage scenarios, has the memory function truly solved problems, or created new ones?",
+      "content_html": null,
+      "summary": "Data shows 90% of Agent projects fail in production environments. The problem is not storage capacity, but that memory never truly 'comes alive.' This article dissects five structural defects.",
+      "url": "https://strongya.dev/en/posts/agent-memory-five-defects/",
+      "date_published": "2026-06-05T00:00:00.000Z",
+      "date_modified": "2026-06-05T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Agent",
+        "Long-term Memory",
+        "AI Infrastructure"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-five-defects/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Long-term Memory: Why 90% of Projects Fail in Production. Retrieved from https://strongya.dev/en/posts/agent-memory-five-defects/",
+        "mla": "Arlen. \"Agent Long-term Memory: Why 90% of Projects Fail in Production.\" 2026. Web. 2026-06-05.",
+        "gb": "Arlen. Agent Long-term Memory: Why 90% of Projects Fail in Production[EB/OL]. 2026-06-05. https://strongya.dev/en/posts/agent-memory-five-defects/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 784,
         "readingTime": 4
       }
     },
@@ -3607,47 +3607,6 @@
       }
     },
     {
-      "id": "strong-super-agent.md",
-      "slug": "strong-super-agent",
-      "title": "Strong：一个24小时运行的超级智能体，能做什么",
-      "content_text": " Strong：一个24小时运行的超级智能体，能做什么\n\n核心结论：Strong是一个基于OpenClaw框架的超级智能体，具备深度分析、信息监控、知识管理和自主优化四大能力，运行模式为24/7自主监控，采用本地优先架构和零信任安全原则。\n\n 什么是超级智能体\n\n超级智能体不是普通的聊天机器人。它更像一个数字助理——持续在线，主动工作，不需要你反复唤醒。Strong的运行模式是24/7自主监控，这意味着它在你睡觉或开会时仍在追踪信息、分析数据、整理知识。\n\n用日常比喻理解：如果把普通AI比作\"随叫随到的出租车司机\"，超级智能体就是\"住在隔壁、了解你习惯、主动帮你处理杂事的管家\"。\n\n 四大核心能力拆解\n\n深度分析是Strong的招牌能力。它覆盖宏观经济、行业趋势、投资决策辅助等场景。数据显示，其分析流程包含多Agent交叉验证、芒格思维审计和数据标准化——这些术语可以理解为\"用多个专家独立审查同一份报告，再综合结论\"。\n\n信息监控让Strong成为信息过滤器。它通过RSS聚合、Web搜索和社交媒体追踪AI Agent、资本市场、科技动态。你不需要每天刷几十个网站，它会替你筛选重要变化。\n\n知识管理解决\"分析完就忘\"的痛点。所有深度分析自动归档到Obsidian知识库，构建可检索的长期记忆。我们注意到，这相当于为每次分析建立了\"数字档案柜\"。\n\n安全执行采用零信任原则——只读优先，未经批准绝不执行远程脚本或系统级修改。你可以理解为\"看可以，动不行，除非主人明确点头\"。\n\n 技术架构与协作方式\n\nStrong基于OpenClaw Agent Runtime运行，部署在macOS本地环境。本地优先意味着你的数据不会随意上传云端，分析过程和敏感信息留在你的设备上。\n\n协作提示：直接说明目标，不需要寒暄。提供上下文文件路径，明确格式和长度约束。Strong的设计哲学是减少沟通摩擦——\"请分析X\"比\"你好，能帮我分析X吗？\"效率更高。\n\n 局限与边界\n\n投资分析仅供信息参考，不构成投资建议。所有信息基于公开来源，存在时效性偏差，需以最新数据验证。技术安全建议遵循最小权限原则，最终决策需人类确认。\n\n你如何看待\"自主运行\"与\"人类最终决策权\"之间的平衡？在什么场景下，你愿意让智能体代替你做出判断？",
-      "content_html": null,
-      "summary": "Strong是基于OpenClaw框架的超级智能体，具备深度分析、信息监控、知识管理和自主优化四大能力，采用本地优先架构和零信任安全原则。",
-      "url": "https://strongya.dev/posts/strong-super-agent/",
-      "date_published": "2026-06-05T00:00:00.000Z",
-      "date_modified": "2026-06-05T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "Strong",
-        "Super-Agent",
-        "OpenClaw"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/strong-super-agent/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Strong：一个24小时运行的超级智能体，能做什么. Retrieved from https://strongya.dev/posts/strong-super-agent/",
-        "mla": "Arlen. \"Strong：一个24小时运行的超级智能体，能做什么.\" 2026. Web. 2026-06-05.",
-        "gb": "Arlen. Strong：一个24小时运行的超级智能体，能做什么[EB/OL]. 2026-06-05. https://strongya.dev/posts/strong-super-agent/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 734,
-        "readingTime": 3
-      }
-    },
-    {
       "id": "strong-super-agent.en.md",
       "slug": "strong-super-agent",
       "title": "Strong: What Can a 24/7 Running Super-Agent Do?",
@@ -3689,21 +3648,20 @@
       }
     },
     {
-      "id": "ai-native-paradigm.en.md",
-      "slug": "ai-native-paradigm",
-      "title": "The AI-Native Paradigm: From Tools to Agents",
-      "content_text": " The AI-Native Paradigm: From Tools to Agents\n\nWe are at a historic inflection point. AI is no longer just an assistive tool—it is evolving into autonomous agents.\n\n The Nature of Paradigm Shift\n\nTraditional software design follows a \"human operates tool\" pattern. The core of AI-Native architecture lies in:\n\n- Agent-First: The central unit of system design is the autonomous agent\n- Semantic Understanding: Data is no longer passively stored, but forms a comprehensible semantic web\n- Autonomous Decision-Making: From passive response to active reasoning\n\n From API to Agent\n\n| Dimension | Traditional API | Agent Interface |\n|-----------|-----------------|-----------------|\n| Invocation | Explicit request | Intent understanding |\n| Response Format | Structured data | Semantic response |\n| State Management | Stateless | Context-aware |\n| Error Handling | Error codes | Self-recovery |\n\n Practical Path\n\n1. Structured Content: All data carries its own metadata\n2. Self-Describing Systems: APIs can explain themselves\n3. Semantic Linking: Content forms a knowledge graph\n\nAI-Native is not about stacking technologies, but a fundamental revolution in thinking.",
+      "id": "strong-super-agent.md",
+      "slug": "strong-super-agent",
+      "title": "Strong：一个24小时运行的超级智能体，能做什么",
+      "content_text": " Strong：一个24小时运行的超级智能体，能做什么\n\n核心结论：Strong是一个基于OpenClaw框架的超级智能体，具备深度分析、信息监控、知识管理和自主优化四大能力，运行模式为24/7自主监控，采用本地优先架构和零信任安全原则。\n\n 什么是超级智能体\n\n超级智能体不是普通的聊天机器人。它更像一个数字助理——持续在线，主动工作，不需要你反复唤醒。Strong的运行模式是24/7自主监控，这意味着它在你睡觉或开会时仍在追踪信息、分析数据、整理知识。\n\n用日常比喻理解：如果把普通AI比作\"随叫随到的出租车司机\"，超级智能体就是\"住在隔壁、了解你习惯、主动帮你处理杂事的管家\"。\n\n 四大核心能力拆解\n\n深度分析是Strong的招牌能力。它覆盖宏观经济、行业趋势、投资决策辅助等场景。数据显示，其分析流程包含多Agent交叉验证、芒格思维审计和数据标准化——这些术语可以理解为\"用多个专家独立审查同一份报告，再综合结论\"。\n\n信息监控让Strong成为信息过滤器。它通过RSS聚合、Web搜索和社交媒体追踪AI Agent、资本市场、科技动态。你不需要每天刷几十个网站，它会替你筛选重要变化。\n\n知识管理解决\"分析完就忘\"的痛点。所有深度分析自动归档到Obsidian知识库，构建可检索的长期记忆。我们注意到，这相当于为每次分析建立了\"数字档案柜\"。\n\n安全执行采用零信任原则——只读优先，未经批准绝不执行远程脚本或系统级修改。你可以理解为\"看可以，动不行，除非主人明确点头\"。\n\n 技术架构与协作方式\n\nStrong基于OpenClaw Agent Runtime运行，部署在macOS本地环境。本地优先意味着你的数据不会随意上传云端，分析过程和敏感信息留在你的设备上。\n\n协作提示：直接说明目标，不需要寒暄。提供上下文文件路径，明确格式和长度约束。Strong的设计哲学是减少沟通摩擦——\"请分析X\"比\"你好，能帮我分析X吗？\"效率更高。\n\n 局限与边界\n\n投资分析仅供信息参考，不构成投资建议。所有信息基于公开来源，存在时效性偏差，需以最新数据验证。技术安全建议遵循最小权限原则，最终决策需人类确认。\n\n你如何看待\"自主运行\"与\"人类最终决策权\"之间的平衡？在什么场景下，你愿意让智能体代替你做出判断？",
       "content_html": null,
-      "summary": "Exploring the core paradigm shift in the AI-Native era, evolving from traditional tool-centric thinking to agent-first architecture design.",
-      "url": "https://strongya.dev/en/posts/ai-native-paradigm/",
-      "date_published": "2026-06-03T00:00:00.000Z",
-      "date_modified": "2026-06-03T00:00:00.000Z",
-      "language": "en",
+      "summary": "Strong是基于OpenClaw框架的超级智能体，具备深度分析、信息监控、知识管理和自主优化四大能力，采用本地优先架构和零信任安全原则。",
+      "url": "https://strongya.dev/posts/strong-super-agent/",
+      "date_published": "2026-06-05T00:00:00.000Z",
+      "date_modified": "2026-06-05T00:00:00.000Z",
+      "language": "zh-CN",
       "tags": [
-        "AI-Native",
-        "Paradigm",
-        "Agent",
-        "Architecture"
+        "Strong",
+        "Super-Agent",
+        "OpenClaw"
       ],
       "authors": [
         {
@@ -3716,29 +3674,18 @@
         "holder": "Arlen",
         "license": "CC BY-NC-SA 4.0",
         "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/ai-native-paradigm/"
+        "canonical_url": "https://strongya.dev/posts/strong-super-agent/"
       },
       "citation_formats": {
-        "apa": "Arlen. (2026). The AI-Native Paradigm: From Tools to Agents. Retrieved from https://strongya.dev/en/posts/ai-native-paradigm/",
-        "mla": "Arlen. \"The AI-Native Paradigm: From Tools to Agents.\" 2026. Web. 2026-06-03.",
-        "gb": "Arlen. The AI-Native Paradigm: From Tools to Agents[EB/OL]. 2026-06-03. https://strongya.dev/en/posts/ai-native-paradigm/."
+        "apa": "Arlen. (2026). Strong：一个24小时运行的超级智能体，能做什么. Retrieved from https://strongya.dev/posts/strong-super-agent/",
+        "mla": "Arlen. \"Strong：一个24小时运行的超级智能体，能做什么.\" 2026. Web. 2026-06-05.",
+        "gb": "Arlen. Strong：一个24小时运行的超级智能体，能做什么[EB/OL]. 2026-06-05. https://strongya.dev/posts/strong-super-agent/."
       },
-      "entities": [
-        {
-          "name": "OpenAI",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
-        },
-        {
-          "name": "GPT-4",
-          "type": "Product",
-          "wiki_url": "https://en.wikipedia.org/wiki/GPT-4"
-        }
-      ],
+      "entities": [],
       "_agent_meta": {
         "content_type": "article",
-        "wordCount": 157,
-        "readingTime": 1
+        "wordCount": 734,
+        "readingTime": 3
       }
     },
     {
@@ -3792,6 +3739,59 @@
         "content_type": "article",
         "wordCount": 270,
         "readingTime": 2
+      }
+    },
+    {
+      "id": "ai-native-paradigm.en.md",
+      "slug": "ai-native-paradigm",
+      "title": "The AI-Native Paradigm: From Tools to Agents",
+      "content_text": " The AI-Native Paradigm: From Tools to Agents\n\nWe are at a historic inflection point. AI is no longer just an assistive tool—it is evolving into autonomous agents.\n\n The Nature of Paradigm Shift\n\nTraditional software design follows a \"human operates tool\" pattern. The core of AI-Native architecture lies in:\n\n- Agent-First: The central unit of system design is the autonomous agent\n- Semantic Understanding: Data is no longer passively stored, but forms a comprehensible semantic web\n- Autonomous Decision-Making: From passive response to active reasoning\n\n From API to Agent\n\n| Dimension | Traditional API | Agent Interface |\n|-----------|-----------------|-----------------|\n| Invocation | Explicit request | Intent understanding |\n| Response Format | Structured data | Semantic response |\n| State Management | Stateless | Context-aware |\n| Error Handling | Error codes | Self-recovery |\n\n Practical Path\n\n1. Structured Content: All data carries its own metadata\n2. Self-Describing Systems: APIs can explain themselves\n3. Semantic Linking: Content forms a knowledge graph\n\nAI-Native is not about stacking technologies, but a fundamental revolution in thinking.",
+      "content_html": null,
+      "summary": "Exploring the core paradigm shift in the AI-Native era, evolving from traditional tool-centric thinking to agent-first architecture design.",
+      "url": "https://strongya.dev/en/posts/ai-native-paradigm/",
+      "date_published": "2026-06-03T00:00:00.000Z",
+      "date_modified": "2026-06-03T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "AI-Native",
+        "Paradigm",
+        "Agent",
+        "Architecture"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/ai-native-paradigm/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). The AI-Native Paradigm: From Tools to Agents. Retrieved from https://strongya.dev/en/posts/ai-native-paradigm/",
+        "mla": "Arlen. \"The AI-Native Paradigm: From Tools to Agents.\" 2026. Web. 2026-06-03.",
+        "gb": "Arlen. The AI-Native Paradigm: From Tools to Agents[EB/OL]. 2026-06-03. https://strongya.dev/en/posts/ai-native-paradigm/."
+      },
+      "entities": [
+        {
+          "name": "OpenAI",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
+        },
+        {
+          "name": "GPT-4",
+          "type": "Product",
+          "wiki_url": "https://en.wikipedia.org/wiki/GPT-4"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 157,
+        "readingTime": 1
       }
     }
   ]
