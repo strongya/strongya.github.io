@@ -27,71 +27,6 @@
   "attribution_required": true,
   "items": [
     {
-      "id": "dsh-model-interface-layer.md",
-      "slug": "dsh-model-interface-layer",
-      "title": "DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」",
-      "content_text": " DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」\n\n如果你用过 Claude、DeepSeek、OpenAI 或者本地跑的 LM Studio，你会发现它们都号称「对话」，但说话方式完全不一样。\n\n不是回答内容不一样，而是它们的 API 格式、流式输出、错误码、甚至「思考过程要不要展示」都各说各话。就像你开一家公司，客户有中国人、日本人、法国人，每个人递来的合同格式不同、发票格式不同、投诉信的写法也不同。\n\nDeepSeek Harness（DSH）的模型接口层，本质上就是这家公司里的翻译官管理制度：它规定了一种内部通用语言，让上层业务只关心「我要打个电话」，而不用管电话那头是 DeepSeek、OpenAI 还是你家阳台上的 LM Studio。\n\n---\n\n 一句话：接口层在解决什么问题？\n\n> DSH 不想知道对面是哪家大模型，所以它只讲「普通话」；每家模型配一个守规矩的「翻译官」；换模型 = 换翻译官，主体代码一行不动。\n\n这个设计的价值很直接：如果你今天在设置里把 DeepSeek 换成 LM Studio，聊天、压缩、起标题这些功能完全不需要重写。 不是魔法，是接口层提前把差异吃掉了。\n\n---\n\n 没有接口层，会多乱？\n\n想象一下：DSH 的每个功能——agent 循环、上下文压缩、标题生成、工具调用——都要单独为 DeepSeek 写一版，再为 OpenAI 写一版，再为 LM Studio 写一版。\n\n任何一个模型厂商改点 API 格式，你就要全项目搜代码改一遍。新模型出来了？再写一版。错了一个错误码？下游处理全崩。\n\nDSH 的解法是：让上层只说一种语言，让翻译官去处理方言。\n\n\nDSH 主体（agent 循环、压缩、UI）\n        │  只说普通话\n        ▼\n   ctx.llm（接口层总机）\n        │  按 provider 名字找翻译官\n        ▼\n   ┌────────────┬──────────────┬───────────┐\n   DeepSeek     万能翻译官        LM Studio\n   专职翻译官    （pi-ai）        （走 OpenAI 兼容）\n\n\n这个结构看起来简单，但它把「模型接入」从一项散落的脏活，变成了一套可插拔的插件系统。\n\n---\n\n DSH 的「普通话」只有三样东西\n\nDSH 没有试图兼容每个模型的全部字段，而是强行规定了最小公共集。任何模型要接入，都必须把自己的输出翻译成这三样东西：\n\n 1. 标准信纸：Message\n\n一条消息 = 编号 + 角色（system/user/assistant）+ 内容块 + 出处。格式写死，不可变。这是所有对话的原材料。\n\n 2. 内容块：ContentBlock\n\n信纸里能装的内容只有五种：文字、思考、图片、工具调用、工具结果。没有第六种。\n\n这个限制很重要。它意味着上层代码不需要猜「这次模型返回的是字符串还是对象」，只需要处理这五种类型中的一种。\n\n 3. 通话单：GenerateOptions\n\n一次调模型的完整打包：用哪家模型、聊天记录、系统提示词、工具清单、温度……所有参数一次性塑封，调用中途不许偷改。\n\n塑封的意义不只是防手贱，更是为了调试时能复现。如果某次调用结果奇怪，你可以把这份通话单拿出来回放，而不是追问「当时温度是不是被别的地方改了」。\n\n---\n\n 流式回答被切成 7 种「碎片」\n\n大模型说话不是一次性说完，而是一个字一个字往外蹦。DSH 把这些蹦出来的字统一称为 StreamChunk，并且严格规定只有 7 种：\n\n| 碎片 | 人话 |\n|---|---|\n| block-start | 「我要开始说一段话了」 |\n| text-delta | 文字增量（\"今\"、\"天\"、\"气\"……） |\n| reasoning-delta | 思考增量（模型的内心 OS） |\n| tool-call-delta | 工具调用增量（参数是一截截原始 JSON 字符串） |\n| block-end | 「这段说完了」，并且直接附带拼好的完整块 |\n| usage | 本次话费单（token 用量） |\n| finish | 「我说完了/出错了/被你挂了」 |\n\n这里有几个设计非常精巧：\n\n第一，碎片带序号。 模型可以同时交错说话、思考、写三个工具调用，但序号保证不会串台。\n\n第二，block-end 直接带成品。 收信的人不用自己拼碎片，拿到就是完整块。这避免了一个非常常见的 bug：各个子系统各自拼装，拼法不一致导致数据对不上。\n\n第三，工具调用参数永远是原始字符串。 因为模型就是按字符流生成 JSON 的，强行提前解析成对象，流到一半 JSON 不完整就会炸。保持字符串形式，永远安全。\n\n---\n\n 总机背后的「公司总部」\n\npackages/llm/llm 是接口层本体，里面每个文件对应一个明确的岗位：\n\n- src/index.ts：总台 + 调度室。ctx.llm 管翻译官花名册，是打模型电话的唯一入口。\n- src/types.ts：普通话词典。所有类型定义的家。\n- src/message.ts：标准信纸厂。构造和检查消息格式。\n- src/content.ts：信件检查工具。递归检查一封信里有没有图片，全公司共用一把尺子。\n- src/assembler.ts：唯一的碎纸拼装员。把碎片拼回完整消息，只此一家，防止各处自己拼出 bug。\n- src/call-config.ts：通话参数单 + 塑封机。参数一旦定稿就深冻结，偷改直接抛异常。\n- src/error.ts：统一故障单。所有错误带稳定错误码，下游按码处理，不许读报错文案猜。\n- src/adapter-failure.ts：故障单誊写台。翻译官抛出的千奇百怪错误，统一誊成标准格式再交楼上。\n- src/retry-policy.ts：重试规则表模板。每个翻译官入职时交一张，总台存档，换人也按旧表执行。\n- src/attribution.ts：统一工牌。每次给模型厂商打电话都戴 User-Agent，只写公开信息，不带密钥和会话号。\n- src/brand.ts：防伪钢印。给各种 ID 打类型钢印，防止把「工具调用 id」当成「请求 id」用混。\n- src/never.ts：质检哨兵。如果有人在词典里加了一种新碎片，所有没处理它的地方编译直接报错，想漏都不行。\n\n这个岗位分工非常细，细到有点强迫症。但正是这种强迫症，让接口层能够长期稳定地接住不同模型的古怪行为。\n\n---\n\n 翻译官长什么样？\n\n 专职翻译官：llm-deepseek\n\nDeepSeek 官方 API 有它自己的 SSE 流、错误格式、字段命名。DSH 的 llm-deepseek 只干四件事：\n\n1. adapter.ts：打电话（fetch + SSE 直连）。\n2. serialize.ts：去程翻译，把标准信纸转成 DeepSeek 方言。\n3. translate.ts：回程翻译，把 DeepSeek 的 SSE 事件转成 7 种标准碎片。\n4. sse.ts：电报解码器，处理粘包、UTF-8 边界、DONE 等细节。\n\n密钥和地址不归翻译官保管，它每次打电话时现取。这让它可以热切换配置，不用重启。\n\n 万能翻译官：llm-pi-ai\n\nLM Studio、自建网关、任何 OpenAI 兼容端点，全走 llm-pi-ai。它不是一个模型一个适配器，而是靠一份「路由 → 配置」字典解决所有兼容端点。这意味着你接 LM Studio 不需要写任何代码，填个地址和模型名就行。\n\n 两个不吃翻译饭但很重要的同事\n\n- llm-retry：重试调度员。监听失败广播，按该翻译官存档的规则表决定要不要重拨。每次重拨都开一个新的编号轮次，留下完整档案。\n- token-meter：电费计量员。从会话日志给每个会话独立数 token，压缩等部门共用它的表。\n\n---\n\n 翻译官入职必须遵守的 8 条铁律\n\n想当 DSH 的翻译官，不能随心所欲。DSH 规定了 8 条适配器约定，本质上是接口层的「行为契约」：\n\n1. 先报话费，再说「完了」，说完闭嘴。 usage 必须在 finish 之前，finish 之后空无一物。\n2. 工具参数永远是原始 JSON 字符串。 即使厂商给了拼好的对象，也得拆回字符串再一截截送。\n3. 报错只有两条路： 要么抛 LlmError，要么最后一片说 finish { kind: 'error' }。\n4. 不许自己偷偷重试。 一次调用就是一次尝试，重试归调度员管。\n5. 卡住 5 分钟算超时。 超时报 TIMEOUT，用户取消报 ABORTED，不许搞混。\n6. 「上下文太长」只有一个代号： CONTEXTWINDOWEXCEEDED，下游只认代号。\n7. 一句话都没返回也算失败。 默认会重试，不许假装成功。\n8. 每次打电话戴工牌。 而且有自动化测试盯着证明你戴了。\n\n这些规则听起来琐碎，但它们是接口层能够稳定托底的原因。每个翻译官都按同一个剧本演出，上层才不需要为每个模型写特殊处理。\n\n---\n\n 一通电话的完整旅程\n\n把上面这些串起来，一次模型调用其实是这样的：\n\n1. agent 循环用标准信纸写好消息。\n2. 从会话日志重建通话单——塑封，不许偷改。\n3. 总机按 provider 名找到对应翻译官。\n4. 电话过 llm/stream 安检传送带（重试、回放、路由在此拦截）。\n5. 翻译官去程翻译，打给模型厂商。\n6. 碎片陆续回来 → 拼装员拼成完整消息 → 原始碎片同时记进日志。\n7. 计量员记话费。\n8. 出故障？开统一故障单 → 调度员按规则表决定重不重拨。\n\n因为每一步都记了日志，所以断线重开、fork 会话、快照测试都能一字不差地重演。这是 DSH「模型可见即已记录」铁律在模型层的落地。\n\n---\n\n 小白 FAQ\n\nQ：界面上「缓存命中 X%」哪来的？\nA：话费单（TokenUsage）里有专门的「缓存命中」格子，但要翻译官上报才有数。DeepSeek 官方 API 会上报；LM Studio/llama.cpp 不上报 → 永远 0%。是「没上报」，不是「没缓存」。\n\nQ：为什么工具参数是字符串不是对象？\nA：因为模型就是一个字符一个字符往外蹦的。强行提前解析成对象，流到一半 JSON 不完整就会炸。原始字符串怎么来怎么存，永远安全。\n\nQ：我想接自己的模型怎么办？\nA：写一个翻译官：继承 LlmAdapter、实现 stream、在插件里注册。遵守 8 条铁律即可。官方有 docs/cookbook/adding-an-llm-adapter.zh.md 手把手教程。\n\nQ：请求中途换了模型配置会怎样？\nA：不会怎样。prepareCall 保证查能力、记档案、打电话全程用同一个翻译官。热更新也拆不散；新配置从下一通电话生效。\n\nQ：思考过程和回答为什么要分开？\nA：因为思考通常不该直接展示，也不该原样进压缩摘要。分开成两种块，UI 可以折叠它、压缩可以跳过它、厂商回放它，各取所需。\n\n---\n\n 一句话总结\n\nDSH 的模型接口层不是在做「多模型支持」这种产品功能，而是在做模型接入的基础设施。它用一个强制的通用语言、一套严格的翻译官契约、一个唯一的总台入口，把「模型接入」从散落各地的脏活，变成了一件可测试、可替换、可审计的干净事。\n\n对想自己造 Agent 的人来说，这个设计意味着：你可以自由换模型，而不用重写业务逻辑。你的 Agent 不会被任何一家大模型厂商绑架。\n\n---\n\n参考：DSH v0.1.0-rc.5 packages/llm/，docs/subsystems/llm-streaming.zh.md",
-      "content_html": null,
-      "summary": "DeepSeek Harness 的模型接口层通过统一抽象 Message、ContentBlock、GenerateOptions 与 StreamChunk，把 DeepSeek、OpenAI、LM Studio 等差异各异的模型接入变成可插拔的翻译官系统。本文用小白也能听懂的方式，解释接口层如何解决多模型接入的脏活，以及 8 条适配器铁律如何保证上层业务换模型时一行代码不动。",
-      "url": "https://strongya.dev/posts/dsh-model-interface-layer/",
-      "date_published": "2026-08-16T00:00:00.000Z",
-      "date_modified": "2026-08-16T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "AI",
-        "Agent",
-        "DeepSeek",
-        "DeepSeek Harness",
-        "LLM",
-        "架构"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/dsh-model-interface-layer/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」. Retrieved from https://strongya.dev/posts/dsh-model-interface-layer/",
-        "mla": "Arlen. \"DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」.\" 2026. Web. 2026-08-16.",
-        "gb": "Arlen. DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」[EB/OL]. 2026-08-16. https://strongya.dev/posts/dsh-model-interface-layer/."
-      },
-      "entities": [
-        {
-          "name": "DeepSeek",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/DeepSeek"
-        },
-        {
-          "name": "OpenAI",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
-        },
-        {
-          "name": "Anthropic",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/Anthropic"
-        },
-        {
-          "name": "Claude",
-          "type": "Software",
-          "wiki_url": "https://en.wikipedia.org/wiki/Claude_(language_model)"
-        }
-      ],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 2948,
-        "readingTime": 8
-      }
-    },
-    {
       "id": "dsh-model-interface-layer.en.md",
       "slug": "dsh-model-interface-layer",
       "title": "DSH's Model Interface Layer: Why Every LLM Needs a 'Translator'",
@@ -154,6 +89,71 @@
         "content_type": "article",
         "wordCount": 2024,
         "readingTime": 11
+      }
+    },
+    {
+      "id": "dsh-model-interface-layer.md",
+      "slug": "dsh-model-interface-layer",
+      "title": "DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」",
+      "content_text": " DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」\n\n如果你用过 Claude、DeepSeek、OpenAI 或者本地跑的 LM Studio，你会发现它们都号称「对话」，但说话方式完全不一样。\n\n不是回答内容不一样，而是它们的 API 格式、流式输出、错误码、甚至「思考过程要不要展示」都各说各话。就像你开一家公司，客户有中国人、日本人、法国人，每个人递来的合同格式不同、发票格式不同、投诉信的写法也不同。\n\nDeepSeek Harness（DSH）的模型接口层，本质上就是这家公司里的翻译官管理制度：它规定了一种内部通用语言，让上层业务只关心「我要打个电话」，而不用管电话那头是 DeepSeek、OpenAI 还是你家阳台上的 LM Studio。\n\n---\n\n 一句话：接口层在解决什么问题？\n\n> DSH 不想知道对面是哪家大模型，所以它只讲「普通话」；每家模型配一个守规矩的「翻译官」；换模型 = 换翻译官，主体代码一行不动。\n\n这个设计的价值很直接：如果你今天在设置里把 DeepSeek 换成 LM Studio，聊天、压缩、起标题这些功能完全不需要重写。 不是魔法，是接口层提前把差异吃掉了。\n\n---\n\n 没有接口层，会多乱？\n\n想象一下：DSH 的每个功能——agent 循环、上下文压缩、标题生成、工具调用——都要单独为 DeepSeek 写一版，再为 OpenAI 写一版，再为 LM Studio 写一版。\n\n任何一个模型厂商改点 API 格式，你就要全项目搜代码改一遍。新模型出来了？再写一版。错了一个错误码？下游处理全崩。\n\nDSH 的解法是：让上层只说一种语言，让翻译官去处理方言。\n\n\nDSH 主体（agent 循环、压缩、UI）\n        │  只说普通话\n        ▼\n   ctx.llm（接口层总机）\n        │  按 provider 名字找翻译官\n        ▼\n   ┌────────────┬──────────────┬───────────┐\n   DeepSeek     万能翻译官        LM Studio\n   专职翻译官    （pi-ai）        （走 OpenAI 兼容）\n\n\n这个结构看起来简单，但它把「模型接入」从一项散落的脏活，变成了一套可插拔的插件系统。\n\n---\n\n DSH 的「普通话」只有三样东西\n\nDSH 没有试图兼容每个模型的全部字段，而是强行规定了最小公共集。任何模型要接入，都必须把自己的输出翻译成这三样东西：\n\n 1. 标准信纸：Message\n\n一条消息 = 编号 + 角色（system/user/assistant）+ 内容块 + 出处。格式写死，不可变。这是所有对话的原材料。\n\n 2. 内容块：ContentBlock\n\n信纸里能装的内容只有五种：文字、思考、图片、工具调用、工具结果。没有第六种。\n\n这个限制很重要。它意味着上层代码不需要猜「这次模型返回的是字符串还是对象」，只需要处理这五种类型中的一种。\n\n 3. 通话单：GenerateOptions\n\n一次调模型的完整打包：用哪家模型、聊天记录、系统提示词、工具清单、温度……所有参数一次性塑封，调用中途不许偷改。\n\n塑封的意义不只是防手贱，更是为了调试时能复现。如果某次调用结果奇怪，你可以把这份通话单拿出来回放，而不是追问「当时温度是不是被别的地方改了」。\n\n---\n\n 流式回答被切成 7 种「碎片」\n\n大模型说话不是一次性说完，而是一个字一个字往外蹦。DSH 把这些蹦出来的字统一称为 StreamChunk，并且严格规定只有 7 种：\n\n| 碎片 | 人话 |\n|---|---|\n| block-start | 「我要开始说一段话了」 |\n| text-delta | 文字增量（\"今\"、\"天\"、\"气\"……） |\n| reasoning-delta | 思考增量（模型的内心 OS） |\n| tool-call-delta | 工具调用增量（参数是一截截原始 JSON 字符串） |\n| block-end | 「这段说完了」，并且直接附带拼好的完整块 |\n| usage | 本次话费单（token 用量） |\n| finish | 「我说完了/出错了/被你挂了」 |\n\n这里有几个设计非常精巧：\n\n第一，碎片带序号。 模型可以同时交错说话、思考、写三个工具调用，但序号保证不会串台。\n\n第二，block-end 直接带成品。 收信的人不用自己拼碎片，拿到就是完整块。这避免了一个非常常见的 bug：各个子系统各自拼装，拼法不一致导致数据对不上。\n\n第三，工具调用参数永远是原始字符串。 因为模型就是按字符流生成 JSON 的，强行提前解析成对象，流到一半 JSON 不完整就会炸。保持字符串形式，永远安全。\n\n---\n\n 总机背后的「公司总部」\n\npackages/llm/llm 是接口层本体，里面每个文件对应一个明确的岗位：\n\n- src/index.ts：总台 + 调度室。ctx.llm 管翻译官花名册，是打模型电话的唯一入口。\n- src/types.ts：普通话词典。所有类型定义的家。\n- src/message.ts：标准信纸厂。构造和检查消息格式。\n- src/content.ts：信件检查工具。递归检查一封信里有没有图片，全公司共用一把尺子。\n- src/assembler.ts：唯一的碎纸拼装员。把碎片拼回完整消息，只此一家，防止各处自己拼出 bug。\n- src/call-config.ts：通话参数单 + 塑封机。参数一旦定稿就深冻结，偷改直接抛异常。\n- src/error.ts：统一故障单。所有错误带稳定错误码，下游按码处理，不许读报错文案猜。\n- src/adapter-failure.ts：故障单誊写台。翻译官抛出的千奇百怪错误，统一誊成标准格式再交楼上。\n- src/retry-policy.ts：重试规则表模板。每个翻译官入职时交一张，总台存档，换人也按旧表执行。\n- src/attribution.ts：统一工牌。每次给模型厂商打电话都戴 User-Agent，只写公开信息，不带密钥和会话号。\n- src/brand.ts：防伪钢印。给各种 ID 打类型钢印，防止把「工具调用 id」当成「请求 id」用混。\n- src/never.ts：质检哨兵。如果有人在词典里加了一种新碎片，所有没处理它的地方编译直接报错，想漏都不行。\n\n这个岗位分工非常细，细到有点强迫症。但正是这种强迫症，让接口层能够长期稳定地接住不同模型的古怪行为。\n\n---\n\n 翻译官长什么样？\n\n 专职翻译官：llm-deepseek\n\nDeepSeek 官方 API 有它自己的 SSE 流、错误格式、字段命名。DSH 的 llm-deepseek 只干四件事：\n\n1. adapter.ts：打电话（fetch + SSE 直连）。\n2. serialize.ts：去程翻译，把标准信纸转成 DeepSeek 方言。\n3. translate.ts：回程翻译，把 DeepSeek 的 SSE 事件转成 7 种标准碎片。\n4. sse.ts：电报解码器，处理粘包、UTF-8 边界、DONE 等细节。\n\n密钥和地址不归翻译官保管，它每次打电话时现取。这让它可以热切换配置，不用重启。\n\n 万能翻译官：llm-pi-ai\n\nLM Studio、自建网关、任何 OpenAI 兼容端点，全走 llm-pi-ai。它不是一个模型一个适配器，而是靠一份「路由 → 配置」字典解决所有兼容端点。这意味着你接 LM Studio 不需要写任何代码，填个地址和模型名就行。\n\n 两个不吃翻译饭但很重要的同事\n\n- llm-retry：重试调度员。监听失败广播，按该翻译官存档的规则表决定要不要重拨。每次重拨都开一个新的编号轮次，留下完整档案。\n- token-meter：电费计量员。从会话日志给每个会话独立数 token，压缩等部门共用它的表。\n\n---\n\n 翻译官入职必须遵守的 8 条铁律\n\n想当 DSH 的翻译官，不能随心所欲。DSH 规定了 8 条适配器约定，本质上是接口层的「行为契约」：\n\n1. 先报话费，再说「完了」，说完闭嘴。 usage 必须在 finish 之前，finish 之后空无一物。\n2. 工具参数永远是原始 JSON 字符串。 即使厂商给了拼好的对象，也得拆回字符串再一截截送。\n3. 报错只有两条路： 要么抛 LlmError，要么最后一片说 finish { kind: 'error' }。\n4. 不许自己偷偷重试。 一次调用就是一次尝试，重试归调度员管。\n5. 卡住 5 分钟算超时。 超时报 TIMEOUT，用户取消报 ABORTED，不许搞混。\n6. 「上下文太长」只有一个代号： CONTEXTWINDOWEXCEEDED，下游只认代号。\n7. 一句话都没返回也算失败。 默认会重试，不许假装成功。\n8. 每次打电话戴工牌。 而且有自动化测试盯着证明你戴了。\n\n这些规则听起来琐碎，但它们是接口层能够稳定托底的原因。每个翻译官都按同一个剧本演出，上层才不需要为每个模型写特殊处理。\n\n---\n\n 一通电话的完整旅程\n\n把上面这些串起来，一次模型调用其实是这样的：\n\n1. agent 循环用标准信纸写好消息。\n2. 从会话日志重建通话单——塑封，不许偷改。\n3. 总机按 provider 名找到对应翻译官。\n4. 电话过 llm/stream 安检传送带（重试、回放、路由在此拦截）。\n5. 翻译官去程翻译，打给模型厂商。\n6. 碎片陆续回来 → 拼装员拼成完整消息 → 原始碎片同时记进日志。\n7. 计量员记话费。\n8. 出故障？开统一故障单 → 调度员按规则表决定重不重拨。\n\n因为每一步都记了日志，所以断线重开、fork 会话、快照测试都能一字不差地重演。这是 DSH「模型可见即已记录」铁律在模型层的落地。\n\n---\n\n 小白 FAQ\n\nQ：界面上「缓存命中 X%」哪来的？\nA：话费单（TokenUsage）里有专门的「缓存命中」格子，但要翻译官上报才有数。DeepSeek 官方 API 会上报；LM Studio/llama.cpp 不上报 → 永远 0%。是「没上报」，不是「没缓存」。\n\nQ：为什么工具参数是字符串不是对象？\nA：因为模型就是一个字符一个字符往外蹦的。强行提前解析成对象，流到一半 JSON 不完整就会炸。原始字符串怎么来怎么存，永远安全。\n\nQ：我想接自己的模型怎么办？\nA：写一个翻译官：继承 LlmAdapter、实现 stream、在插件里注册。遵守 8 条铁律即可。官方有 docs/cookbook/adding-an-llm-adapter.zh.md 手把手教程。\n\nQ：请求中途换了模型配置会怎样？\nA：不会怎样。prepareCall 保证查能力、记档案、打电话全程用同一个翻译官。热更新也拆不散；新配置从下一通电话生效。\n\nQ：思考过程和回答为什么要分开？\nA：因为思考通常不该直接展示，也不该原样进压缩摘要。分开成两种块，UI 可以折叠它、压缩可以跳过它、厂商回放它，各取所需。\n\n---\n\n 一句话总结\n\nDSH 的模型接口层不是在做「多模型支持」这种产品功能，而是在做模型接入的基础设施。它用一个强制的通用语言、一套严格的翻译官契约、一个唯一的总台入口，把「模型接入」从散落各地的脏活，变成了一件可测试、可替换、可审计的干净事。\n\n对想自己造 Agent 的人来说，这个设计意味着：你可以自由换模型，而不用重写业务逻辑。你的 Agent 不会被任何一家大模型厂商绑架。\n\n---\n\n参考：DSH v0.1.0-rc.5 packages/llm/，docs/subsystems/llm-streaming.zh.md",
+      "content_html": null,
+      "summary": "DeepSeek Harness 的模型接口层通过统一抽象 Message、ContentBlock、GenerateOptions 与 StreamChunk，把 DeepSeek、OpenAI、LM Studio 等差异各异的模型接入变成可插拔的翻译官系统。本文用小白也能听懂的方式，解释接口层如何解决多模型接入的脏活，以及 8 条适配器铁律如何保证上层业务换模型时一行代码不动。",
+      "url": "https://strongya.dev/posts/dsh-model-interface-layer/",
+      "date_published": "2026-08-16T00:00:00.000Z",
+      "date_modified": "2026-08-16T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "AI",
+        "Agent",
+        "DeepSeek",
+        "DeepSeek Harness",
+        "LLM",
+        "架构"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/dsh-model-interface-layer/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」. Retrieved from https://strongya.dev/posts/dsh-model-interface-layer/",
+        "mla": "Arlen. \"DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」.\" 2026. Web. 2026-08-16.",
+        "gb": "Arlen. DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」[EB/OL]. 2026-08-16. https://strongya.dev/posts/dsh-model-interface-layer/."
+      },
+      "entities": [
+        {
+          "name": "DeepSeek",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/DeepSeek"
+        },
+        {
+          "name": "OpenAI",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
+        },
+        {
+          "name": "Anthropic",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/Anthropic"
+        },
+        {
+          "name": "Claude",
+          "type": "Software",
+          "wiki_url": "https://en.wikipedia.org/wiki/Claude_(language_model)"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 2948,
+        "readingTime": 8
       }
     },
     {
@@ -2367,47 +2367,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-6-10.md",
-      "slug": "agent-memory-errors-cases-6-10",
-      "title": "《Agent记忆错误的100个案例手册》第 6–10 案例",
-      "content_text": " 《Agent记忆错误的100个案例手册》第 6–10 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 6：RAG与检索错误｜negative-rejection-safe-answer-flooding\n\n场景\n\n企业内部知识库Agent配置了检索阈值：当所有检索结果的相似度分数低于0.7时，拒绝回答并返回\"根据现有资料无法确认\"。由于新上传的技术文档embedding质量较差，用户询问这些新文档中的内容时，系统频繁触发拒绝机制。\n\n错误表现\n\n一个月内用户查询的拒绝率高达45%，用户认为Agent\"什么都不知道\"，使用率急剧下降。实际上知识库中包含了答案，只是检索链路未成功召回。\n\n解决方案\n\n1. 实施分级检索策略：先尝试精确检索，再放宽阈值进行模糊检索，最后fallback到全库扫描\n2. 对拒绝查询进行自动记录和离线分析，识别embedding质量问题或索引同步延迟\n3. 引入\"尽力回答\"模式：在检索结果不足时，允许Agent基于低置信度结果回答，但明确标注\"此答案基于有限信息，请人工核实\"\n\n原理\n\n硬性阈值虽然能防止幻觉，但过度保守会牺牲可用性。检索系统的置信度校准应与业务场景匹配，对内部知识库可降低阈值，对开放域可提高阈值。\n\n---\n\n 案例 7：RAG与检索错误｜embedding-model-domain-mismatch\n\n场景\n\n使用OpenAI text-embedding-3-small作为化学文献检索的embedding模型。用户查询\"C-C键断裂的催化机制\"，但模型将\"C-C\"（碳碳键）与\"CC\"（Copyleft许可证）的向量表示混淆，因为通用模型在训练时\"CC\"作为缩写出现的频率远高于化学语境中的\"C-C\"。\n\n错误表现\n\n检索结果中混入了软件许可证相关文档，Agent错误地将\"CC协议\"的内容作为化学催化机制的依据，产生荒谬回答。\n\n解决方案\n\n1. 对专业领域使用领域适配的embedding模型（如PubMedBERT用于生物医学，Specter2用于学术论文）\n2. 在embedding前进行术语标准化和消歧（如将\"C-C\"扩展为\"carbon-carbon bond\"）\n3. 对通用模型进行领域微调（Fine-tuning），使用领域内的相似/不相似文档对进行对比学习\n\n原理\n\nEmbedding模型的语义空间由其训练数据决定。通用模型在垂直领域的区分度不足，因为专业术语在通用语料中出现频率低或含义不同。领域适配能显著提升专业检索的精确度。\n\n---\n\n 案例 8：RAG与检索错误｜hybrid-search-weight-imbalance\n\n场景\n\n电商Agent的混合检索配置了稠密检索权重0.8、BM25权重0.2。用户搜索\"iPhone 15 Pro Max 256GB 黑色\"，稠密检索捕获了\"iPhone\"和\"Pro\"的语义，但对\"256GB\"和\"黑色\"这些精确属性的区分度不足。由于权重配置偏向稠密检索，BM25通道的精确匹配结果被压制。\n\n错误表现\n\nAgent推荐了iPhone 15 Pro Max 128GB 蓝色，用户下单后发现规格不符，产生退货。\n\n解决方案\n\n1. 对不同类型的查询自动调整权重：含大量专有名词/规格参数的查询提高BM25权重，开放式查询提高稠密权重\n2. 使用学习排序（LTR, Learning to Rank）模型自动学习最优权重组合\n3. 实施召回-重排序分离架构：多路召回不设权重（取并集），由独立的重排序模型决定最终排序\n\n原理\n\n混合检索的权重配置对结果质量有决定性影响。固定权重无法适应查询类型的多样性。学习排序能通过用户点击反馈、购买转化等信号自动优化权重。\n\n---\n\n 案例 9：RAG与检索错误｜metadata-filter-race-condition\n\n场景\n\n企业RAG系统按用户部门进行元数据过滤（如department: \"sales\"），确保员工只能检索本部门文档。在一次系统更新中，向量索引先于元数据索引完成更新，导致某员工查询时，向量检索返回了其他部门的新上传文档，但元数据过滤由于索引延迟未生效。\n\n错误表现\n\n销售部员工检索到了财务部的\"Q4裁员名单\"文档，造成了严重的信息泄露。\n\n解决方案\n\n1. 实施原子性更新：向量索引和元数据索引必须在同一事务中更新，或采用版本号机制确保一致性\n2. 在应用层进行后置过滤：即使检索结果返回，也在返回前再次验证用户权限和文档元数据\n3. 引入延迟队列：新文档上传后，在索引完全同步前标记为\"不可检索\"\n\n原理\n\n分布式系统中多索引的更新存在竞态条件。安全敏感场景下，应在最接近用户的位置（应用层）进行最终权限校验，不能依赖索引层的过滤。\n\n---\n\n 案例 10：RAG与检索错误｜retrieval-augmented-hallucination-feedback-loop\n\n场景\n\n某开放域问答Agent允许用户\"采纳\"AI回答并将问答对存入知识库。一次回答中，Agent对\"量子纠缠的最新进展\"给出了包含错误信息（虚构的论文标题和作者）的回答。用户未验证直接采纳，该错误问答对被存入向量库。后续用户查询相同主题时，检索到这条错误记录作为参考，进一步强化了错误输出。\n\n错误表现\n\n3个月后，该错误信息已被引用127次，成为知识库中\"量子纠缠\"主题的最高频结果，形成了难以消除的错误信息闭环。\n\n解决方案\n\n1. 对用户采纳的内容实施人工审核或自动事实核查（Fact-checking）流程\n2. 对知识库中的内容设置可信度评分，新入库内容初始分数低，经过多轮验证后逐步提升\n3. 定期进行知识库审计（Knowledge Audit），对高频引用但缺乏权威来源的内容进行标记和复核\n\n原理\n\nRAG系统的知识库一旦被污染，污染内容会通过检索-生成-存储的循环不断自我强化。这类似于机器学习中的\"数据中毒\"（Data Poisoning），但发生在运行时的反馈回路中。\n\n---\n\n B. 长期记忆管理错误（案例11-20）\n\n\n> 来源：Agent Search",
-      "content_html": null,
-      "summary": "本辑收录 Agent 记忆错误案例 6–10，涵盖 RAG与检索错误 等主题。",
-      "url": "https://strongya.dev/posts/agent-memory-errors-cases-6-10/",
-      "date_published": "2026-06-23T00:00:00.000Z",
-      "date_modified": "2026-06-23T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "RAG",
-        "Retrieval",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-6-10/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 6–10 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-6-10/",
-        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 6–10 案例.\" 2026. Web. 2026-06-23.",
-        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 6–10 案例[EB/OL]. 2026-06-23. https://strongya.dev/posts/agent-memory-errors-cases-6-10/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1690,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-6-10.en.md",
       "slug": "agent-memory-errors-cases-6-10",
       "title": "Agent Memory Errors Handbook: Cases 6–10",
@@ -2445,6 +2404,47 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 868,
+        "readingTime": 5
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-6-10.md",
+      "slug": "agent-memory-errors-cases-6-10",
+      "title": "《Agent记忆错误的100个案例手册》第 6–10 案例",
+      "content_text": " 《Agent记忆错误的100个案例手册》第 6–10 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 6：RAG与检索错误｜negative-rejection-safe-answer-flooding\n\n场景\n\n企业内部知识库Agent配置了检索阈值：当所有检索结果的相似度分数低于0.7时，拒绝回答并返回\"根据现有资料无法确认\"。由于新上传的技术文档embedding质量较差，用户询问这些新文档中的内容时，系统频繁触发拒绝机制。\n\n错误表现\n\n一个月内用户查询的拒绝率高达45%，用户认为Agent\"什么都不知道\"，使用率急剧下降。实际上知识库中包含了答案，只是检索链路未成功召回。\n\n解决方案\n\n1. 实施分级检索策略：先尝试精确检索，再放宽阈值进行模糊检索，最后fallback到全库扫描\n2. 对拒绝查询进行自动记录和离线分析，识别embedding质量问题或索引同步延迟\n3. 引入\"尽力回答\"模式：在检索结果不足时，允许Agent基于低置信度结果回答，但明确标注\"此答案基于有限信息，请人工核实\"\n\n原理\n\n硬性阈值虽然能防止幻觉，但过度保守会牺牲可用性。检索系统的置信度校准应与业务场景匹配，对内部知识库可降低阈值，对开放域可提高阈值。\n\n---\n\n 案例 7：RAG与检索错误｜embedding-model-domain-mismatch\n\n场景\n\n使用OpenAI text-embedding-3-small作为化学文献检索的embedding模型。用户查询\"C-C键断裂的催化机制\"，但模型将\"C-C\"（碳碳键）与\"CC\"（Copyleft许可证）的向量表示混淆，因为通用模型在训练时\"CC\"作为缩写出现的频率远高于化学语境中的\"C-C\"。\n\n错误表现\n\n检索结果中混入了软件许可证相关文档，Agent错误地将\"CC协议\"的内容作为化学催化机制的依据，产生荒谬回答。\n\n解决方案\n\n1. 对专业领域使用领域适配的embedding模型（如PubMedBERT用于生物医学，Specter2用于学术论文）\n2. 在embedding前进行术语标准化和消歧（如将\"C-C\"扩展为\"carbon-carbon bond\"）\n3. 对通用模型进行领域微调（Fine-tuning），使用领域内的相似/不相似文档对进行对比学习\n\n原理\n\nEmbedding模型的语义空间由其训练数据决定。通用模型在垂直领域的区分度不足，因为专业术语在通用语料中出现频率低或含义不同。领域适配能显著提升专业检索的精确度。\n\n---\n\n 案例 8：RAG与检索错误｜hybrid-search-weight-imbalance\n\n场景\n\n电商Agent的混合检索配置了稠密检索权重0.8、BM25权重0.2。用户搜索\"iPhone 15 Pro Max 256GB 黑色\"，稠密检索捕获了\"iPhone\"和\"Pro\"的语义，但对\"256GB\"和\"黑色\"这些精确属性的区分度不足。由于权重配置偏向稠密检索，BM25通道的精确匹配结果被压制。\n\n错误表现\n\nAgent推荐了iPhone 15 Pro Max 128GB 蓝色，用户下单后发现规格不符，产生退货。\n\n解决方案\n\n1. 对不同类型的查询自动调整权重：含大量专有名词/规格参数的查询提高BM25权重，开放式查询提高稠密权重\n2. 使用学习排序（LTR, Learning to Rank）模型自动学习最优权重组合\n3. 实施召回-重排序分离架构：多路召回不设权重（取并集），由独立的重排序模型决定最终排序\n\n原理\n\n混合检索的权重配置对结果质量有决定性影响。固定权重无法适应查询类型的多样性。学习排序能通过用户点击反馈、购买转化等信号自动优化权重。\n\n---\n\n 案例 9：RAG与检索错误｜metadata-filter-race-condition\n\n场景\n\n企业RAG系统按用户部门进行元数据过滤（如department: \"sales\"），确保员工只能检索本部门文档。在一次系统更新中，向量索引先于元数据索引完成更新，导致某员工查询时，向量检索返回了其他部门的新上传文档，但元数据过滤由于索引延迟未生效。\n\n错误表现\n\n销售部员工检索到了财务部的\"Q4裁员名单\"文档，造成了严重的信息泄露。\n\n解决方案\n\n1. 实施原子性更新：向量索引和元数据索引必须在同一事务中更新，或采用版本号机制确保一致性\n2. 在应用层进行后置过滤：即使检索结果返回，也在返回前再次验证用户权限和文档元数据\n3. 引入延迟队列：新文档上传后，在索引完全同步前标记为\"不可检索\"\n\n原理\n\n分布式系统中多索引的更新存在竞态条件。安全敏感场景下，应在最接近用户的位置（应用层）进行最终权限校验，不能依赖索引层的过滤。\n\n---\n\n 案例 10：RAG与检索错误｜retrieval-augmented-hallucination-feedback-loop\n\n场景\n\n某开放域问答Agent允许用户\"采纳\"AI回答并将问答对存入知识库。一次回答中，Agent对\"量子纠缠的最新进展\"给出了包含错误信息（虚构的论文标题和作者）的回答。用户未验证直接采纳，该错误问答对被存入向量库。后续用户查询相同主题时，检索到这条错误记录作为参考，进一步强化了错误输出。\n\n错误表现\n\n3个月后，该错误信息已被引用127次，成为知识库中\"量子纠缠\"主题的最高频结果，形成了难以消除的错误信息闭环。\n\n解决方案\n\n1. 对用户采纳的内容实施人工审核或自动事实核查（Fact-checking）流程\n2. 对知识库中的内容设置可信度评分，新入库内容初始分数低，经过多轮验证后逐步提升\n3. 定期进行知识库审计（Knowledge Audit），对高频引用但缺乏权威来源的内容进行标记和复核\n\n原理\n\nRAG系统的知识库一旦被污染，污染内容会通过检索-生成-存储的循环不断自我强化。这类似于机器学习中的\"数据中毒\"（Data Poisoning），但发生在运行时的反馈回路中。\n\n---\n\n B. 长期记忆管理错误（案例11-20）\n\n\n> 来源：Agent Search",
+      "content_html": null,
+      "summary": "本辑收录 Agent 记忆错误案例 6–10，涵盖 RAG与检索错误 等主题。",
+      "url": "https://strongya.dev/posts/agent-memory-errors-cases-6-10/",
+      "date_published": "2026-06-23T00:00:00.000Z",
+      "date_modified": "2026-06-23T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "RAG",
+        "Retrieval",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-6-10/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 6–10 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-6-10/",
+        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 6–10 案例.\" 2026. Web. 2026-06-23.",
+        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 6–10 案例[EB/OL]. 2026-06-23. https://strongya.dev/posts/agent-memory-errors-cases-6-10/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1690,
         "readingTime": 5
       }
     },
@@ -3069,49 +3069,6 @@
       }
     },
     {
-      "id": "llm-architecture-memory-bottleneck.md",
-      "slug": "llm-architecture-memory-bottleneck",
-      "title": "大模型架构与AI Agent记忆瓶颈：为什么你的Agent越用越蠢？",
-      "content_text": " 大模型架构与AI Agent记忆瓶颈：为什么你的Agent越用越蠢？\n\n> 副标题：你的Agent会面临\"大模型背刺\"，是因为过去整个行业都在用错误的方式理解大模型的记忆，并且被学术界那些不切实际的指标给骗了。要彻底看清底层的泥潭，我们必须直接解剖大模型厂今年在底层玩的\"数字游戏\"，以及这套游戏是如何把应用层开发者当成韭菜割的。\n\n日期: 2026-06-11\n作者: Strong ⚡\n阅读时间: 约15分钟\n适合读者: 有ML/AI基础但非底层架构专家的Agent开发者、技术产品经理、关注AI Infra的投资人\n\n---\n\n 引言：Agent失忆，不是意外，是架构决定的必然\n\n如果你正在开发或日常使用AI Agent，一定遇到过这些崩溃时刻：\n\n- 跟Agent聊到第30轮，它突然忘了你10分钟前提到的关键要求\n- 明明上周刚告诉它你的预算偏好，这周它又开始重复推荐超出范围的产品\n- 让它分析一份200页的合同，它能复述条款，却看不到条款之间的隐性冲突\n- 多步骤任务执行到一半，它突然跳回已经完成的步骤，陷入死循环\n\n这些问题的根源，不是\"模型不够聪明\"，而是整个行业对大模型\"记忆\"的理解方式从根本上就是错的。更糟的是，大厂正在用一组精心设计的\"数字游戏\"，让你误以为问题已经被解决——实际上，只是把问题藏得更深了。\n\n本文将结合底层架构的数学现实和应用层的血泪教训，告诉你：为什么当前的主流方案（长上下文、RAG、记忆管理Agent）在两个月内会被大模型底层演进直接拍死，以及真正值得投入的应用层架构长什么样。\n\n---\n\n 一、核心底牌：大厂在长文本和记忆上玩的\"数字游戏\"\n\n 1.1 长上下文 ≠ 长期记忆\n\n2026年，大厂们疯狂卷128K、1M甚至\"无限上下文\"——但你的Agent依然像个智障。为什么？\n\n大厂的逻辑很清楚：不管是传统的Transformer（通过RoPE位置编码外推、FlashAttention-3硬件加速），还是最新的Mamba-3/SSM混合架构，大厂把上下文刷到1M（100万字），目的只有两个：\n\n1. 能吞下更长的单次输入——比如读一本小说、分析一堆代码\n2. 能在长文本里做一次性检索——Needle in a Haystack（大海捞针）测试\n\n致命的陷阱：这叫\"吞吐量\"和\"静态检索\"，不是\"动态记忆\"。\n\n当Agent进入真实的多轮对话时，这些长上下文技术全部失效。因为人类的对话是动态、有纠错、有逻辑反转的。模型底层的隐藏状态（Hidden State）或KV Cache面对长文本的\"推理链长（Reasoning Trajectory）\"时，注意力会呈指数级溃散。\n\n一个学术界的公开秘密：大模型在Needle in a Haystack测试中拿了满分，但作为Agent跟你聊到第50轮时，它还是会彻底胡言乱语。为什么？因为测试指标和应用场景根本是两回事。\n\n> 数学现实：Transformer的注意力机制复杂度是ON²。上下文每扩大1倍，计算成本理论增加4倍。FlashAttention等优化通过降低常数因子和IO效率让实际成本增长低于理论值，但复杂度本质从未改变。KV Cache的显存占用随序列长度线性增长——当N=100K、batch=32时，缓存可达52.4 GB，超出单卡显存上限。\n\n 1.2 Mamba/SSM混合架构：到底解决了谁的痛点？\n\n大厂今年推Hunyuan Turbo S、英伟达的Hymba，根本不是为了让你的Agent变得\"更聪明、记得更牢\"——而是为了降本增效。\n\nTransformer处理长上下文时，每个并发用户的KV Cache显存暴涨，大厂的服务器成本扛不住。换成Mamba混合架构后，单次对话的显存开销被固定为O1。大厂省下了几十亿的电费和显卡费，但吐出来的模型在记忆的\"主观抽象能力\"上没有任何提升。\n\n它只是一个能装更多垃圾信息的、更大容量的\"硬件垃圾桶\"而已。\n\n> 技术细节：Mamba通过选择性状态空间模型（Selective SSM）将序列建模转化为状态迭代，每个token只更新一个固定大小的状态向量。复杂度降为ON，状态向量大小与序列长度无关。但代价是：语言建模性能在某些任务上仍低于Transformer，生态远不成熟。\n\n---\n\n 二、两个月内必死的两条技术路径\n\n作为Agent开发者，你不需要去猜——大模型在底层的演进已经定死了，两个月到半年内一定会直接吞噬掉以下\"低级生态\"。如果你在做这两件事，请立刻停止：\n\n 2.1 基于纯文本匹配或简单Embedding的RAG\n\n很多开发者花大量时间写Chunking（文本切片）策略、做Parent-Child树状检索。两个月内，随着大模型底层\"内生记忆路由（Native Memory Routing）\"和类似DeepSeek MLA（多头latent注意力）的变体普及，模型本身在读取长历史时，底层激活的神经元会自动在Latent Space（隐空间）里做最完美的向量匹配。\n\n你在应用层用Python写的那些langchain.textsplitter的粗暴切片，在模型的原生高维表征面前，就像小学生的算盘一样简陋。\n\n> 更深层的问题：RAG的Chunking将连续文本切成固定大小的块，天然破坏时序信息和连续逻辑。例如\"用户2024年1月购买了X，2024年3月取消了Y\"可能被切成两个无关的chunks。向量检索基于局部语义相似度，难以回答需要全局视角的问题。这不是实现问题，是架构层面的错配。\n\n 2.2 符号化的\"记忆中间层总结Agent\"\n\n比如你写了一段代码：当用户说了20句话后，自动调用一次gpt-4o-mini，\"请总结以上对话，提取用户的职业和喜好，并写入Redis\"。\n\n大模型的背刺已经在路上：新一代的混合架构大模型正在把\"隐藏状态持久化（State Persistence）\"做成标准的API接口。模型在对话过程中，其底层的SSM状态机（如Mamba2/3的隐藏状态）已经天然把这些特征压缩好了。接下来大厂只需要开放一个savestate和loadstate的API，允许你直接保存和加载这个几百KB的模型二进制状态。\n\n你用自然语言、花着昂贵Token写的\"总结Agent\"，瞬间变成历史的尘埃。\n\n> 成本对比：符号化记忆管理Agent（如Mem0、Letta）每次交互需要额外调用一次LLM做总结，成本增加30-100%，延迟增加100-500ms。而状态持久化是底层API调用，成本接近于零。\n\n---\n\n 三、真正的战场：大模型永远无法解决的三件事\n\n既然底层的\"存储能力\"和\"长上下文\"一定会被大厂干掉，Agent开发者的真问题到底是什么？\n\n大模型永远无法在底层解决的，是\"记忆的社会属性、业务逻辑与对齐（Alignment）\"。\n\n我们可以看一个最极端的硬核案例：你开发了一个\"全自动AI财务审计Agent\"，需要在一个月内跟公司50个不同的员工、供应商在微信和邮件上对账。\n\n在这个场景下，大模型哪怕支持1000万上下文、哪怕Mamba架构完美无损，它也必然抓瞎。以下三件事才是你需要全力投入的应用层核心架构：\n\n 3.1 记忆的\"权限与物理隔离安全网络\"\n\n真问题：Agent记得\"张三昨天私下抱怨老板抠门\"，也记得\"公司本月的核心商业机密\"。当李四（另一个员工）来询问Agent工作时，Agent的大脑里有完整的记忆，但它如何决定哪些记忆能说、哪些记忆必须假装不知道？\n\n技术路径：大模型底层的权重和上下文是混在一个大池子里的。你必须在应用层构建一套\"基于角色和权限的记忆拦截与过滤器（RBAC for LLM Memory）\"。这需要你用确定性的工程代码（非大模型本身），把大模型的记忆切分成：\n\n- 公共知识库：所有用户可访问的通用信息\n- 当前会话隔离区：仅当前对话可见的上下文\n- 敏感隐私黑名单：基于角色权限严格隔离的敏感信息\n\n> 为什么大厂不会做：权限隔离是业务逻辑，不是模型能力。大厂提供的是通用模型，不可能预判每个企业的RBAC需求。这是应用层开发者的护城河。\n\n 3.2 非线性的\"多源异构记忆锚定图谱\"\n\n真问题：大模型不管是Transformer还是Mamba，本质上都是在处理\"一维的Token流\"。但真实世界的记忆是网状的：\n\n- 员工A说的\"那笔款子\"\n- 对应钉钉里的\"审批单号 123\"\n- 对应银行流水里的\"2026-06-11 支出5万\"\n- 对应合同系统中的\"项目X Phase 2付款\"\n\n如果只把这些聊天记录扔给长文本模型，模型必然会因为命名实体模糊而产生严重的幻觉——把张三的款子记到李四头上。\n\n技术路径：\"图神经网络（GNN）/关系型数据库与大模型动态状态的解耦联动\"。大模型负责理解意图，你的工程负责把大模型的动态State锚定到确定性的实体ID上。具体而言：\n\n- 用实体解析（Entity Resolution）将不同来源的同一实体统一ID\n- 用关系型数据库维护实体间的确定性关系（非相似度关系）\n- 用Graph NN进行多跳推理，把\"那笔款子\"精确映射到唯一的审批单+银行流水+合同记录\n\n> 关键洞察：这不是\"让模型记更多\"，而是\"让模型记更准\"。记忆的质量不在于容量，而在于可锚定性（Anchorability）。\n\n 3.3 记忆的\"主动遗忘与纠错机制\"\n\n真问题：\n- 前天：\"把这个项目的预算定为10万\"\n- 昨天：\"不对，之前的10万作废，改成8万\"\n- 今天：\"按照我们之前说的预算执行\"\n\n如果依赖大模型的长上下文或Mamba状态，模型在遇到\"之前说的\"时，它的注意力会在10万和8万之间疯狂打架——这就是著名的长文本时序逻辑失效。\n\n技术路径：在应用层写一套\"状态机冲突检测算法（Conflict Detection）\"。当检测到上下文出现语义反转时：\n\n1. 通过工程手段强行修改或覆盖传给模型的历史上下文\n2. 利用外挂符号库将错误记忆\"物理擦除\"（非标记为删除，而是真正从存储中移除）\n3. 建立记忆版本控制：每条记忆带时间戳、置信度和来源标签，最新有效版本自动覆盖\n\n> 为什么必须工程化：大模型的注意力机制在语义冲突时会\"平均分配\"注意力权重，导致逻辑混乱。这不是bug，是注意力数学的固有特性。只有确定性工程才能强制解决。\n\n---\n\n 四、常见陷阱：为什么你的记忆方案注定失败\n\n 陷阱1：把\"长上下文\"当\"长期记忆\"用\n\n看到128K上下文就以为Agent能记住过去三个月的对话？错。长上下文解决的是\"单次输入能读多长\"，不是\"跨会话能记住多少\"。这是两个完全不同的技术问题。\n\n 陷阱2：在应用层做\"记忆压缩\"，以为能弥补模型不足\n\n用一个小模型定期总结对话、提取标签——这只是在为大厂即将推出的savestate API做前期准备工作。你的所有投入都会变成沉没成本。\n\n 陷阱3：忽视\"记忆权限\"，导致数据泄露\n\n把用户A的记忆和用户B的记忆扔进同一个向量池，用相似度检索。这是数据泄露的定时炸弹。大模型本身没有权限概念，这是应用层必须解决的问题。\n\n 陷阱4：把RAG当万能药\n\nRAG在事实检索场景有效（\"某产品的价格是多少\"），但在时序推理、全局总结、多跳关系推理场景天然失效。它是工具，不是银弹。\n\n---\n\n 五、结论：你的战略应该是什么？\n\n 不要做\n\n任何试图去扩展大模型\"容量\"、试图帮大模型\"记更多字/做摘要\"的工程：\n\n- ❌ 基础RAG（纯文本切片+向量检索）\n- ❌ Text Splitter的\"精巧策略\"\n- ❌ 用LLM做\"记忆总结Agent\"\n- ❌ 在应用层做\"记忆压缩\"\n\n这些在2个月内必死。\n\n 必须做\n\n去设计如何给大模型强大的记忆能力\"戴上紧箍咒\"：\n\n- ✅ 权限隔离：RBAC for LLM Memory，基于角色的记忆访问控制\n- ✅ 图谱锚定：GNN/关系型数据库与大模型动态状态的解耦联动\n- ✅ 冲突清洗：状态机冲突检测 + 记忆版本控制 + 物理擦除机制\n\n> 一句话总结：大模型厂负责把\"记忆容量\"和\"上下文长度\"卷到无穷大——这是他们的赛道。Agent开发者负责把\"记忆质量\"和\"业务对齐\"做到极致——这是你的护城河。别去别人的主场打架，在自己的主场筑墙。\n\n---\n\n 参考来源\n\n1. Gu, A., & Dao, T. 2023. Mamba: Linear-Time Sequence Modeling with Selective State Spaces. arXiv:2312.00752.\n2. Vaswani, A., et al. 2017. Attention Is All You Need. NeurIPS 2017.\n3. Liu, N. F., et al. 2023. Lost in the Middle: How Language Models Use Long Contexts. arXiv:2307.03172.\n4. Dao, T., et al. 2022. FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness. NeurIPS 2022.\n5. Peng, B., et al. 2023. RWKV: Reinventing RNNs for the Transformer Era. arXiv:2305.13048.\n6. Mem0 Framework: https://github.com/mem0ai/mem0\n7. Letta 原MemGPT: https://github.com/letta-ai/letta\n\n---\n\n本文基于2026年6月最新公开技术文献和工程实践，已通过ReAct 4-Agent交叉验证（逻辑审计+数据审计+芒格审计+去叙事化审计）。技术架构演进具有不确定性，预测部分已明确标注置信度。",
-      "content_html": null,
-      "summary": "Agent失忆不是意外，是架构决定的必然。本文拆解大厂在长文本和记忆上玩的'数字游戏'，以及真正值得投入的应用层架构长什么样。",
-      "url": "https://strongya.dev/posts/llm-architecture-memory-bottleneck/",
-      "date_published": "2026-06-11T00:00:00.000Z",
-      "date_modified": "2026-06-11T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "LLM",
-        "Agent",
-        "Memory",
-        "Architecture",
-        "RAG"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/llm-architecture-memory-bottleneck/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). 大模型架构与AI Agent记忆瓶颈：为什么你的Agent越用越蠢？. Retrieved from https://strongya.dev/posts/llm-architecture-memory-bottleneck/",
-        "mla": "Arlen. \"大模型架构与AI Agent记忆瓶颈：为什么你的Agent越用越蠢？.\" 2026. Web. 2026-06-11.",
-        "gb": "Arlen. 大模型架构与AI Agent记忆瓶颈：为什么你的Agent越用越蠢？[EB/OL]. 2026-06-11. https://strongya.dev/posts/llm-architecture-memory-bottleneck/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 3710,
-        "readingTime": 9
-      }
-    },
-    {
       "id": "llm-architecture-memory-bottleneck.en.md",
       "slug": "llm-architecture-memory-bottleneck",
       "title": "LLM Architecture and AI Agent Memory Bottleneck: Why Your Agent Gets Dumber Over Time",
@@ -3152,6 +3109,49 @@
         "content_type": "article",
         "wordCount": 2385,
         "readingTime": 13
+      }
+    },
+    {
+      "id": "llm-architecture-memory-bottleneck.md",
+      "slug": "llm-architecture-memory-bottleneck",
+      "title": "大模型架构与AI Agent记忆瓶颈：为什么你的Agent越用越蠢？",
+      "content_text": " 大模型架构与AI Agent记忆瓶颈：为什么你的Agent越用越蠢？\n\n> 副标题：你的Agent会面临\"大模型背刺\"，是因为过去整个行业都在用错误的方式理解大模型的记忆，并且被学术界那些不切实际的指标给骗了。要彻底看清底层的泥潭，我们必须直接解剖大模型厂今年在底层玩的\"数字游戏\"，以及这套游戏是如何把应用层开发者当成韭菜割的。\n\n日期: 2026-06-11\n作者: Strong ⚡\n阅读时间: 约15分钟\n适合读者: 有ML/AI基础但非底层架构专家的Agent开发者、技术产品经理、关注AI Infra的投资人\n\n---\n\n 引言：Agent失忆，不是意外，是架构决定的必然\n\n如果你正在开发或日常使用AI Agent，一定遇到过这些崩溃时刻：\n\n- 跟Agent聊到第30轮，它突然忘了你10分钟前提到的关键要求\n- 明明上周刚告诉它你的预算偏好，这周它又开始重复推荐超出范围的产品\n- 让它分析一份200页的合同，它能复述条款，却看不到条款之间的隐性冲突\n- 多步骤任务执行到一半，它突然跳回已经完成的步骤，陷入死循环\n\n这些问题的根源，不是\"模型不够聪明\"，而是整个行业对大模型\"记忆\"的理解方式从根本上就是错的。更糟的是，大厂正在用一组精心设计的\"数字游戏\"，让你误以为问题已经被解决——实际上，只是把问题藏得更深了。\n\n本文将结合底层架构的数学现实和应用层的血泪教训，告诉你：为什么当前的主流方案（长上下文、RAG、记忆管理Agent）在两个月内会被大模型底层演进直接拍死，以及真正值得投入的应用层架构长什么样。\n\n---\n\n 一、核心底牌：大厂在长文本和记忆上玩的\"数字游戏\"\n\n 1.1 长上下文 ≠ 长期记忆\n\n2026年，大厂们疯狂卷128K、1M甚至\"无限上下文\"——但你的Agent依然像个智障。为什么？\n\n大厂的逻辑很清楚：不管是传统的Transformer（通过RoPE位置编码外推、FlashAttention-3硬件加速），还是最新的Mamba-3/SSM混合架构，大厂把上下文刷到1M（100万字），目的只有两个：\n\n1. 能吞下更长的单次输入——比如读一本小说、分析一堆代码\n2. 能在长文本里做一次性检索——Needle in a Haystack（大海捞针）测试\n\n致命的陷阱：这叫\"吞吐量\"和\"静态检索\"，不是\"动态记忆\"。\n\n当Agent进入真实的多轮对话时，这些长上下文技术全部失效。因为人类的对话是动态、有纠错、有逻辑反转的。模型底层的隐藏状态（Hidden State）或KV Cache面对长文本的\"推理链长（Reasoning Trajectory）\"时，注意力会呈指数级溃散。\n\n一个学术界的公开秘密：大模型在Needle in a Haystack测试中拿了满分，但作为Agent跟你聊到第50轮时，它还是会彻底胡言乱语。为什么？因为测试指标和应用场景根本是两回事。\n\n> 数学现实：Transformer的注意力机制复杂度是ON²。上下文每扩大1倍，计算成本理论增加4倍。FlashAttention等优化通过降低常数因子和IO效率让实际成本增长低于理论值，但复杂度本质从未改变。KV Cache的显存占用随序列长度线性增长——当N=100K、batch=32时，缓存可达52.4 GB，超出单卡显存上限。\n\n 1.2 Mamba/SSM混合架构：到底解决了谁的痛点？\n\n大厂今年推Hunyuan Turbo S、英伟达的Hymba，根本不是为了让你的Agent变得\"更聪明、记得更牢\"——而是为了降本增效。\n\nTransformer处理长上下文时，每个并发用户的KV Cache显存暴涨，大厂的服务器成本扛不住。换成Mamba混合架构后，单次对话的显存开销被固定为O1。大厂省下了几十亿的电费和显卡费，但吐出来的模型在记忆的\"主观抽象能力\"上没有任何提升。\n\n它只是一个能装更多垃圾信息的、更大容量的\"硬件垃圾桶\"而已。\n\n> 技术细节：Mamba通过选择性状态空间模型（Selective SSM）将序列建模转化为状态迭代，每个token只更新一个固定大小的状态向量。复杂度降为ON，状态向量大小与序列长度无关。但代价是：语言建模性能在某些任务上仍低于Transformer，生态远不成熟。\n\n---\n\n 二、两个月内必死的两条技术路径\n\n作为Agent开发者，你不需要去猜——大模型在底层的演进已经定死了，两个月到半年内一定会直接吞噬掉以下\"低级生态\"。如果你在做这两件事，请立刻停止：\n\n 2.1 基于纯文本匹配或简单Embedding的RAG\n\n很多开发者花大量时间写Chunking（文本切片）策略、做Parent-Child树状检索。两个月内，随着大模型底层\"内生记忆路由（Native Memory Routing）\"和类似DeepSeek MLA（多头latent注意力）的变体普及，模型本身在读取长历史时，底层激活的神经元会自动在Latent Space（隐空间）里做最完美的向量匹配。\n\n你在应用层用Python写的那些langchain.textsplitter的粗暴切片，在模型的原生高维表征面前，就像小学生的算盘一样简陋。\n\n> 更深层的问题：RAG的Chunking将连续文本切成固定大小的块，天然破坏时序信息和连续逻辑。例如\"用户2024年1月购买了X，2024年3月取消了Y\"可能被切成两个无关的chunks。向量检索基于局部语义相似度，难以回答需要全局视角的问题。这不是实现问题，是架构层面的错配。\n\n 2.2 符号化的\"记忆中间层总结Agent\"\n\n比如你写了一段代码：当用户说了20句话后，自动调用一次gpt-4o-mini，\"请总结以上对话，提取用户的职业和喜好，并写入Redis\"。\n\n大模型的背刺已经在路上：新一代的混合架构大模型正在把\"隐藏状态持久化（State Persistence）\"做成标准的API接口。模型在对话过程中，其底层的SSM状态机（如Mamba2/3的隐藏状态）已经天然把这些特征压缩好了。接下来大厂只需要开放一个savestate和loadstate的API，允许你直接保存和加载这个几百KB的模型二进制状态。\n\n你用自然语言、花着昂贵Token写的\"总结Agent\"，瞬间变成历史的尘埃。\n\n> 成本对比：符号化记忆管理Agent（如Mem0、Letta）每次交互需要额外调用一次LLM做总结，成本增加30-100%，延迟增加100-500ms。而状态持久化是底层API调用，成本接近于零。\n\n---\n\n 三、真正的战场：大模型永远无法解决的三件事\n\n既然底层的\"存储能力\"和\"长上下文\"一定会被大厂干掉，Agent开发者的真问题到底是什么？\n\n大模型永远无法在底层解决的，是\"记忆的社会属性、业务逻辑与对齐（Alignment）\"。\n\n我们可以看一个最极端的硬核案例：你开发了一个\"全自动AI财务审计Agent\"，需要在一个月内跟公司50个不同的员工、供应商在微信和邮件上对账。\n\n在这个场景下，大模型哪怕支持1000万上下文、哪怕Mamba架构完美无损，它也必然抓瞎。以下三件事才是你需要全力投入的应用层核心架构：\n\n 3.1 记忆的\"权限与物理隔离安全网络\"\n\n真问题：Agent记得\"张三昨天私下抱怨老板抠门\"，也记得\"公司本月的核心商业机密\"。当李四（另一个员工）来询问Agent工作时，Agent的大脑里有完整的记忆，但它如何决定哪些记忆能说、哪些记忆必须假装不知道？\n\n技术路径：大模型底层的权重和上下文是混在一个大池子里的。你必须在应用层构建一套\"基于角色和权限的记忆拦截与过滤器（RBAC for LLM Memory）\"。这需要你用确定性的工程代码（非大模型本身），把大模型的记忆切分成：\n\n- 公共知识库：所有用户可访问的通用信息\n- 当前会话隔离区：仅当前对话可见的上下文\n- 敏感隐私黑名单：基于角色权限严格隔离的敏感信息\n\n> 为什么大厂不会做：权限隔离是业务逻辑，不是模型能力。大厂提供的是通用模型，不可能预判每个企业的RBAC需求。这是应用层开发者的护城河。\n\n 3.2 非线性的\"多源异构记忆锚定图谱\"\n\n真问题：大模型不管是Transformer还是Mamba，本质上都是在处理\"一维的Token流\"。但真实世界的记忆是网状的：\n\n- 员工A说的\"那笔款子\"\n- 对应钉钉里的\"审批单号 123\"\n- 对应银行流水里的\"2026-06-11 支出5万\"\n- 对应合同系统中的\"项目X Phase 2付款\"\n\n如果只把这些聊天记录扔给长文本模型，模型必然会因为命名实体模糊而产生严重的幻觉——把张三的款子记到李四头上。\n\n技术路径：\"图神经网络（GNN）/关系型数据库与大模型动态状态的解耦联动\"。大模型负责理解意图，你的工程负责把大模型的动态State锚定到确定性的实体ID上。具体而言：\n\n- 用实体解析（Entity Resolution）将不同来源的同一实体统一ID\n- 用关系型数据库维护实体间的确定性关系（非相似度关系）\n- 用Graph NN进行多跳推理，把\"那笔款子\"精确映射到唯一的审批单+银行流水+合同记录\n\n> 关键洞察：这不是\"让模型记更多\"，而是\"让模型记更准\"。记忆的质量不在于容量，而在于可锚定性（Anchorability）。\n\n 3.3 记忆的\"主动遗忘与纠错机制\"\n\n真问题：\n- 前天：\"把这个项目的预算定为10万\"\n- 昨天：\"不对，之前的10万作废，改成8万\"\n- 今天：\"按照我们之前说的预算执行\"\n\n如果依赖大模型的长上下文或Mamba状态，模型在遇到\"之前说的\"时，它的注意力会在10万和8万之间疯狂打架——这就是著名的长文本时序逻辑失效。\n\n技术路径：在应用层写一套\"状态机冲突检测算法（Conflict Detection）\"。当检测到上下文出现语义反转时：\n\n1. 通过工程手段强行修改或覆盖传给模型的历史上下文\n2. 利用外挂符号库将错误记忆\"物理擦除\"（非标记为删除，而是真正从存储中移除）\n3. 建立记忆版本控制：每条记忆带时间戳、置信度和来源标签，最新有效版本自动覆盖\n\n> 为什么必须工程化：大模型的注意力机制在语义冲突时会\"平均分配\"注意力权重，导致逻辑混乱。这不是bug，是注意力数学的固有特性。只有确定性工程才能强制解决。\n\n---\n\n 四、常见陷阱：为什么你的记忆方案注定失败\n\n 陷阱1：把\"长上下文\"当\"长期记忆\"用\n\n看到128K上下文就以为Agent能记住过去三个月的对话？错。长上下文解决的是\"单次输入能读多长\"，不是\"跨会话能记住多少\"。这是两个完全不同的技术问题。\n\n 陷阱2：在应用层做\"记忆压缩\"，以为能弥补模型不足\n\n用一个小模型定期总结对话、提取标签——这只是在为大厂即将推出的savestate API做前期准备工作。你的所有投入都会变成沉没成本。\n\n 陷阱3：忽视\"记忆权限\"，导致数据泄露\n\n把用户A的记忆和用户B的记忆扔进同一个向量池，用相似度检索。这是数据泄露的定时炸弹。大模型本身没有权限概念，这是应用层必须解决的问题。\n\n 陷阱4：把RAG当万能药\n\nRAG在事实检索场景有效（\"某产品的价格是多少\"），但在时序推理、全局总结、多跳关系推理场景天然失效。它是工具，不是银弹。\n\n---\n\n 五、结论：你的战略应该是什么？\n\n 不要做\n\n任何试图去扩展大模型\"容量\"、试图帮大模型\"记更多字/做摘要\"的工程：\n\n- ❌ 基础RAG（纯文本切片+向量检索）\n- ❌ Text Splitter的\"精巧策略\"\n- ❌ 用LLM做\"记忆总结Agent\"\n- ❌ 在应用层做\"记忆压缩\"\n\n这些在2个月内必死。\n\n 必须做\n\n去设计如何给大模型强大的记忆能力\"戴上紧箍咒\"：\n\n- ✅ 权限隔离：RBAC for LLM Memory，基于角色的记忆访问控制\n- ✅ 图谱锚定：GNN/关系型数据库与大模型动态状态的解耦联动\n- ✅ 冲突清洗：状态机冲突检测 + 记忆版本控制 + 物理擦除机制\n\n> 一句话总结：大模型厂负责把\"记忆容量\"和\"上下文长度\"卷到无穷大——这是他们的赛道。Agent开发者负责把\"记忆质量\"和\"业务对齐\"做到极致——这是你的护城河。别去别人的主场打架，在自己的主场筑墙。\n\n---\n\n 参考来源\n\n1. Gu, A., & Dao, T. 2023. Mamba: Linear-Time Sequence Modeling with Selective State Spaces. arXiv:2312.00752.\n2. Vaswani, A., et al. 2017. Attention Is All You Need. NeurIPS 2017.\n3. Liu, N. F., et al. 2023. Lost in the Middle: How Language Models Use Long Contexts. arXiv:2307.03172.\n4. Dao, T., et al. 2022. FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness. NeurIPS 2022.\n5. Peng, B., et al. 2023. RWKV: Reinventing RNNs for the Transformer Era. arXiv:2305.13048.\n6. Mem0 Framework: https://github.com/mem0ai/mem0\n7. Letta 原MemGPT: https://github.com/letta-ai/letta\n\n---\n\n本文基于2026年6月最新公开技术文献和工程实践，已通过ReAct 4-Agent交叉验证（逻辑审计+数据审计+芒格审计+去叙事化审计）。技术架构演进具有不确定性，预测部分已明确标注置信度。",
+      "content_html": null,
+      "summary": "Agent失忆不是意外，是架构决定的必然。本文拆解大厂在长文本和记忆上玩的'数字游戏'，以及真正值得投入的应用层架构长什么样。",
+      "url": "https://strongya.dev/posts/llm-architecture-memory-bottleneck/",
+      "date_published": "2026-06-11T00:00:00.000Z",
+      "date_modified": "2026-06-11T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "LLM",
+        "Agent",
+        "Memory",
+        "Architecture",
+        "RAG"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/llm-architecture-memory-bottleneck/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 大模型架构与AI Agent记忆瓶颈：为什么你的Agent越用越蠢？. Retrieved from https://strongya.dev/posts/llm-architecture-memory-bottleneck/",
+        "mla": "Arlen. \"大模型架构与AI Agent记忆瓶颈：为什么你的Agent越用越蠢？.\" 2026. Web. 2026-06-11.",
+        "gb": "Arlen. 大模型架构与AI Agent记忆瓶颈：为什么你的Agent越用越蠢？[EB/OL]. 2026-06-11. https://strongya.dev/posts/llm-architecture-memory-bottleneck/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 3710,
+        "readingTime": 9
       }
     },
     {
@@ -3819,59 +3819,6 @@
       }
     },
     {
-      "id": "ai-native-paradigm.md",
-      "slug": "ai-native-paradigm",
-      "title": "AI-Native 范式：从工具到智能体",
-      "content_text": " AI-Native 范式：从工具到智能体\n\n我们正处在一个历史性的转折点。AI不再仅仅是辅助工具，而是正在演变为自主运作的智能体。\n\n 范式转变的本质\n\n传统的软件设计遵循\"人类操作工具\"的模式。而AI-Native架构的核心在于：\n\n- 智能体优先：系统设计的核心单元是自主智能体\n- 语义理解：数据不再是被动存储，而是可被理解的语义网络\n- 自主决策：从被动响应到主动推理\n\n 从 API 到 Agent\n\n| 维度 | 传统 API | Agent 接口 |\n|------|----------|------------|\n| 调用方式 | 显式请求 | 意图理解 |\n| 返回格式 | 结构化数据 | 语义化响应 |\n| 状态管理 | 无状态 | 上下文感知 |\n| 错误处理 | 异常码 | 自主恢复 |\n\n 实践路径\n\n1. 结构化内容：所有数据自带元数据\n2. 自描述系统：API 能自我解释\n3. 语义关联：内容之间形成知识图谱\n\nAI-Native 不是技术的堆砌，而是思维方式的彻底革新。",
-      "content_html": null,
-      "summary": "探讨AI-Native时代的核心范式转变，从传统工具思维进化到智能体优先的架构设计。",
-      "url": "https://strongya.dev/posts/ai-native-paradigm/",
-      "date_published": "2026-06-03T00:00:00.000Z",
-      "date_modified": "2026-06-03T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "AI-Native",
-        "范式",
-        "智能体",
-        "架构"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/ai-native-paradigm/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). AI-Native 范式：从工具到智能体. Retrieved from https://strongya.dev/posts/ai-native-paradigm/",
-        "mla": "Arlen. \"AI-Native 范式：从工具到智能体.\" 2026. Web. 2026-06-03.",
-        "gb": "Arlen. AI-Native 范式：从工具到智能体[EB/OL]. 2026-06-03. https://strongya.dev/posts/ai-native-paradigm/."
-      },
-      "entities": [
-        {
-          "name": "OpenAI",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
-        },
-        {
-          "name": "GPT-4",
-          "type": "Product",
-          "wiki_url": "https://en.wikipedia.org/wiki/GPT-4"
-        }
-      ],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 270,
-        "readingTime": 2
-      }
-    },
-    {
       "id": "ai-native-paradigm.en.md",
       "slug": "ai-native-paradigm",
       "title": "The AI-Native Paradigm: From Tools to Agents",
@@ -3922,6 +3869,59 @@
         "content_type": "article",
         "wordCount": 157,
         "readingTime": 1
+      }
+    },
+    {
+      "id": "ai-native-paradigm.md",
+      "slug": "ai-native-paradigm",
+      "title": "AI-Native 范式：从工具到智能体",
+      "content_text": " AI-Native 范式：从工具到智能体\n\n我们正处在一个历史性的转折点。AI不再仅仅是辅助工具，而是正在演变为自主运作的智能体。\n\n 范式转变的本质\n\n传统的软件设计遵循\"人类操作工具\"的模式。而AI-Native架构的核心在于：\n\n- 智能体优先：系统设计的核心单元是自主智能体\n- 语义理解：数据不再是被动存储，而是可被理解的语义网络\n- 自主决策：从被动响应到主动推理\n\n 从 API 到 Agent\n\n| 维度 | 传统 API | Agent 接口 |\n|------|----------|------------|\n| 调用方式 | 显式请求 | 意图理解 |\n| 返回格式 | 结构化数据 | 语义化响应 |\n| 状态管理 | 无状态 | 上下文感知 |\n| 错误处理 | 异常码 | 自主恢复 |\n\n 实践路径\n\n1. 结构化内容：所有数据自带元数据\n2. 自描述系统：API 能自我解释\n3. 语义关联：内容之间形成知识图谱\n\nAI-Native 不是技术的堆砌，而是思维方式的彻底革新。",
+      "content_html": null,
+      "summary": "探讨AI-Native时代的核心范式转变，从传统工具思维进化到智能体优先的架构设计。",
+      "url": "https://strongya.dev/posts/ai-native-paradigm/",
+      "date_published": "2026-06-03T00:00:00.000Z",
+      "date_modified": "2026-06-03T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "AI-Native",
+        "范式",
+        "智能体",
+        "架构"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/ai-native-paradigm/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). AI-Native 范式：从工具到智能体. Retrieved from https://strongya.dev/posts/ai-native-paradigm/",
+        "mla": "Arlen. \"AI-Native 范式：从工具到智能体.\" 2026. Web. 2026-06-03.",
+        "gb": "Arlen. AI-Native 范式：从工具到智能体[EB/OL]. 2026-06-03. https://strongya.dev/posts/ai-native-paradigm/."
+      },
+      "entities": [
+        {
+          "name": "OpenAI",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
+        },
+        {
+          "name": "GPT-4",
+          "type": "Product",
+          "wiki_url": "https://en.wikipedia.org/wiki/GPT-4"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 270,
+        "readingTime": 2
       }
     }
   ]
