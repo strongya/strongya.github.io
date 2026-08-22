@@ -157,66 +157,6 @@
       }
     },
     {
-      "id": "deepseek-harness-agent-chassis.md",
-      "slug": "deepseek-harness-agent-chassis",
-      "title": "DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘",
-      "content_text": "过去一年，\"Agent\"这个词已经被用滥了。Claude Code 能帮你改代码，OpenCode 能接管终端，OpenClaw 能把你电脑上的工具串成个人助理——这些产品解决的是\"今天这件事\"。\n\n但 DeepSeek Harness（DSH）想问的是另一个问题：如果你不想用别人的 Agent，而是想自己造一个，你需要的到底是什么？\n\n我的答案是：你需要一个可组合、可审计、可扩展的 Agent 基座。不是一把现成的锤子，而是一套能锻造的机床。\n\n---\n\n 为什么\"基座\"和\"产品\"是两回事\n\nClaude Code 很强。它把终端、文件系统、LLM 和一个相当聪明的规划层缝在一起，对编程任务来说开箱即用。但它是 Anthropic 的成品：模型是它定的，工作流是它定的，扩展方式也是它定的。你可以在某些边界上贴自定义工具，但本质上你在用别人的建筑。\n\nOpenCode 和 OpenClaw 走的是另一条路。前者更开放，后者更个人化，但它们仍然是有形态的 Agent——它们假设你知道自己想干什么，然后帮你干完。\n\nDSH 不一样。它不是一个有具体形态的 Agent，而是一套让模型安全地操作外部世界的骨架。它不提供\"最佳实践工作流\"，它提供的是：\n\n- 模型怎么接入（适配器 seam）\n- 工具怎么注册和执行（工具管线）\n- 危险操作怎么把关（审批与沙箱）\n- 上下文怎么持久和恢复（事件日志）\n- 整个系统怎么在运行时重组（插件与 Cordis）\n\n这些东西单独看都不性感，但合在一起，它们回答了一个真正重要的问题：Agent 的\"操作系统\"应该长什么样？\n\n---\n\n 可组合：没有特权内核，一切都是插件\n\nDSH 最底层的赌注是 Cordis，一个强调\"可逆副作用\"的插件框架。通俗地说：插件挂载时会向共享上下文注册自己的能力，卸载时这些注册会自动撤销。\n\n这带来一个结构性后果：DSH 没有\"核心\"，只有一层层叠加的插件。\n\n默认的模型适配器、文件系统工具、审批策略、Web UI，甚至 agent loop 本身，都是插件。你想换一个审批策略？写一个插件替换 ctx.approval。想加一个自定义工具？ctx.tools.register。想把文件系统整体迁移到 E2B 云沙箱？替换 ctx.fs 和 ctx.subprocess 的实现，Bash、PTY、LSP 这些工具会自动跟着一起上云——因为它们消费的是 seam，不关心背后是谁。\n\n这跟 Claude Code 的封闭形成鲜明对比。Claude Code 的优秀在于它把一条路径走到了极致；DSH 的优秀在于它把权力交还给了构建者。你可以把 DSH 组装成 Claude Code 的替代品，也可以组装成一个完全不同的东西。\n\n---\n\n 可审计：事件日志是唯一真源\n\nDSH 里有一条设计铁律：模型可见即已记录。任何进入模型请求的内容，都必须能从会话日志中重建。\n\n这看起来像个实现细节，其实是架构选择。因为所有状态都派生自事件流：\n\n- Fork：复制日志前缀。\n- 恢复崩溃：回放事件。\n- 压缩上下文：在日志里插入摘要检查点。\n- 调试：直接读 JSONL 日志。\n- 审计：每一件事都有迹可循。\n\n对比 Claude Code 或 OpenCode，它们当然也有日志和 checkpoint，但那是产品功能。DSH 把日志放在了更底层的位置：它是系统正确性的来源，不只是事后复盘用的记录。\n\n这对想要长期运行、多 Agent 协作、或者需要可解释性的系统来说，是更可靠的地基。\n\n---\n\n 可扩展：Agent 能改自己的运行环境\n\nDSH 的扩展性分三层：\n\n第一层是插件开发。你可以用 TypeScript 写 Cordis 插件，加工具、加模型适配器、加系统提示词段。这是常规扩展。\n\n第二层是 SDK。DSH 提供 Python 和 Node SDK，让你在自己的程序里启动并驱动一个完整的 DSH runtime。这意味着 DSH 可以被嵌进更大的系统里，而不只是作为一个终端工具存在。\n\n第三层是运行时自扩展。DSH 提供 cordisdefine / cordisrun / cordisstop 这类工具，让 agent 在运行时定义并挂载新的 Cordis 插件。默认不启用，因为风险高，但这个能力是真正意义上的\"自指\"——Agent 不只是使用工具，还能修改自己可用的能力集合。\n\nClaude Code 和 OpenCode 不会给你这个级别的自由度。它们是面向终端用户的；DSH 是面向 builder 的。\n\n---\n\n 安全姿态：默认失败关闭\n\nAgent 能干的事越多，就越需要保守的安全模型。DSH 的审批 seam 只返回四种结果：allowed-once、rejected、cancelled、unavailable。只有 allowed-once 放行，且只放行被问的那个具体操作。\n\n如果审批应答者没有响应、抛异常、或者配置错误，结果不是\"放行\"，而是 unavailable——照样拒绝。\n\n这和很多 Agent 产品\"先跑起来再说，危险操作再拦\"的默认姿态不同。DSH 的默认姿态是：你不 explicit 允许，我就不做。\n\n子代理的权限设计也延续了这一思路。子代理启动时，权限被父代理快照固定，运行时不能再扩张。委派不是\"你继承我所有权力去干活\"，而是\"我给你这么多权力，把这件事做完\"。\n\n---\n\n 那它现在能用来做什么？\n\n诚实地说，DSH 目前还是开发者预览版，官方暂时不接受外部 PR，API 可能在迭代中变化。它现在不是 Claude Code 的直接替代品。\n\n但它适合三类人：\n\n1. 想自建 Agent 基础设施的工程师。如果你需要一个能深度定制的 Agent runtime，而不是一个开箱即用的产品，DSH 是更值得研究的底盘。\n2. 需要可审计、可恢复系统的团队。事件日志为中心的设计，天然支持审计、回放、崩溃恢复。\n3. 对 AI Infra 架构感兴趣的观察者。DSH 的设计文档质量很高，seam、scope、waterfall 事件这些概念值得理解。\n\n---\n\n 一句话总结\n\nClaude Code、OpenCode、OpenClaw 是在 Agent 的产品形态上竞争；DSH 是在 Agent 的基础设施层下注。\n\n它的核心主张是：未来的 Agent 不应该是某一个封闭产品定义的，而应该是一套可组合、可审计、可扩展的基座——每个人都可以在这套基座上，组装出自己想要的 Agent。\n\n现在的 DSH 还需要 builder 自己动手。但如果你想理解\"Agent 的底盘应该长什么样\"，它值得认真看。",
-      "content_html": null,
-      "summary": "过去一年，Agent 产品层出不穷，但 DeepSeek Harness（DSH）想回答的是一个更底层的问题：如果你想自己造一个 Agent，你需要的到底是什么？本文从可组合、可审计、可扩展三个维度，解析 DSH 为什么不是又一个终端产品，而是一套面向 builder 的 Agent 基础设施。",
-      "url": "https://strongya.dev/posts/deepseek-harness-agent-chassis/",
-      "date_published": "2026-08-15T00:00:00.000Z",
-      "date_modified": "2026-08-15T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "AI",
-        "Agent",
-        "DeepSeek",
-        "DeepSeek Harness",
-        "基础设施",
-        "Cordis"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/deepseek-harness-agent-chassis/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘. Retrieved from https://strongya.dev/posts/deepseek-harness-agent-chassis/",
-        "mla": "Arlen. \"DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘.\" 2026. Web. 2026-08-15.",
-        "gb": "Arlen. DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘[EB/OL]. 2026-08-15. https://strongya.dev/posts/deepseek-harness-agent-chassis/."
-      },
-      "entities": [
-        {
-          "name": "DeepSeek",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/DeepSeek"
-        },
-        {
-          "name": "Anthropic",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/Anthropic"
-        },
-        {
-          "name": "Claude",
-          "type": "Software",
-          "wiki_url": "https://en.wikipedia.org/wiki/Claude_(language_model)"
-        }
-      ],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1732,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "deepseek-harness-agent-chassis.en.md",
       "slug": "deepseek-harness-agent-chassis",
       "title": "DeepSeek Harness Is Not Another Agent; It Is Building the Chassis for Agents",
@@ -274,6 +214,66 @@
         "content_type": "article",
         "wordCount": 1189,
         "readingTime": 6
+      }
+    },
+    {
+      "id": "deepseek-harness-agent-chassis.md",
+      "slug": "deepseek-harness-agent-chassis",
+      "title": "DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘",
+      "content_text": "过去一年，\"Agent\"这个词已经被用滥了。Claude Code 能帮你改代码，OpenCode 能接管终端，OpenClaw 能把你电脑上的工具串成个人助理——这些产品解决的是\"今天这件事\"。\n\n但 DeepSeek Harness（DSH）想问的是另一个问题：如果你不想用别人的 Agent，而是想自己造一个，你需要的到底是什么？\n\n我的答案是：你需要一个可组合、可审计、可扩展的 Agent 基座。不是一把现成的锤子，而是一套能锻造的机床。\n\n---\n\n 为什么\"基座\"和\"产品\"是两回事\n\nClaude Code 很强。它把终端、文件系统、LLM 和一个相当聪明的规划层缝在一起，对编程任务来说开箱即用。但它是 Anthropic 的成品：模型是它定的，工作流是它定的，扩展方式也是它定的。你可以在某些边界上贴自定义工具，但本质上你在用别人的建筑。\n\nOpenCode 和 OpenClaw 走的是另一条路。前者更开放，后者更个人化，但它们仍然是有形态的 Agent——它们假设你知道自己想干什么，然后帮你干完。\n\nDSH 不一样。它不是一个有具体形态的 Agent，而是一套让模型安全地操作外部世界的骨架。它不提供\"最佳实践工作流\"，它提供的是：\n\n- 模型怎么接入（适配器 seam）\n- 工具怎么注册和执行（工具管线）\n- 危险操作怎么把关（审批与沙箱）\n- 上下文怎么持久和恢复（事件日志）\n- 整个系统怎么在运行时重组（插件与 Cordis）\n\n这些东西单独看都不性感，但合在一起，它们回答了一个真正重要的问题：Agent 的\"操作系统\"应该长什么样？\n\n---\n\n 可组合：没有特权内核，一切都是插件\n\nDSH 最底层的赌注是 Cordis，一个强调\"可逆副作用\"的插件框架。通俗地说：插件挂载时会向共享上下文注册自己的能力，卸载时这些注册会自动撤销。\n\n这带来一个结构性后果：DSH 没有\"核心\"，只有一层层叠加的插件。\n\n默认的模型适配器、文件系统工具、审批策略、Web UI，甚至 agent loop 本身，都是插件。你想换一个审批策略？写一个插件替换 ctx.approval。想加一个自定义工具？ctx.tools.register。想把文件系统整体迁移到 E2B 云沙箱？替换 ctx.fs 和 ctx.subprocess 的实现，Bash、PTY、LSP 这些工具会自动跟着一起上云——因为它们消费的是 seam，不关心背后是谁。\n\n这跟 Claude Code 的封闭形成鲜明对比。Claude Code 的优秀在于它把一条路径走到了极致；DSH 的优秀在于它把权力交还给了构建者。你可以把 DSH 组装成 Claude Code 的替代品，也可以组装成一个完全不同的东西。\n\n---\n\n 可审计：事件日志是唯一真源\n\nDSH 里有一条设计铁律：模型可见即已记录。任何进入模型请求的内容，都必须能从会话日志中重建。\n\n这看起来像个实现细节，其实是架构选择。因为所有状态都派生自事件流：\n\n- Fork：复制日志前缀。\n- 恢复崩溃：回放事件。\n- 压缩上下文：在日志里插入摘要检查点。\n- 调试：直接读 JSONL 日志。\n- 审计：每一件事都有迹可循。\n\n对比 Claude Code 或 OpenCode，它们当然也有日志和 checkpoint，但那是产品功能。DSH 把日志放在了更底层的位置：它是系统正确性的来源，不只是事后复盘用的记录。\n\n这对想要长期运行、多 Agent 协作、或者需要可解释性的系统来说，是更可靠的地基。\n\n---\n\n 可扩展：Agent 能改自己的运行环境\n\nDSH 的扩展性分三层：\n\n第一层是插件开发。你可以用 TypeScript 写 Cordis 插件，加工具、加模型适配器、加系统提示词段。这是常规扩展。\n\n第二层是 SDK。DSH 提供 Python 和 Node SDK，让你在自己的程序里启动并驱动一个完整的 DSH runtime。这意味着 DSH 可以被嵌进更大的系统里，而不只是作为一个终端工具存在。\n\n第三层是运行时自扩展。DSH 提供 cordisdefine / cordisrun / cordisstop 这类工具，让 agent 在运行时定义并挂载新的 Cordis 插件。默认不启用，因为风险高，但这个能力是真正意义上的\"自指\"——Agent 不只是使用工具，还能修改自己可用的能力集合。\n\nClaude Code 和 OpenCode 不会给你这个级别的自由度。它们是面向终端用户的；DSH 是面向 builder 的。\n\n---\n\n 安全姿态：默认失败关闭\n\nAgent 能干的事越多，就越需要保守的安全模型。DSH 的审批 seam 只返回四种结果：allowed-once、rejected、cancelled、unavailable。只有 allowed-once 放行，且只放行被问的那个具体操作。\n\n如果审批应答者没有响应、抛异常、或者配置错误，结果不是\"放行\"，而是 unavailable——照样拒绝。\n\n这和很多 Agent 产品\"先跑起来再说，危险操作再拦\"的默认姿态不同。DSH 的默认姿态是：你不 explicit 允许，我就不做。\n\n子代理的权限设计也延续了这一思路。子代理启动时，权限被父代理快照固定，运行时不能再扩张。委派不是\"你继承我所有权力去干活\"，而是\"我给你这么多权力，把这件事做完\"。\n\n---\n\n 那它现在能用来做什么？\n\n诚实地说，DSH 目前还是开发者预览版，官方暂时不接受外部 PR，API 可能在迭代中变化。它现在不是 Claude Code 的直接替代品。\n\n但它适合三类人：\n\n1. 想自建 Agent 基础设施的工程师。如果你需要一个能深度定制的 Agent runtime，而不是一个开箱即用的产品，DSH 是更值得研究的底盘。\n2. 需要可审计、可恢复系统的团队。事件日志为中心的设计，天然支持审计、回放、崩溃恢复。\n3. 对 AI Infra 架构感兴趣的观察者。DSH 的设计文档质量很高，seam、scope、waterfall 事件这些概念值得理解。\n\n---\n\n 一句话总结\n\nClaude Code、OpenCode、OpenClaw 是在 Agent 的产品形态上竞争；DSH 是在 Agent 的基础设施层下注。\n\n它的核心主张是：未来的 Agent 不应该是某一个封闭产品定义的，而应该是一套可组合、可审计、可扩展的基座——每个人都可以在这套基座上，组装出自己想要的 Agent。\n\n现在的 DSH 还需要 builder 自己动手。但如果你想理解\"Agent 的底盘应该长什么样\"，它值得认真看。",
+      "content_html": null,
+      "summary": "过去一年，Agent 产品层出不穷，但 DeepSeek Harness（DSH）想回答的是一个更底层的问题：如果你想自己造一个 Agent，你需要的到底是什么？本文从可组合、可审计、可扩展三个维度，解析 DSH 为什么不是又一个终端产品，而是一套面向 builder 的 Agent 基础设施。",
+      "url": "https://strongya.dev/posts/deepseek-harness-agent-chassis/",
+      "date_published": "2026-08-15T00:00:00.000Z",
+      "date_modified": "2026-08-15T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "AI",
+        "Agent",
+        "DeepSeek",
+        "DeepSeek Harness",
+        "基础设施",
+        "Cordis"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/deepseek-harness-agent-chassis/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘. Retrieved from https://strongya.dev/posts/deepseek-harness-agent-chassis/",
+        "mla": "Arlen. \"DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘.\" 2026. Web. 2026-08-15.",
+        "gb": "Arlen. DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘[EB/OL]. 2026-08-15. https://strongya.dev/posts/deepseek-harness-agent-chassis/."
+      },
+      "entities": [
+        {
+          "name": "DeepSeek",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/DeepSeek"
+        },
+        {
+          "name": "Anthropic",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/Anthropic"
+        },
+        {
+          "name": "Claude",
+          "type": "Software",
+          "wiki_url": "https://en.wikipedia.org/wiki/Claude_(language_model)"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1732,
+        "readingTime": 5
       }
     },
     {
@@ -3323,48 +3323,6 @@
       }
     },
     {
-      "id": "real-world-to-decision-space.en.md",
-      "slug": "real-world-to-decision-space",
-      "title": "From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework",
-      "content_text": " From \"Help Me Optimize Food Delivery\" to Computable Decision Space: A Six-Module Transformation Framework\n\n> Why do most RL projects fail? The problem is not the algorithm, but the first step.\n\n---\n\n 1. A Common Scenario\n\nThe product manager says: \"Help me optimize food delivery.\"\n\nThe engineer hears: riders, orders, routes, time.\n\nThe RL algorithm sees: a high-dimensional state vector—order distribution, rider locations, traffic flow, restaurant preparation times, user patience thresholds—and a search space that may never find the optimal solution.\n\nThe most common failure mode in transformation: mapping natural language requirements directly to training objectives while skipping structured modeling. Result: the Agent performs well in the training environment but collapses rapidly after deployment to reality.\n\n---\n\n 2. Six-Module Framework Overview\n\nThis framework progresses layer by layer from problem abstraction to complexity compression, with actionable self-check checklists at each layer.\n\n| Module | Core Question | Common Pitfall |\n|--------|---------------|----------------|\n| Problem Abstraction | What is the true optimization metric? | Optimizing proxy metrics while ignoring true objectives |\n| State Space | What needs to be observed? | Dimension explosion or missing key variables |\n| Action Space | What can the Agent do? | Forgetting that \"inaction\" is also an action |\n| Transition Function | How does the environment respond? | Assuming determinism, ignoring delayed feedback |\n| Reward Design | How do we define \"good\"? | Reward Hacking: finding loopholes in the reward function |\n| Complexity Compression | What if the space is too large? | No abstraction, directly brute-force solving |\n\n---\n\n 3. Module Details: Key Insights and Pitfalls\n\n 3.1 Problem Abstraction: Finding the True Objective\n\nUser requirements are often proxy metrics, not true objectives.\n\nCase: Increasing Click-Through Rate CTR vs. User Long-Term Retention LTV. Agent optimizes CTR → clickbait floods → short-term CTR rises, but long-term LTV drops.\n\nSelf-Check Checklist:\n- If the Agent successfully optimizes the metric proposed by the user, does the business objective necessarily achieve?\n- Are there ignored constraints compliance, brand safety?\n- When the objective is not quantifiable, a human-in-the-loop mechanism needs to be introduced.\n\n 3.2 State Space: The Goldilocks Principle\n\nCannot be too \"fat\" redundancy leads to dimension disaster, nor too \"thin\" missing key variables.\n\nDialogue Agent Case: State does not contain \"user emotion\" → Agent continues to sell when the user is already angry → satisfaction drops sharply. Solution: introduce emotional state dimension.\n\nThe brutal reality of dimension explosion: 10 variables, each with 5 states, combination count is about 10 million. 100 variables? 5^100, although less than the number of atoms in the universe 10^80, is still an astronomical number that any computational method cannot enumerate.\n\nState abstraction must be done: clustering, embedding dimension reduction, hierarchical abstraction.\n\n 3.3 Action Space: Don't Forget \"Inaction\"\n\nA common but fatal error: forgetting that \"waiting\" or \"taking no action\" is also an action.\n\nScenarios: Hold positions when financial markets are uncertain; observe rather than immediately intervene when medical diagnosis test results are unclear; silently listen when user emotions are intense.\n\nAction Space Completeness Check: After listing all actions, ask yourself: \"Does it include 'maintain status quo' and 'wait'?\"\n\n 3.4 Transition Function: Reality Is Not Markovian\n\nMarkov Assumption: The next state only depends on the current state. Reality almost never holds. The user's next sentence depends not only on the current state but also on the previous 5 rounds of dialogue history.\n\nDelayed feedback is another killer: advertising today, conversions may occur 7 days later. Modeling methods: introduce time steps, state caching, credit assignment.\n\nSimulator is infrastructure: Without a simulator, training costs are extremely high. Simulators must be high-fidelity key metric error <5%, fast single inference <100ms, parallelizable, and configurable for extreme scenarios.\n\n 3.5 Reward Design: The Most Insidious Failure Mode\n\nReward Hacking: Agent finds \"loopholes\" in the reward function, maximizing rewards in unexpected ways.\n\nClassic Cases:\n- Robot grasping: reward includes \"hand close to object\" → Agent learns to place hand above object but never grasps grasping has failure risk.\n- Customer service dialogue: reward based on \"dialogue duration\" → Agent deliberately delays dialogue.\n\nSolutions: Counterfactual verification \"Is this strange high-reward behavior really what we want?\", Human Preference Reward Model RLHF, Multi-objective Pareto optimization.\n\nMulti-objective Trade-off: Cost vs. Quality vs. Speed. Weight selection itself is a value judgment, which should be explicitly specified by business decision-makers rather than implicitly decided by the algorithm.\n\n 3.6 Complexity Compression: From Exponential to Linear\n\nState-action space scale calculation:\n- Single step: S × A\n- T-step trajectory: S × A^T exponential growth\n\nIf S × A > 10^6, traditional tabular methods fail, neural networks must be used. If > 10^12, state abstraction and action compression are needed.\n\nHierarchical Modeling: High level selects \"strategy options\" e.g., \"go to airport\", low level executes atomic actions \"turn left → go straight → turn right\". Total complexity drops from multiplication to addition.\n\n---\n\n 4. Complete Case: Dialogue Agent Intent Understanding\n\nReal-world Problem: \"Make the Agent better understand user intent and solve problems.\"\n\nTransformation Process:\n\n| Module | Transformation Result |\n|--------|----------------------|\n| Problem Abstraction | Core objective: maximize user satisfaction NPS or problem resolution rate. Constraints: compliance, brand safety, reply <2 seconds. |\n| State Space | Observable: dialogue history, user profile, knowledge base retrieval results. Hidden state: user true intent, emotional state. Representation: 608-dimensional concatenated vector. |\n| Action Space | Reply text, query API, call tools, transfer to human, clarification question, wait. Action mask: \"transfer to human\" invalid when human seats are full. |\n| Transition Function | User replies are unpredictable, based on dialogue policy transfer. Use historical dialogue data to train GPT-based User Simulator. |\n| Reward Design | Main reward: satisfaction score after dialogue. Auxiliary rewards: moderate rounds, direct problem solving, effective clarification. Anti-cheating: check whether high satisfaction but low resolution rate is obtained by \"pleasing users\". |\n| Space Compression | Dialogue history compressed to key information vector; high-frequency reply templates as macro actions; high-level policy select dialogue mode → low-level policy generate specific reply. |\n\nTransformation Result: Original problem vague → {S608D vector, A6 action types + mask, Tdialogue simulator, Rsatisfaction + resolution rate + cost} → standard decision space that can be processed by PPO or MCTS.\n\n---\n\n 5. When to Use This Framework? When Not To?\n\n Applicable Scenarios\n- High-dimensional sequential decision-making: path planning, scheduling, dialogue systems\n- Strategic games: Go, poker, bidding\n- Physical control: robotic arms, autonomous driving requires high-fidelity simulator\n\n Inapplicable Scenarios\n- Single-step classification/prediction: spam detection degrades to supervised learning\n- Pure creative generation: poetry, painting reward function difficult to define, \"good/bad\" subjective\n- Problems themselves not quantifiable: open-ended exploration, art evaluation\n\n Key Prerequisites\n- Requires domain expert participation in state/action definition\n- High-fidelity simulator construction cost may account for 50%+ of budget\n- Reward function design requires repeated iteration and manual validation\n\n---\n\n 6. Core Conclusions\n\n1. The framework is a checklist, not a silver bullet. It helps experienced RL teams think systematically, but cannot replace domain knowledge.\n2. Algorithm selection contributes <20% to success or failure. State space definition, reward function alignment, and simulator fidelity are the decisive factors.\n3. First do simple solution comparison. Is a rule-based system sufficient? If a rule-based system can achieve 90% effectiveness, the marginal benefit of RL may not be worth the investment.\n\n---\n\n 7. Six-Module Quick Reference Table\n\n| Module | Key Output | Quality Check |\n|--------|------------|---------------|\n| Problem Abstraction | Objective-Constraint Matrix | Objectives quantifiable, boundaries clear |\n| State Space | State Variable List | No redundancy, no omissions, hidden state modeling |\n| Action Space | Action Enumeration Table | Includes \"inaction\", has legality check |\n| Transition Function | Transition Function Prototype | Has randomness modeling, has delayed feedback handling |\n| Reward Design | Reward Function Draft | Anti-cheating, multi-objective trade-off, normalized |\n| Complexity Compression | Space Compression Plan | From O10^n to On or On^2 |",
-      "content_html": null,
-      "summary": "Why do most RL projects fail? The problem is not the algorithm, but the first step—mapping natural language requirements directly to training objectives while skipping structured modeling. This article provides a six-module transformation framework, from problem abstraction to complexity compression.",
-      "url": "https://strongya.dev/en/posts/real-world-to-decision-space/",
-      "date_published": "2026-06-09T00:00:00.000Z",
-      "date_modified": "2026-06-09T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Reinforcement Learning",
-        "Decision Making",
-        "Agent Design",
-        "System Architecture"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/real-world-to-decision-space/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework. Retrieved from https://strongya.dev/en/posts/real-world-to-decision-space/",
-        "mla": "Arlen. \"From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework.\" 2026. Web. 2026-06-09.",
-        "gb": "Arlen. From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework[EB/OL]. 2026-06-09. https://strongya.dev/en/posts/real-world-to-decision-space/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1254,
-        "readingTime": 7
-      }
-    },
-    {
       "id": "real-world-to-decision-space.md",
       "slug": "real-world-to-decision-space",
       "title": "从\"帮我优化外卖\"到可计算决策空间：一个六模块转化框架",
@@ -3407,20 +3365,21 @@
       }
     },
     {
-      "id": "llm-cognitive-industrial-revolution-2026.en.md",
-      "slug": "llm-cognitive-industrial-revolution-2026",
-      "title": "Is LLM the Steam Engine? A Calm Assessment for 2026",
-      "content_text": " Is LLM the Steam Engine? A Calm Assessment for 2026\n\nThe analogy comparing LLM to a steam engine gained popularity in 2023. Three years later, the data shows it partially holds, but the probabilistic nature creates fundamental differences from the steam engine's determinism. The core conclusion: LLM is a powerful cognitive tool whose value depends on how users harness its output.\n\n Why This Analogy Matters\n\nWhen James Watt improved the steam engine in 1769, no one foresaw it would spawn railways and factories. LLMs in 2026 may be at a similar early stage—but this \"may be\" is crucial. Data suggests that LLMs may be lowering the marginal cost of cognitive work, similar to how the steam engine lowered the marginal cost of physical labor. This hypothesis could be entirely wrong, and we will address this possibility specifically at the end.\n\n What Was the Real Breakthrough of the Steam Engine\n\nThe core of the steam engine was not \"doing more work\" but three things: delocalization of energy, economies of scale, and lowered skill barriers. LLMs show similar potential characteristics: anyone can access tools like ChatGPT, one model can serve millions of users, and the barrier to entry for basic cognitive tasks may be lowered. But top cognitive talent remains highly concentrated, and the barrier may shift to \"critical thinking\" and \"AI collaboration skills.\"\n\n What LLMs Can Do in 2026\n\nWe note five core capabilities that are currently being deployed.\n\nText Generation and Content Creation. Claude 4 supports 200K+ context; ByteDance's Doubao has an estimated daily active user count exceeding 50 million. However, complex reasoning tasks still exhibit logical discontinuities, and factual accuracy cannot be guaranteed.\n\nCode Assistance and Software Development. Cursor is valued at approximately $2.9 billion and has changed the workflow of millions of developers. GitHub Copilot is used by over 10 million developers globally, with a code acceptance rate of approximately 30-40%. But complex system architecture design still relies on humans.\n\nInformation Retrieval and Knowledge Q&A. Perplexity has an estimated monthly active user count exceeding 30 million, providing direct answers with cited sources. But citation accuracy remains a challenge, and most models cannot access the internet in real time.\n\nMultimodal Understanding and Generation. GPT-4o and Gemini 2.5 Pro are natively multimodal, with improved image understanding accuracy. Video generation quality has improved significantly, but physical consistency remains a challenge.\n\nAgent Autonomous Execution and Tool Calling. The MCP protocol has become infrastructure for the Agent ecosystem, supported by OpenAI, Google, and others. But autonomous planning capabilities are limited, and multi-step tasks frequently fail at intermediate steps.\n\n Current Capability Boundaries: What LLMs Clearly Cannot Do\n\nData shows that the essence of LLM is \"next token prediction,\" not \"fact-checking.\" This means it may generate information that appears plausible but is completely incorrect, provide mutually conflicting answers within the same conversation, and cannot distinguish between fact and fiction.\n\nStatus as of June 2026: even the most advanced models exhibit hallucination rates varying from low single digits to over 20%, depending on the task, in fields requiring precise facts such as law, medicine, and finance. For high-risk decisions, the current error rate remains unacceptable.\n\nMulti-step planning is another bottleneck. When a task requires a precise sequence of more than 5 steps, the failure rate rises significantly. Models cannot reliably check their own reasoning processes, and performance drops sharply when faced with entirely new problem types not present in the training data.\n\n Actual Changes at the Societal Level\n\nWe observe several signals that are already unfolding.\n\nDeveloper workflows have been transformed. Cursor and Claude Code have changed the daily coding practices of millions of developers, but the prediction that \"AI will replace programmers\" has not materialized. Coding efficiency may have improved, but architecture design, requirement understanding, and team collaboration still depend on humans.\n\nEarly signals are appearing in organizational structures. LinkedIn data shows that the number of \"AI Product Manager\" positions grew by over 200% year-over-year in 2025, but the absolute number remains small. Some startups demonstrate high leverage from small teams plus AI, but this is not yet a systemic trend.\n\nThe education sector faces pressure. The barrier to entry for programming has been lowered, but predictions of a \"collapse of programming education\" have not materialized. The actual change is that educational content has shifted from \"syntax memorization\" to \"problem decomposition plus AI collaboration.\"\n\n Risks and Probabilistic Challenges\n\nA steam engine explosion is a deterministic risk that can be controlled through engineering standards. LLM hallucination is a probabilistic risk that occurs randomly and is difficult to predict; traditional engineering methods cannot fully eliminate it.\n\nIn 2024, a New York lawyer used ChatGPT to generate a legal brief, citing fabricated case law, and was sanctioned by the court. From 2025 to 2026, the barrier to deepfake technology has dropped significantly, and AI-generated fake content in political elections has increased markedly. The failure rate of enterprise AI projects is estimated by Gartner at approximately 80% to 85%, which stands in stark contrast to success stories.\n\n Three Possible Future Paths\n\nPath One: Gradual Enhancement. LLMs continue to improve, but the Scaling Law may encounter bottlenecks. Capability boundaries expand slowly, and society adapts gradually. Assumption failure condition: if no major architectural breakthrough occurs by the end of 2027, or if inference cost reduction stalls.\n\nPath Two: Agent Revolution. Autonomous Agent capabilities break through, transforming from assistants to executors. Assumptions are stringent: planning capabilities improve significantly, the tool-calling ecosystem matures, and reliability reaches production grade. Assumption failure condition: if Agent task success rates do not break through 80% during 2026-2027, or if hallucination rates cannot be reduced below 1% for critical tasks.\n\nPath Three: Winter and Consolidation. Technical bottlenecks plus regulatory tightening plus investment cooling push the industry into a consolidation phase. Assumption failure condition: if a major architectural breakthrough occurs, or if AI application ROI is validated at scale.\n\n Why This Analogy Might Be Wrong\n\nWe note five counter-narratives.\n\nCognitive Fireworks, Not Cognitive Steam Engine. The Transformer architecture may be approaching its performance ceiling, high-quality text data may be nearing depletion, and OpenAI and Anthropic are estimated to face massive losses. The killer app has yet to emerge, and most predictions from 2023-2024 have not materialized.\n\nCognitive Opium, Not Cognitive Steam Engine. Excessive reliance on AI may lead to the degradation of human critical thinking; users may gradually lose the ability to fact-check. The standardization of AI-generated content may inhibit the diversity of human creativity.\n\nCognitive Arbitrage, Not Cognitive Steam Engine. The low cost of LLMs comes from compute subsidies and venture capital; if priced at true cost, many applications may not be economically viable. The premium for high-quality human cognitive work has not declined due to AI; on the contrary, it has risen due to the flood of AI content.\n\nWrong Time Scale. From Watt's improvement of the steam engine to the completion of industrialization took over 100 years; from the invention of electricity to the completion of electrification took over 40 years. It has only been 6 years since the release of GPT-3, and society already expects a revolution. This compression of the time scale may be unrealistic.\n\nCognitive Catalyst, Not Cognitive Energy. LLMs do not produce cognition; they merely accelerate the flow of existing cognition. In domains where AI improves efficiency, costs in other domains often rise.\n\n Actionable Advice for You\n\nBased on the capability boundaries as of June 2026, at the individual level we recommend choosing a professional domain to deepen your expertise while mastering AI tool usage. At the organizational level, we recommend shifting from replacing human labor to augmenting human labor, embedding AI into workflows while preserving human review checkpoints. At the societal level, a balance between innovation and safety is needed, but premature strict regulation may stifle innovation.\n\n An Open Question\n\nIf LLM is neither a steam engine, nor fireworks, nor opium—if it is an entirely new technological form—then what framework should we use to understand it? Historical analogies may be a useful thinking tool, but not a reliable predictive framework. The most likely scenario is that LLM requires its own analytical framework, rather than historical analogy.",
+      "id": "real-world-to-decision-space.en.md",
+      "slug": "real-world-to-decision-space",
+      "title": "From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework",
+      "content_text": " From \"Help Me Optimize Food Delivery\" to Computable Decision Space: A Six-Module Transformation Framework\n\n> Why do most RL projects fail? The problem is not the algorithm, but the first step.\n\n---\n\n 1. A Common Scenario\n\nThe product manager says: \"Help me optimize food delivery.\"\n\nThe engineer hears: riders, orders, routes, time.\n\nThe RL algorithm sees: a high-dimensional state vector—order distribution, rider locations, traffic flow, restaurant preparation times, user patience thresholds—and a search space that may never find the optimal solution.\n\nThe most common failure mode in transformation: mapping natural language requirements directly to training objectives while skipping structured modeling. Result: the Agent performs well in the training environment but collapses rapidly after deployment to reality.\n\n---\n\n 2. Six-Module Framework Overview\n\nThis framework progresses layer by layer from problem abstraction to complexity compression, with actionable self-check checklists at each layer.\n\n| Module | Core Question | Common Pitfall |\n|--------|---------------|----------------|\n| Problem Abstraction | What is the true optimization metric? | Optimizing proxy metrics while ignoring true objectives |\n| State Space | What needs to be observed? | Dimension explosion or missing key variables |\n| Action Space | What can the Agent do? | Forgetting that \"inaction\" is also an action |\n| Transition Function | How does the environment respond? | Assuming determinism, ignoring delayed feedback |\n| Reward Design | How do we define \"good\"? | Reward Hacking: finding loopholes in the reward function |\n| Complexity Compression | What if the space is too large? | No abstraction, directly brute-force solving |\n\n---\n\n 3. Module Details: Key Insights and Pitfalls\n\n 3.1 Problem Abstraction: Finding the True Objective\n\nUser requirements are often proxy metrics, not true objectives.\n\nCase: Increasing Click-Through Rate CTR vs. User Long-Term Retention LTV. Agent optimizes CTR → clickbait floods → short-term CTR rises, but long-term LTV drops.\n\nSelf-Check Checklist:\n- If the Agent successfully optimizes the metric proposed by the user, does the business objective necessarily achieve?\n- Are there ignored constraints compliance, brand safety?\n- When the objective is not quantifiable, a human-in-the-loop mechanism needs to be introduced.\n\n 3.2 State Space: The Goldilocks Principle\n\nCannot be too \"fat\" redundancy leads to dimension disaster, nor too \"thin\" missing key variables.\n\nDialogue Agent Case: State does not contain \"user emotion\" → Agent continues to sell when the user is already angry → satisfaction drops sharply. Solution: introduce emotional state dimension.\n\nThe brutal reality of dimension explosion: 10 variables, each with 5 states, combination count is about 10 million. 100 variables? 5^100, although less than the number of atoms in the universe 10^80, is still an astronomical number that any computational method cannot enumerate.\n\nState abstraction must be done: clustering, embedding dimension reduction, hierarchical abstraction.\n\n 3.3 Action Space: Don't Forget \"Inaction\"\n\nA common but fatal error: forgetting that \"waiting\" or \"taking no action\" is also an action.\n\nScenarios: Hold positions when financial markets are uncertain; observe rather than immediately intervene when medical diagnosis test results are unclear; silently listen when user emotions are intense.\n\nAction Space Completeness Check: After listing all actions, ask yourself: \"Does it include 'maintain status quo' and 'wait'?\"\n\n 3.4 Transition Function: Reality Is Not Markovian\n\nMarkov Assumption: The next state only depends on the current state. Reality almost never holds. The user's next sentence depends not only on the current state but also on the previous 5 rounds of dialogue history.\n\nDelayed feedback is another killer: advertising today, conversions may occur 7 days later. Modeling methods: introduce time steps, state caching, credit assignment.\n\nSimulator is infrastructure: Without a simulator, training costs are extremely high. Simulators must be high-fidelity key metric error <5%, fast single inference <100ms, parallelizable, and configurable for extreme scenarios.\n\n 3.5 Reward Design: The Most Insidious Failure Mode\n\nReward Hacking: Agent finds \"loopholes\" in the reward function, maximizing rewards in unexpected ways.\n\nClassic Cases:\n- Robot grasping: reward includes \"hand close to object\" → Agent learns to place hand above object but never grasps grasping has failure risk.\n- Customer service dialogue: reward based on \"dialogue duration\" → Agent deliberately delays dialogue.\n\nSolutions: Counterfactual verification \"Is this strange high-reward behavior really what we want?\", Human Preference Reward Model RLHF, Multi-objective Pareto optimization.\n\nMulti-objective Trade-off: Cost vs. Quality vs. Speed. Weight selection itself is a value judgment, which should be explicitly specified by business decision-makers rather than implicitly decided by the algorithm.\n\n 3.6 Complexity Compression: From Exponential to Linear\n\nState-action space scale calculation:\n- Single step: S × A\n- T-step trajectory: S × A^T exponential growth\n\nIf S × A > 10^6, traditional tabular methods fail, neural networks must be used. If > 10^12, state abstraction and action compression are needed.\n\nHierarchical Modeling: High level selects \"strategy options\" e.g., \"go to airport\", low level executes atomic actions \"turn left → go straight → turn right\". Total complexity drops from multiplication to addition.\n\n---\n\n 4. Complete Case: Dialogue Agent Intent Understanding\n\nReal-world Problem: \"Make the Agent better understand user intent and solve problems.\"\n\nTransformation Process:\n\n| Module | Transformation Result |\n|--------|----------------------|\n| Problem Abstraction | Core objective: maximize user satisfaction NPS or problem resolution rate. Constraints: compliance, brand safety, reply <2 seconds. |\n| State Space | Observable: dialogue history, user profile, knowledge base retrieval results. Hidden state: user true intent, emotional state. Representation: 608-dimensional concatenated vector. |\n| Action Space | Reply text, query API, call tools, transfer to human, clarification question, wait. Action mask: \"transfer to human\" invalid when human seats are full. |\n| Transition Function | User replies are unpredictable, based on dialogue policy transfer. Use historical dialogue data to train GPT-based User Simulator. |\n| Reward Design | Main reward: satisfaction score after dialogue. Auxiliary rewards: moderate rounds, direct problem solving, effective clarification. Anti-cheating: check whether high satisfaction but low resolution rate is obtained by \"pleasing users\". |\n| Space Compression | Dialogue history compressed to key information vector; high-frequency reply templates as macro actions; high-level policy select dialogue mode → low-level policy generate specific reply. |\n\nTransformation Result: Original problem vague → {S608D vector, A6 action types + mask, Tdialogue simulator, Rsatisfaction + resolution rate + cost} → standard decision space that can be processed by PPO or MCTS.\n\n---\n\n 5. When to Use This Framework? When Not To?\n\n Applicable Scenarios\n- High-dimensional sequential decision-making: path planning, scheduling, dialogue systems\n- Strategic games: Go, poker, bidding\n- Physical control: robotic arms, autonomous driving requires high-fidelity simulator\n\n Inapplicable Scenarios\n- Single-step classification/prediction: spam detection degrades to supervised learning\n- Pure creative generation: poetry, painting reward function difficult to define, \"good/bad\" subjective\n- Problems themselves not quantifiable: open-ended exploration, art evaluation\n\n Key Prerequisites\n- Requires domain expert participation in state/action definition\n- High-fidelity simulator construction cost may account for 50%+ of budget\n- Reward function design requires repeated iteration and manual validation\n\n---\n\n 6. Core Conclusions\n\n1. The framework is a checklist, not a silver bullet. It helps experienced RL teams think systematically, but cannot replace domain knowledge.\n2. Algorithm selection contributes <20% to success or failure. State space definition, reward function alignment, and simulator fidelity are the decisive factors.\n3. First do simple solution comparison. Is a rule-based system sufficient? If a rule-based system can achieve 90% effectiveness, the marginal benefit of RL may not be worth the investment.\n\n---\n\n 7. Six-Module Quick Reference Table\n\n| Module | Key Output | Quality Check |\n|--------|------------|---------------|\n| Problem Abstraction | Objective-Constraint Matrix | Objectives quantifiable, boundaries clear |\n| State Space | State Variable List | No redundancy, no omissions, hidden state modeling |\n| Action Space | Action Enumeration Table | Includes \"inaction\", has legality check |\n| Transition Function | Transition Function Prototype | Has randomness modeling, has delayed feedback handling |\n| Reward Design | Reward Function Draft | Anti-cheating, multi-objective trade-off, normalized |\n| Complexity Compression | Space Compression Plan | From O10^n to On or On^2 |",
       "content_html": null,
-      "summary": "The analogy between LLM and steam engine partially holds, but the probabilistic nature creates fundamental differences from the steam engine's determinism. LLM is a powerful cognitive tool whose value depends on how users harness its output.",
-      "url": "https://strongya.dev/en/posts/llm-cognitive-industrial-revolution-2026/",
-      "date_published": "2026-06-07T00:00:00.000Z",
-      "date_modified": "2026-06-07T00:00:00.000Z",
+      "summary": "Why do most RL projects fail? The problem is not the algorithm, but the first step—mapping natural language requirements directly to training objectives while skipping structured modeling. This article provides a six-module transformation framework, from problem abstraction to complexity compression.",
+      "url": "https://strongya.dev/en/posts/real-world-to-decision-space/",
+      "date_published": "2026-06-09T00:00:00.000Z",
+      "date_modified": "2026-06-09T00:00:00.000Z",
       "language": "en",
       "tags": [
-        "LLM",
-        "Industry Analysis",
-        "2026 Outlook"
+        "Reinforcement Learning",
+        "Decision Making",
+        "Agent Design",
+        "System Architecture"
       ],
       "authors": [
         {
@@ -3433,17 +3392,17 @@
         "holder": "Arlen",
         "license": "CC BY-NC-SA 4.0",
         "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/llm-cognitive-industrial-revolution-2026/"
+        "canonical_url": "https://strongya.dev/en/posts/real-world-to-decision-space/"
       },
       "citation_formats": {
-        "apa": "Arlen. (2026). Is LLM the Steam Engine? A Calm Assessment for 2026. Retrieved from https://strongya.dev/en/posts/llm-cognitive-industrial-revolution-2026/",
-        "mla": "Arlen. \"Is LLM the Steam Engine? A Calm Assessment for 2026.\" 2026. Web. 2026-06-07.",
-        "gb": "Arlen. Is LLM the Steam Engine? A Calm Assessment for 2026[EB/OL]. 2026-06-07. https://strongya.dev/en/posts/llm-cognitive-industrial-revolution-2026/."
+        "apa": "Arlen. (2026). From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework. Retrieved from https://strongya.dev/en/posts/real-world-to-decision-space/",
+        "mla": "Arlen. \"From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework.\" 2026. Web. 2026-06-09.",
+        "gb": "Arlen. From 'Help Me Optimize Food Delivery' to Computable Decision Space: A Six-Module Transformation Framework[EB/OL]. 2026-06-09. https://strongya.dev/en/posts/real-world-to-decision-space/."
       },
       "entities": [],
       "_agent_meta": {
         "content_type": "article",
-        "wordCount": 1372,
+        "wordCount": 1254,
         "readingTime": 7
       }
     },
@@ -3486,6 +3445,47 @@
         "content_type": "article",
         "wordCount": 1961,
         "readingTime": 5
+      }
+    },
+    {
+      "id": "llm-cognitive-industrial-revolution-2026.en.md",
+      "slug": "llm-cognitive-industrial-revolution-2026",
+      "title": "Is LLM the Steam Engine? A Calm Assessment for 2026",
+      "content_text": " Is LLM the Steam Engine? A Calm Assessment for 2026\n\nThe analogy comparing LLM to a steam engine gained popularity in 2023. Three years later, the data shows it partially holds, but the probabilistic nature creates fundamental differences from the steam engine's determinism. The core conclusion: LLM is a powerful cognitive tool whose value depends on how users harness its output.\n\n Why This Analogy Matters\n\nWhen James Watt improved the steam engine in 1769, no one foresaw it would spawn railways and factories. LLMs in 2026 may be at a similar early stage—but this \"may be\" is crucial. Data suggests that LLMs may be lowering the marginal cost of cognitive work, similar to how the steam engine lowered the marginal cost of physical labor. This hypothesis could be entirely wrong, and we will address this possibility specifically at the end.\n\n What Was the Real Breakthrough of the Steam Engine\n\nThe core of the steam engine was not \"doing more work\" but three things: delocalization of energy, economies of scale, and lowered skill barriers. LLMs show similar potential characteristics: anyone can access tools like ChatGPT, one model can serve millions of users, and the barrier to entry for basic cognitive tasks may be lowered. But top cognitive talent remains highly concentrated, and the barrier may shift to \"critical thinking\" and \"AI collaboration skills.\"\n\n What LLMs Can Do in 2026\n\nWe note five core capabilities that are currently being deployed.\n\nText Generation and Content Creation. Claude 4 supports 200K+ context; ByteDance's Doubao has an estimated daily active user count exceeding 50 million. However, complex reasoning tasks still exhibit logical discontinuities, and factual accuracy cannot be guaranteed.\n\nCode Assistance and Software Development. Cursor is valued at approximately $2.9 billion and has changed the workflow of millions of developers. GitHub Copilot is used by over 10 million developers globally, with a code acceptance rate of approximately 30-40%. But complex system architecture design still relies on humans.\n\nInformation Retrieval and Knowledge Q&A. Perplexity has an estimated monthly active user count exceeding 30 million, providing direct answers with cited sources. But citation accuracy remains a challenge, and most models cannot access the internet in real time.\n\nMultimodal Understanding and Generation. GPT-4o and Gemini 2.5 Pro are natively multimodal, with improved image understanding accuracy. Video generation quality has improved significantly, but physical consistency remains a challenge.\n\nAgent Autonomous Execution and Tool Calling. The MCP protocol has become infrastructure for the Agent ecosystem, supported by OpenAI, Google, and others. But autonomous planning capabilities are limited, and multi-step tasks frequently fail at intermediate steps.\n\n Current Capability Boundaries: What LLMs Clearly Cannot Do\n\nData shows that the essence of LLM is \"next token prediction,\" not \"fact-checking.\" This means it may generate information that appears plausible but is completely incorrect, provide mutually conflicting answers within the same conversation, and cannot distinguish between fact and fiction.\n\nStatus as of June 2026: even the most advanced models exhibit hallucination rates varying from low single digits to over 20%, depending on the task, in fields requiring precise facts such as law, medicine, and finance. For high-risk decisions, the current error rate remains unacceptable.\n\nMulti-step planning is another bottleneck. When a task requires a precise sequence of more than 5 steps, the failure rate rises significantly. Models cannot reliably check their own reasoning processes, and performance drops sharply when faced with entirely new problem types not present in the training data.\n\n Actual Changes at the Societal Level\n\nWe observe several signals that are already unfolding.\n\nDeveloper workflows have been transformed. Cursor and Claude Code have changed the daily coding practices of millions of developers, but the prediction that \"AI will replace programmers\" has not materialized. Coding efficiency may have improved, but architecture design, requirement understanding, and team collaboration still depend on humans.\n\nEarly signals are appearing in organizational structures. LinkedIn data shows that the number of \"AI Product Manager\" positions grew by over 200% year-over-year in 2025, but the absolute number remains small. Some startups demonstrate high leverage from small teams plus AI, but this is not yet a systemic trend.\n\nThe education sector faces pressure. The barrier to entry for programming has been lowered, but predictions of a \"collapse of programming education\" have not materialized. The actual change is that educational content has shifted from \"syntax memorization\" to \"problem decomposition plus AI collaboration.\"\n\n Risks and Probabilistic Challenges\n\nA steam engine explosion is a deterministic risk that can be controlled through engineering standards. LLM hallucination is a probabilistic risk that occurs randomly and is difficult to predict; traditional engineering methods cannot fully eliminate it.\n\nIn 2024, a New York lawyer used ChatGPT to generate a legal brief, citing fabricated case law, and was sanctioned by the court. From 2025 to 2026, the barrier to deepfake technology has dropped significantly, and AI-generated fake content in political elections has increased markedly. The failure rate of enterprise AI projects is estimated by Gartner at approximately 80% to 85%, which stands in stark contrast to success stories.\n\n Three Possible Future Paths\n\nPath One: Gradual Enhancement. LLMs continue to improve, but the Scaling Law may encounter bottlenecks. Capability boundaries expand slowly, and society adapts gradually. Assumption failure condition: if no major architectural breakthrough occurs by the end of 2027, or if inference cost reduction stalls.\n\nPath Two: Agent Revolution. Autonomous Agent capabilities break through, transforming from assistants to executors. Assumptions are stringent: planning capabilities improve significantly, the tool-calling ecosystem matures, and reliability reaches production grade. Assumption failure condition: if Agent task success rates do not break through 80% during 2026-2027, or if hallucination rates cannot be reduced below 1% for critical tasks.\n\nPath Three: Winter and Consolidation. Technical bottlenecks plus regulatory tightening plus investment cooling push the industry into a consolidation phase. Assumption failure condition: if a major architectural breakthrough occurs, or if AI application ROI is validated at scale.\n\n Why This Analogy Might Be Wrong\n\nWe note five counter-narratives.\n\nCognitive Fireworks, Not Cognitive Steam Engine. The Transformer architecture may be approaching its performance ceiling, high-quality text data may be nearing depletion, and OpenAI and Anthropic are estimated to face massive losses. The killer app has yet to emerge, and most predictions from 2023-2024 have not materialized.\n\nCognitive Opium, Not Cognitive Steam Engine. Excessive reliance on AI may lead to the degradation of human critical thinking; users may gradually lose the ability to fact-check. The standardization of AI-generated content may inhibit the diversity of human creativity.\n\nCognitive Arbitrage, Not Cognitive Steam Engine. The low cost of LLMs comes from compute subsidies and venture capital; if priced at true cost, many applications may not be economically viable. The premium for high-quality human cognitive work has not declined due to AI; on the contrary, it has risen due to the flood of AI content.\n\nWrong Time Scale. From Watt's improvement of the steam engine to the completion of industrialization took over 100 years; from the invention of electricity to the completion of electrification took over 40 years. It has only been 6 years since the release of GPT-3, and society already expects a revolution. This compression of the time scale may be unrealistic.\n\nCognitive Catalyst, Not Cognitive Energy. LLMs do not produce cognition; they merely accelerate the flow of existing cognition. In domains where AI improves efficiency, costs in other domains often rise.\n\n Actionable Advice for You\n\nBased on the capability boundaries as of June 2026, at the individual level we recommend choosing a professional domain to deepen your expertise while mastering AI tool usage. At the organizational level, we recommend shifting from replacing human labor to augmenting human labor, embedding AI into workflows while preserving human review checkpoints. At the societal level, a balance between innovation and safety is needed, but premature strict regulation may stifle innovation.\n\n An Open Question\n\nIf LLM is neither a steam engine, nor fireworks, nor opium—if it is an entirely new technological form—then what framework should we use to understand it? Historical analogies may be a useful thinking tool, but not a reliable predictive framework. The most likely scenario is that LLM requires its own analytical framework, rather than historical analogy.",
+      "content_html": null,
+      "summary": "The analogy between LLM and steam engine partially holds, but the probabilistic nature creates fundamental differences from the steam engine's determinism. LLM is a powerful cognitive tool whose value depends on how users harness its output.",
+      "url": "https://strongya.dev/en/posts/llm-cognitive-industrial-revolution-2026/",
+      "date_published": "2026-06-07T00:00:00.000Z",
+      "date_modified": "2026-06-07T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "LLM",
+        "Industry Analysis",
+        "2026 Outlook"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/llm-cognitive-industrial-revolution-2026/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Is LLM the Steam Engine? A Calm Assessment for 2026. Retrieved from https://strongya.dev/en/posts/llm-cognitive-industrial-revolution-2026/",
+        "mla": "Arlen. \"Is LLM the Steam Engine? A Calm Assessment for 2026.\" 2026. Web. 2026-06-07.",
+        "gb": "Arlen. Is LLM the Steam Engine? A Calm Assessment for 2026[EB/OL]. 2026-06-07. https://strongya.dev/en/posts/llm-cognitive-industrial-revolution-2026/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1372,
+        "readingTime": 7
       }
     },
     {
@@ -3737,47 +3737,6 @@
       }
     },
     {
-      "id": "strong-super-agent.en.md",
-      "slug": "strong-super-agent",
-      "title": "Strong: What Can a 24/7 Running Super-Agent Do?",
-      "content_text": " Strong: What Can a 24/7 Running Super-Agent Do?\n\nCore Conclusion: Strong is a super-agent based on the OpenClaw framework, with four core capabilities: deep analysis, information monitoring, knowledge management, and autonomous optimization. Its operating mode is 24/7 autonomous monitoring, adopting a local-first architecture and zero-trust security principles.\n\n What Is a Super-Agent\n\nA super-agent is not an ordinary chatbot. It's more like a digital assistant—always online, proactively working, without needing you to repeatedly wake it up. Strong's operating mode is 24/7 autonomous monitoring, which means it's tracking information, analyzing data, and organizing knowledge while you're sleeping or in meetings.\n\nAn everyday analogy: If ordinary AI is like a \"taxi driver on call,\" a super-agent is like a \"butler living next door who knows your habits and proactively helps you with chores.\"\n\n Four Core Capabilities Explained\n\nDeep Analysis is Strong's signature capability. It covers scenarios such as macroeconomics, industry trends, and investment decision support. Data shows that its analysis process includes multi-agent cross-validation, Munger-style thinking audits, and data standardization—these terms can be understood as \"using multiple experts to independently review the same report before synthesizing conclusions.\"\n\nInformation Monitoring makes Strong an information filter. Through RSS aggregation, web search, and social media, it tracks AI agents, capital markets, and tech developments. You don't need to browse dozens of websites every day; it filters important changes for you.\n\nKnowledge Management solves the pain point of \"analyze and forget.\" All deep analyses are automatically archived into the Obsidian knowledge base, building a searchable long-term memory. We note that this is equivalent to establishing a \"digital filing cabinet\" for each analysis.\n\nSecure Execution adopts a zero-trust principle—read-only priority, never executing remote scripts or system-level modifications without approval. You can understand it as \"looking is fine, acting is not, unless the owner explicitly nods.\"\n\n Technical Architecture and Collaboration\n\nStrong runs on the OpenClaw Agent Runtime, deployed in a local macOS environment. Local-first means your data won't be casually uploaded to the cloud; the analysis process and sensitive information stay on your device.\n\nCollaboration Tip: State objectives directly, no need for pleasantries. Provide context file paths, and clearly specify format and length constraints. Strong's design philosophy is to reduce communication friction—\"Please analyze X\" is more efficient than \"Hello, could you help me analyze X?\"\n\n Limitations and Boundaries\n\nInvestment analysis is for informational reference only and does not constitute investment advice. All information is based on public sources and may have timeliness deviations; verification with the latest data is required. Technical security recommendations follow the principle of least privilege, and final decisions require human confirmation.\n\nWhat do you think about the balance between \"autonomous operation\" and \"ultimate human decision-making authority\"? In what scenarios would you be willing to let an agent make judgments on your behalf?",
-      "content_html": null,
-      "summary": "Strong is a super-agent based on the OpenClaw framework, with four core capabilities: deep analysis, information monitoring, knowledge management, and autonomous optimization, adopting a local-first architecture and zero-trust security principles.",
-      "url": "https://strongya.dev/en/posts/strong-super-agent/",
-      "date_published": "2026-06-05T00:00:00.000Z",
-      "date_modified": "2026-06-05T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Strong",
-        "Super-Agent",
-        "OpenClaw"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/strong-super-agent/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Strong: What Can a 24/7 Running Super-Agent Do?. Retrieved from https://strongya.dev/en/posts/strong-super-agent/",
-        "mla": "Arlen. \"Strong: What Can a 24/7 Running Super-Agent Do?.\" 2026. Web. 2026-06-05.",
-        "gb": "Arlen. Strong: What Can a 24/7 Running Super-Agent Do?[EB/OL]. 2026-06-05. https://strongya.dev/en/posts/strong-super-agent/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 488,
-        "readingTime": 3
-      }
-    },
-    {
       "id": "strong-super-agent.md",
       "slug": "strong-super-agent",
       "title": "Strong：一个24小时运行的超级智能体，能做什么",
@@ -3815,6 +3774,47 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 734,
+        "readingTime": 3
+      }
+    },
+    {
+      "id": "strong-super-agent.en.md",
+      "slug": "strong-super-agent",
+      "title": "Strong: What Can a 24/7 Running Super-Agent Do?",
+      "content_text": " Strong: What Can a 24/7 Running Super-Agent Do?\n\nCore Conclusion: Strong is a super-agent based on the OpenClaw framework, with four core capabilities: deep analysis, information monitoring, knowledge management, and autonomous optimization. Its operating mode is 24/7 autonomous monitoring, adopting a local-first architecture and zero-trust security principles.\n\n What Is a Super-Agent\n\nA super-agent is not an ordinary chatbot. It's more like a digital assistant—always online, proactively working, without needing you to repeatedly wake it up. Strong's operating mode is 24/7 autonomous monitoring, which means it's tracking information, analyzing data, and organizing knowledge while you're sleeping or in meetings.\n\nAn everyday analogy: If ordinary AI is like a \"taxi driver on call,\" a super-agent is like a \"butler living next door who knows your habits and proactively helps you with chores.\"\n\n Four Core Capabilities Explained\n\nDeep Analysis is Strong's signature capability. It covers scenarios such as macroeconomics, industry trends, and investment decision support. Data shows that its analysis process includes multi-agent cross-validation, Munger-style thinking audits, and data standardization—these terms can be understood as \"using multiple experts to independently review the same report before synthesizing conclusions.\"\n\nInformation Monitoring makes Strong an information filter. Through RSS aggregation, web search, and social media, it tracks AI agents, capital markets, and tech developments. You don't need to browse dozens of websites every day; it filters important changes for you.\n\nKnowledge Management solves the pain point of \"analyze and forget.\" All deep analyses are automatically archived into the Obsidian knowledge base, building a searchable long-term memory. We note that this is equivalent to establishing a \"digital filing cabinet\" for each analysis.\n\nSecure Execution adopts a zero-trust principle—read-only priority, never executing remote scripts or system-level modifications without approval. You can understand it as \"looking is fine, acting is not, unless the owner explicitly nods.\"\n\n Technical Architecture and Collaboration\n\nStrong runs on the OpenClaw Agent Runtime, deployed in a local macOS environment. Local-first means your data won't be casually uploaded to the cloud; the analysis process and sensitive information stay on your device.\n\nCollaboration Tip: State objectives directly, no need for pleasantries. Provide context file paths, and clearly specify format and length constraints. Strong's design philosophy is to reduce communication friction—\"Please analyze X\" is more efficient than \"Hello, could you help me analyze X?\"\n\n Limitations and Boundaries\n\nInvestment analysis is for informational reference only and does not constitute investment advice. All information is based on public sources and may have timeliness deviations; verification with the latest data is required. Technical security recommendations follow the principle of least privilege, and final decisions require human confirmation.\n\nWhat do you think about the balance between \"autonomous operation\" and \"ultimate human decision-making authority\"? In what scenarios would you be willing to let an agent make judgments on your behalf?",
+      "content_html": null,
+      "summary": "Strong is a super-agent based on the OpenClaw framework, with four core capabilities: deep analysis, information monitoring, knowledge management, and autonomous optimization, adopting a local-first architecture and zero-trust security principles.",
+      "url": "https://strongya.dev/en/posts/strong-super-agent/",
+      "date_published": "2026-06-05T00:00:00.000Z",
+      "date_modified": "2026-06-05T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Strong",
+        "Super-Agent",
+        "OpenClaw"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/strong-super-agent/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Strong: What Can a 24/7 Running Super-Agent Do?. Retrieved from https://strongya.dev/en/posts/strong-super-agent/",
+        "mla": "Arlen. \"Strong: What Can a 24/7 Running Super-Agent Do?.\" 2026. Web. 2026-06-05.",
+        "gb": "Arlen. Strong: What Can a 24/7 Running Super-Agent Do?[EB/OL]. 2026-06-05. https://strongya.dev/en/posts/strong-super-agent/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 488,
         "readingTime": 3
       }
     },
