@@ -2287,46 +2287,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-11-15.en.md",
-      "slug": "agent-memory-errors-cases-11-15",
-      "title": "Agent Memory Errors Handbook: Cases 11–15",
-      "content_text": " Agent Memory Errors Handbook: Cases 11–15\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 11: Long-term Memory Management Errors — Episodic Memory Duplicate Storage\n\nScenario\n\nAfter every conversation, the Agent stores a dialogue summary in long-term memory. A user repeatedly asks the same question, such as \"What is my server password?\" Each answer creates a new memory: \"User asked for server password; answer is XXX.\" After six months, 47 nearly identical memories accumulate under this topic.\n\nError Manifestation\n\nWhen answering related questions, the Agent retrieves several of these memories. Because the summaries differ slightly in wording, the Agent gives inconsistent answers across sessions, sometimes citing multiple versions in one reply and appearing self-contradictory.\n\nSolution\n\n1. Deduplicate semantically before storing: compare new memories with existing ones and merge when similarity exceeds a threshold\n2. Track \"last updated\" timestamps and access counts; merge by keeping the latest version and accumulating counts\n3. Periodically run memory compaction: cluster memories on the same topic and generate a unified summary\n\nPrinciple\n\nContinuous accumulation of episodic memory causes storage bloat and redundancy. Human memory consolidates similar experiences; Agent memory systems need analogous mechanisms to stay consistent.\n\n---\n\n Case 12: Long-term Memory Management Errors — Procedural Memory Overwrite Bugfix\n\nScenario\n\nA programming Agent stores procedural memory for \"How to fix Python's UnicodeDecodeError.\" A user encounters a CSV encoding error, and the Agent generates a scenario-specific fix and stores it. Later, another user encounters a different UnicodeDecodeError JSON encoding, the Agent generates a new fix, and overwrites the old memory.\n\nError Manifestation\n\nWhen the first user hits the CSV problem again, the Agent gives the JSON-scenario fix using json.loads's encoding parameter, which is completely inapplicable and confuses the user.\n\nSolution\n\n1. Store procedural memory as condition-action pairs, explicitly recording each memory's applicable scenario\n2. Match conditions before overwriting: only overwrite when the new solution applies to the same or a more general scenario\n3. Add memory version control so historical versions remain available and the most relevant one can be selected\n\nPrinciple\n\nProcedural memory encodes how-to knowledge and is tightly coupled to specific scenarios. Direct overwriting destroys the scenario-solution mapping. Conditional storage lets knowledge for different scenarios coexist.\n\n---\n\n Case 13: Long-term Memory Management Errors — Semantic Memory Inheritance Conflict\n\nScenario\n\nA knowledge-graph Agent builds semantic memory with an object-oriented multiple-inheritance model. The entity \"Electric Vehicle\" inherits from \"Car\" attribute: needs refueling and \"Electric Device\" attribute: needs charging. When the user asks, \"Does an electric vehicle need refueling?\" the Agent must choose between two contradictory parent attributes.\n\nError Manifestation\n\nThe Agent gives inconsistent answers: once \"needs refueling\" from Car, once \"no\" from Electric Device, with no consistent decision rule.\n\nSolution\n\n1. Set inheritance priorities e.g., subclass > direct parent > indirect parent or use C3 linearization\n2. Explicitly flag conflicting attributes and trigger a conflict-resolution flow that asks for more context\n3. Use probabilistic inheritance: compute attribute likelihood weighted by association strength to each category\n\nPrinciple\n\nInheritance conflicts in semantic memory are a classic knowledge-representation problem. Without conflict resolution, systems behave nondeterministically and erode user trust.\n\n---\n\n Case 14: Long-term Memory Management Errors — Memory Access Pattern Hotspot Exhaustion\n\nScenario\n\nA social-media Agent maintains a user-profile memory for every followed user. A celebrity has one million followers, and every follower's query about \"how to interact with X\" triggers retrieval of that celebrity's profile. The memory becomes a hotspot, accessed thousands of times per second and exceeding the vector database's read quota.\n\nError Manifestation\n\nAfter rate limiting kicks in, later queries for that profile time out or degrade to empty results. The Agent cannot offer personalized suggestions, and users complain about instability.\n\nSolution\n\n1. Add multi-level caching for hot memories: L1 in-process cache → L2 Redis → L3 vector database\n2. Shard read replicas of hot memories to distribute load\n3. Use approximate-memory snapshots: periodically generate static summary files e.g., JSON for hot profiles and serve them from object storage\n\nPrinciple\n\nEvery storage system has access limits. Frequently accessed long-term memory concentrates load on a single point. Multi-level caching and read sharding are standard patterns for hotspots.\n\n---\n\n Case 15: Long-term Memory Management Errors — Forgetting Curve Misalignment\n\nScenario\n\nThe Agent applies the Ebbinghaus forgetting curve: new memories decay 20% after one day, 50% after seven days, and 80% after thirty days. In a project-management scenario, the user creates a memory: \"Product launch plan in three months.\" Under the default curve, the memory decays to near-unretrievable before the launch.\n\nError Manifestation\n\nA week before launch, the user asks, \"What is our launch plan?\" The Agent cannot retrieve it from long-term memory and replies, \"I have no information about the launch plan.\" The user thinks the Agent has a bad memory.\n\nSolution\n\n1. Use custom decay strategies by memory type: different curves for todos, plans, and facts\n2. Introduce importance markers: users or the system can mark a memory as important, skipping decay or extending retention\n3. Set reminders for time-sensitive memories so their weights rise automatically at trigger times\n\nPrinciple\n\nA single forgetting curve cannot fit every business timescale. Project management needs month-level memory; casual chat may need only hour-level memory. Adaptive decay matches business needs.\n\n\n> Source: Agent Search",
-      "content_html": null,
-      "summary": "This installment covers Agent memory error cases 11–15, including Long-term Memory Management Errors.",
-      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-11-15/",
-      "date_published": "2026-06-23T00:00:00.000Z",
-      "date_modified": "2026-06-23T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Long-term Memory",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-11-15/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 11–15. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-11-15/",
-        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 11–15.\" 2026. Web. 2026-06-23.",
-        "gb": "Arlen. Agent Memory Errors Handbook: Cases 11–15[EB/OL]. 2026-06-23. https://strongya.dev/en/posts/agent-memory-errors-cases-11-15/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 893,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-11-15.md",
       "slug": "agent-memory-errors-cases-11-15",
       "title": "《Agent记忆错误的100个案例手册》第 11–15 案例",
@@ -2363,6 +2323,46 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 1703,
+        "readingTime": 5
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-11-15.en.md",
+      "slug": "agent-memory-errors-cases-11-15",
+      "title": "Agent Memory Errors Handbook: Cases 11–15",
+      "content_text": " Agent Memory Errors Handbook: Cases 11–15\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 11: Long-term Memory Management Errors — Episodic Memory Duplicate Storage\n\nScenario\n\nAfter every conversation, the Agent stores a dialogue summary in long-term memory. A user repeatedly asks the same question, such as \"What is my server password?\" Each answer creates a new memory: \"User asked for server password; answer is XXX.\" After six months, 47 nearly identical memories accumulate under this topic.\n\nError Manifestation\n\nWhen answering related questions, the Agent retrieves several of these memories. Because the summaries differ slightly in wording, the Agent gives inconsistent answers across sessions, sometimes citing multiple versions in one reply and appearing self-contradictory.\n\nSolution\n\n1. Deduplicate semantically before storing: compare new memories with existing ones and merge when similarity exceeds a threshold\n2. Track \"last updated\" timestamps and access counts; merge by keeping the latest version and accumulating counts\n3. Periodically run memory compaction: cluster memories on the same topic and generate a unified summary\n\nPrinciple\n\nContinuous accumulation of episodic memory causes storage bloat and redundancy. Human memory consolidates similar experiences; Agent memory systems need analogous mechanisms to stay consistent.\n\n---\n\n Case 12: Long-term Memory Management Errors — Procedural Memory Overwrite Bugfix\n\nScenario\n\nA programming Agent stores procedural memory for \"How to fix Python's UnicodeDecodeError.\" A user encounters a CSV encoding error, and the Agent generates a scenario-specific fix and stores it. Later, another user encounters a different UnicodeDecodeError JSON encoding, the Agent generates a new fix, and overwrites the old memory.\n\nError Manifestation\n\nWhen the first user hits the CSV problem again, the Agent gives the JSON-scenario fix using json.loads's encoding parameter, which is completely inapplicable and confuses the user.\n\nSolution\n\n1. Store procedural memory as condition-action pairs, explicitly recording each memory's applicable scenario\n2. Match conditions before overwriting: only overwrite when the new solution applies to the same or a more general scenario\n3. Add memory version control so historical versions remain available and the most relevant one can be selected\n\nPrinciple\n\nProcedural memory encodes how-to knowledge and is tightly coupled to specific scenarios. Direct overwriting destroys the scenario-solution mapping. Conditional storage lets knowledge for different scenarios coexist.\n\n---\n\n Case 13: Long-term Memory Management Errors — Semantic Memory Inheritance Conflict\n\nScenario\n\nA knowledge-graph Agent builds semantic memory with an object-oriented multiple-inheritance model. The entity \"Electric Vehicle\" inherits from \"Car\" attribute: needs refueling and \"Electric Device\" attribute: needs charging. When the user asks, \"Does an electric vehicle need refueling?\" the Agent must choose between two contradictory parent attributes.\n\nError Manifestation\n\nThe Agent gives inconsistent answers: once \"needs refueling\" from Car, once \"no\" from Electric Device, with no consistent decision rule.\n\nSolution\n\n1. Set inheritance priorities e.g., subclass > direct parent > indirect parent or use C3 linearization\n2. Explicitly flag conflicting attributes and trigger a conflict-resolution flow that asks for more context\n3. Use probabilistic inheritance: compute attribute likelihood weighted by association strength to each category\n\nPrinciple\n\nInheritance conflicts in semantic memory are a classic knowledge-representation problem. Without conflict resolution, systems behave nondeterministically and erode user trust.\n\n---\n\n Case 14: Long-term Memory Management Errors — Memory Access Pattern Hotspot Exhaustion\n\nScenario\n\nA social-media Agent maintains a user-profile memory for every followed user. A celebrity has one million followers, and every follower's query about \"how to interact with X\" triggers retrieval of that celebrity's profile. The memory becomes a hotspot, accessed thousands of times per second and exceeding the vector database's read quota.\n\nError Manifestation\n\nAfter rate limiting kicks in, later queries for that profile time out or degrade to empty results. The Agent cannot offer personalized suggestions, and users complain about instability.\n\nSolution\n\n1. Add multi-level caching for hot memories: L1 in-process cache → L2 Redis → L3 vector database\n2. Shard read replicas of hot memories to distribute load\n3. Use approximate-memory snapshots: periodically generate static summary files e.g., JSON for hot profiles and serve them from object storage\n\nPrinciple\n\nEvery storage system has access limits. Frequently accessed long-term memory concentrates load on a single point. Multi-level caching and read sharding are standard patterns for hotspots.\n\n---\n\n Case 15: Long-term Memory Management Errors — Forgetting Curve Misalignment\n\nScenario\n\nThe Agent applies the Ebbinghaus forgetting curve: new memories decay 20% after one day, 50% after seven days, and 80% after thirty days. In a project-management scenario, the user creates a memory: \"Product launch plan in three months.\" Under the default curve, the memory decays to near-unretrievable before the launch.\n\nError Manifestation\n\nA week before launch, the user asks, \"What is our launch plan?\" The Agent cannot retrieve it from long-term memory and replies, \"I have no information about the launch plan.\" The user thinks the Agent has a bad memory.\n\nSolution\n\n1. Use custom decay strategies by memory type: different curves for todos, plans, and facts\n2. Introduce importance markers: users or the system can mark a memory as important, skipping decay or extending retention\n3. Set reminders for time-sensitive memories so their weights rise automatically at trigger times\n\nPrinciple\n\nA single forgetting curve cannot fit every business timescale. Project management needs month-level memory; casual chat may need only hour-level memory. Adaptive decay matches business needs.\n\n\n> Source: Agent Search",
+      "content_html": null,
+      "summary": "This installment covers Agent memory error cases 11–15, including Long-term Memory Management Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-11-15/",
+      "date_published": "2026-06-23T00:00:00.000Z",
+      "date_modified": "2026-06-23T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Long-term Memory",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-11-15/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 11–15. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-11-15/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 11–15.\" 2026. Web. 2026-06-23.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 11–15[EB/OL]. 2026-06-23. https://strongya.dev/en/posts/agent-memory-errors-cases-11-15/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 893,
         "readingTime": 5
       }
     },
@@ -2669,49 +2669,6 @@
       }
     },
     {
-      "id": "agent-external-data-compliance.en.md",
-      "slug": "agent-external-data-compliance",
-      "title": "Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling",
-      "content_text": " Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling\n\n> —From legal minefields to technical self-healing, a practical defense handbook for AI architects\n\n---\n\n Introduction: Why Your Agent Might Be \"Crawling Data Illegally\"\n\nIn 2026, if your AI Agent is still using requests.get to crudely scrape web data, it may be simultaneously collapsing on three battlefields: legal lawsuits, server bans, and user trust erosion.\n\nThis is not alarmism. X Corp formerly Twitter sued Cohere in late 2023, accusing it of unauthorized data scraping for model training. GDPR Article 5 explicitly stipulates the data \"minimization\" principle. China's \"Interim Measures for the Management of Generative AI Services\" Article 7 requires training data to \"have legal sources.\" Meanwhile, traditional crawler success rates on top websites have plummeted from about 60% in 2023 to about 15% in 2026—Cloudflare, Akamai and others have evolved bot detection to \"mouse trajectory-level\" biometric identification.\n\nA more hidden risk is hallucination contamination: although RAG architecture reduces model hallucinations, if an Agent crawls incorrect external data outdated web pages, wrong API responses, the LLM will generate more believable lies based on this \"toxic context\"—and these errors are harder for humans to detect than pure hallucinations.\n\nCore problem: Enterprises and developers need a complete \"Pre-Check → In-Flight → Post-Check\" three-stage closed-loop framework to manage the full lifecycle of Agent external information sources.\n\n---\n\n Core Framework: Three-Stage Closed Loop\n\n Stage One: Pre-Check—Should We Crawl It?\n\nBefore an Agent connects to any information source, it must pass four general admission assessments:\n\n1. Legal Compliance Scan\n- Robots.txt: Not a suggestion, but a legal risk boundary. After hiQ Labs v. LinkedIn, U.S. courts have treated robots.txt as \"part of the terms of service.\" Agent systems must have built-in parsers to hard-block Disallow: /.\n- ToS Terms of Service: Recommend using NLP models e.g., BERT-ToS-classifier to automatically scan risk levels. High risk = explicitly prohibits automated access; medium risk = prohibits \"excessive\" access; low risk = allows but requires source attribution.\n- Data Retention Policy: Public web data ≤90 days, API responses ≤30 days, enterprise sensitive data ≤7 days. GDPR Article 17 \"right to be forgotten\" requires systems to support one-click deletion.\n\n2. Data Quality Baseline\nBefore deciding \"worth crawling,\" quantify five dimensions: field completeness ≥95%, cross-validation accuracy ≥98%, timeliness finance ≤1 minute/news ≤5 minutes, 30-day availability ≥99.5%, structured degree ≥80%. Any dimension not meeting standard = veto, enter observation list.\n\nDifferentiated Assessment for Three Types of Sources:\n\n| Source Type | Core Risk | Key Decision Point |\n|-----------|---------|-----------|\n| Public web pages | Anti-crawl confrontation costs rising exponentially | L4+ CAPTCHA confrontation monthly cost $1000-3000, success rate only 40-60%. Prefer official APIs |\n| Paid APIs | Hidden costs and version changes | TCO = subscription + overage + integration + maintenance + opportunity costs. API version changes are a top-3 production failure cause |\n| Enterprise intranet | Data leakage and production load impact | Must go through DAL Data Access Layer, implement row/column-level permission filtering. Prohibit Agents from directly connecting to production DBs |\n\n Stage Two: In-Flight—How to Crawl? What If Banned?\n\n1. Adaptive Rate Limiting Technical Good Citizen\n\nTraditional fixed rate limiting e.g., 1 req/s is outdated. Recommended: adaptive token bucket algorithm: dynamically adjust based on server response signals. 429 status → reduce 50%; 503 → reduce 70%; response time >2s → reduce 20%; <500ms → allow speedup 10%.\n\nKey parameters: initial 0.5 req/s, max not exceeding robots.txt declaration, token bucket capacity = 2× current rate.\n\n2. Three-Layer Parsing Auto-Degradation\n\nWebsite redesign is the Agent's \"chronic killer\"—XPath fails but HTTP 200 returns normally, and the system silently produces dirty data. Solution:\n\n- Layer 1: Precise DOM parsing CSS Selector/XPath → auto-degrade when field missing rate >30%\n- Layer 2: HTML→Markdown + regex/NER extraction → continue degrading when extraction rate <50%\n- Layer 3: Plain text semantic extraction → feed to LLM for understanding, highest cost but final fallback\n\n3. Self-Healing Mechanisms\n\n| Failure Type | Self-Healing Strategy | Key Parameters |\n|---------|---------|---------|\n| 429/503 rate limiting | Exponential backoff 1→2→4→8→16s + random jitter | Max 5 retries, single upper limit 60s |\n| 403 ban | Proxy IP pool switching, overheated IP cooling ≥30min | Datacenter/residential/mobile proxy tiering |\n| DOM structure change | Auto-switch to Layer 2/3, trigger alert | Daily hash comparison, difference >30% triggers |\n| Multi-source data conflict | Weighted arbitration model source weight × timeliness factor × consistency factor | Difference rate >5% triggers human intervention |\n\n Stage Three: Post-Check—Is the Crawled Data Trustworthy?\n\n1. Cleaning and Denoising\nRaw web pages contain 40-70% noise. Cleaning targets: ad removal ≥95%, navigation removal ≥98%, footer ≥99%, comments/social plugins ≥90%.\n\n2. Push Hallucination Rate Below 1%\nThree-layer defense:\n- Source side: numerical rationality checks stock prices can't be negative + NER knowledge graph validation \"Tim Cook is Apple CEO\"\n- Generation side: RAG-constrained generation prompt \"answer only based on provided documents, no inference\" + mandatory citations ^1 markers + temperature=0.0-0.2\n- Output side: self-consistency check compare 3 answers to same question + fact-check API Google Fact Check + human spot checks finance 100%/customer service 5%/internal reports 20%\n\n3. 100% Traceability\nEach data chunk gets a unique chunkid; original HTML snapshots retained 30-90 days. ^1 markers in LLM output must be clickable back to full metadata URL, crawl time, parsing version, validation status.\n\n4. 100-Point Quantitative Scoring Table\n\n| Dimension | Weight | Key Sub-item | Knock-out? |\n|------|------|---------|----------|\n| Data completeness | 15% | Field completeness ≥95% | No |\n| Data accuracy | 25% | Cross-validation consistency ≥98% | No |\n| Data timeliness | 15% | Sync delay ≤ scenario threshold | No |\n| Data cleaning quality | 15% | Noise removal ≥90% | No |\n| Traceability & explainability | 15% | Traceability coverage 100% | No |\n| System stability | 10% | 30-day availability ≥99.5% | No |\n| Data security | 5% | TLS 1.3/mTLS coverage 100% | No |\n| Legal compliance | — | Unauthorized crawling / PII leakage | Yes |\n| Security incident | — | Data source ban / alert | Yes |\n\nScore levels: 90-100 🟢 production-ready; 80-89 🟡 deploy + improvement plan; 70-79 🟠 rectify and re-evaluate; <70 🔴 prohibited from deployment.\n\n---\n\n High-Risk Domains: Knock-out Criteria\n\nIn four domains, general standards are insufficient; Knock-out Criteria must be introduced:\n\n| Domain | Knock-out Item | Mandatory Requirement |\n|------|----------|---------|\n| Finance | Unaudited data source; real-time delay >3s; no risk control check | Traceability chain satisfies SEC/MiFID II audit |\n| Healthcare | Non-evidence-based sources Wikipedia/blogs; PHI leakage; drug dosage advice | Output includes disclaimer + evidence level Level A/B/C |\n| Cross-border e-commerce | IP infringement; price change >30% 24h; unofficial customs/tax data | Multi-currency with exchange rate source and timestamp |\n| Scientific literature | Non-peer-reviewed sources; retracted papers; fake journals | Citations must include DOI + journal name + publication date |\n\n---\n\n Conclusion: Why Is This Framework Worth Implementing Now?\n\nThree strategic values:\n\n1. Risk firewall: No framework = running naked. One GDPR lawsuit can wipe out the full-year ROI of AI investment.\n2. Quality foundation: RAG's \"garbage in, garbage out\" law has been verified. Without acceptance mechanisms, user trust collapses within 3-6 months.\n3. Cost optimization: Standardized crawling adaptive rate limiting, precise parsing, cache reuse can reduce external data costs by 40-60%. Unordered crawling's proxy IP consumption, API overage fees, and ban losses are \"invisible budget black holes.\"\n\nIn the next 12-18 months, Agent information sources will expand from pure text to images, videos, audio, and scanned PDFs multimodal crawling. The framework needs to cover in advance: OCR structured extraction, video keyframes + ASR, multimodal consistency checks. Meanwhile, AI-driven compliance auto-auditing LLM automatically scanning ToS/robots.txt will compress compliance audits from \"person-day level\" to \"minute level.\"\n\n---\n\n References and Data Sources\n\nThis report is compiled based on the following core sources:\n\n- Legal cases: hiQ Labs v. LinkedIn 2022, X Corp v. Cohere Inc. 2023.12, Thomson Reuters v. ROSS Intelligence 2025, Guangzhou Internet Court AI training case precedent 2025\n- Industry reports: Gartner 2025 AI Agent Deployment Survey, Postman 2025 State of API Report\n- Regulatory standards: GDPR EU 2016/679, AI Act EU 2024/1689, China \"Interim Measures for the Management of Generative AI Services\" 2023, CCPA/CPRA California, HIPAA US, SEC Regulation SCI, MiFID II EU, robots.txt RFC 9309 2024\n- Technical tools: Scrapy, Playwright, Selenium, readability-lxml, trafilatura, Presidio, tenacity, jsonschema, pydantic, Celery, Prometheus+Grafana, MinIO, AWS Secrets Manager, HashiCorp Vault\n- Anti-crawl/security: Cloudflare, Akamai, DataDome, PerimeterX, Bright Data, Oxylabs, Smartproxy\n- Databases/storage: ClickHouse, Snowflake, PostgreSQL, MySQL, Redis, ProxySQL, PgBouncer\n\nData cutoff date: 2026-06-15",
-      "content_html": null,
-      "summary": "From legal minefields to technical self-healing—a practical defense handbook for AI architects. This article provides a 'Pre-Check → In-Flight → Post-Check' three-stage closed-loop framework for managing the full lifecycle of Agent external information sources.",
-      "url": "https://strongya.dev/en/posts/agent-external-data-compliance/",
-      "date_published": "2026-06-15T00:00:00.000Z",
-      "date_modified": "2026-06-15T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Agent",
-        "Data Compliance",
-        "Web Scraping",
-        "RAG",
-        "Security"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-external-data-compliance/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling. Retrieved from https://strongya.dev/en/posts/agent-external-data-compliance/",
-        "mla": "Arlen. \"Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling.\" 2026. Web. 2026-06-15.",
-        "gb": "Arlen. Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling[EB/OL]. 2026-06-15. https://strongya.dev/en/posts/agent-external-data-compliance/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1392,
-        "readingTime": 7
-      }
-    },
-    {
       "id": "agent-external-data-compliance.md",
       "slug": "agent-external-data-compliance",
       "title": "你的AI Agent正在'裸奔'：外部数据抓取的隐秘战场与生存法则",
@@ -2752,6 +2709,49 @@
         "content_type": "article",
         "wordCount": 2195,
         "readingTime": 6
+      }
+    },
+    {
+      "id": "agent-external-data-compliance.en.md",
+      "slug": "agent-external-data-compliance",
+      "title": "Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling",
+      "content_text": " Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling\n\n> —From legal minefields to technical self-healing, a practical defense handbook for AI architects\n\n---\n\n Introduction: Why Your Agent Might Be \"Crawling Data Illegally\"\n\nIn 2026, if your AI Agent is still using requests.get to crudely scrape web data, it may be simultaneously collapsing on three battlefields: legal lawsuits, server bans, and user trust erosion.\n\nThis is not alarmism. X Corp formerly Twitter sued Cohere in late 2023, accusing it of unauthorized data scraping for model training. GDPR Article 5 explicitly stipulates the data \"minimization\" principle. China's \"Interim Measures for the Management of Generative AI Services\" Article 7 requires training data to \"have legal sources.\" Meanwhile, traditional crawler success rates on top websites have plummeted from about 60% in 2023 to about 15% in 2026—Cloudflare, Akamai and others have evolved bot detection to \"mouse trajectory-level\" biometric identification.\n\nA more hidden risk is hallucination contamination: although RAG architecture reduces model hallucinations, if an Agent crawls incorrect external data outdated web pages, wrong API responses, the LLM will generate more believable lies based on this \"toxic context\"—and these errors are harder for humans to detect than pure hallucinations.\n\nCore problem: Enterprises and developers need a complete \"Pre-Check → In-Flight → Post-Check\" three-stage closed-loop framework to manage the full lifecycle of Agent external information sources.\n\n---\n\n Core Framework: Three-Stage Closed Loop\n\n Stage One: Pre-Check—Should We Crawl It?\n\nBefore an Agent connects to any information source, it must pass four general admission assessments:\n\n1. Legal Compliance Scan\n- Robots.txt: Not a suggestion, but a legal risk boundary. After hiQ Labs v. LinkedIn, U.S. courts have treated robots.txt as \"part of the terms of service.\" Agent systems must have built-in parsers to hard-block Disallow: /.\n- ToS Terms of Service: Recommend using NLP models e.g., BERT-ToS-classifier to automatically scan risk levels. High risk = explicitly prohibits automated access; medium risk = prohibits \"excessive\" access; low risk = allows but requires source attribution.\n- Data Retention Policy: Public web data ≤90 days, API responses ≤30 days, enterprise sensitive data ≤7 days. GDPR Article 17 \"right to be forgotten\" requires systems to support one-click deletion.\n\n2. Data Quality Baseline\nBefore deciding \"worth crawling,\" quantify five dimensions: field completeness ≥95%, cross-validation accuracy ≥98%, timeliness finance ≤1 minute/news ≤5 minutes, 30-day availability ≥99.5%, structured degree ≥80%. Any dimension not meeting standard = veto, enter observation list.\n\nDifferentiated Assessment for Three Types of Sources:\n\n| Source Type | Core Risk | Key Decision Point |\n|-----------|---------|-----------|\n| Public web pages | Anti-crawl confrontation costs rising exponentially | L4+ CAPTCHA confrontation monthly cost $1000-3000, success rate only 40-60%. Prefer official APIs |\n| Paid APIs | Hidden costs and version changes | TCO = subscription + overage + integration + maintenance + opportunity costs. API version changes are a top-3 production failure cause |\n| Enterprise intranet | Data leakage and production load impact | Must go through DAL Data Access Layer, implement row/column-level permission filtering. Prohibit Agents from directly connecting to production DBs |\n\n Stage Two: In-Flight—How to Crawl? What If Banned?\n\n1. Adaptive Rate Limiting Technical Good Citizen\n\nTraditional fixed rate limiting e.g., 1 req/s is outdated. Recommended: adaptive token bucket algorithm: dynamically adjust based on server response signals. 429 status → reduce 50%; 503 → reduce 70%; response time >2s → reduce 20%; <500ms → allow speedup 10%.\n\nKey parameters: initial 0.5 req/s, max not exceeding robots.txt declaration, token bucket capacity = 2× current rate.\n\n2. Three-Layer Parsing Auto-Degradation\n\nWebsite redesign is the Agent's \"chronic killer\"—XPath fails but HTTP 200 returns normally, and the system silently produces dirty data. Solution:\n\n- Layer 1: Precise DOM parsing CSS Selector/XPath → auto-degrade when field missing rate >30%\n- Layer 2: HTML→Markdown + regex/NER extraction → continue degrading when extraction rate <50%\n- Layer 3: Plain text semantic extraction → feed to LLM for understanding, highest cost but final fallback\n\n3. Self-Healing Mechanisms\n\n| Failure Type | Self-Healing Strategy | Key Parameters |\n|---------|---------|---------|\n| 429/503 rate limiting | Exponential backoff 1→2→4→8→16s + random jitter | Max 5 retries, single upper limit 60s |\n| 403 ban | Proxy IP pool switching, overheated IP cooling ≥30min | Datacenter/residential/mobile proxy tiering |\n| DOM structure change | Auto-switch to Layer 2/3, trigger alert | Daily hash comparison, difference >30% triggers |\n| Multi-source data conflict | Weighted arbitration model source weight × timeliness factor × consistency factor | Difference rate >5% triggers human intervention |\n\n Stage Three: Post-Check—Is the Crawled Data Trustworthy?\n\n1. Cleaning and Denoising\nRaw web pages contain 40-70% noise. Cleaning targets: ad removal ≥95%, navigation removal ≥98%, footer ≥99%, comments/social plugins ≥90%.\n\n2. Push Hallucination Rate Below 1%\nThree-layer defense:\n- Source side: numerical rationality checks stock prices can't be negative + NER knowledge graph validation \"Tim Cook is Apple CEO\"\n- Generation side: RAG-constrained generation prompt \"answer only based on provided documents, no inference\" + mandatory citations ^1 markers + temperature=0.0-0.2\n- Output side: self-consistency check compare 3 answers to same question + fact-check API Google Fact Check + human spot checks finance 100%/customer service 5%/internal reports 20%\n\n3. 100% Traceability\nEach data chunk gets a unique chunkid; original HTML snapshots retained 30-90 days. ^1 markers in LLM output must be clickable back to full metadata URL, crawl time, parsing version, validation status.\n\n4. 100-Point Quantitative Scoring Table\n\n| Dimension | Weight | Key Sub-item | Knock-out? |\n|------|------|---------|----------|\n| Data completeness | 15% | Field completeness ≥95% | No |\n| Data accuracy | 25% | Cross-validation consistency ≥98% | No |\n| Data timeliness | 15% | Sync delay ≤ scenario threshold | No |\n| Data cleaning quality | 15% | Noise removal ≥90% | No |\n| Traceability & explainability | 15% | Traceability coverage 100% | No |\n| System stability | 10% | 30-day availability ≥99.5% | No |\n| Data security | 5% | TLS 1.3/mTLS coverage 100% | No |\n| Legal compliance | — | Unauthorized crawling / PII leakage | Yes |\n| Security incident | — | Data source ban / alert | Yes |\n\nScore levels: 90-100 🟢 production-ready; 80-89 🟡 deploy + improvement plan; 70-79 🟠 rectify and re-evaluate; <70 🔴 prohibited from deployment.\n\n---\n\n High-Risk Domains: Knock-out Criteria\n\nIn four domains, general standards are insufficient; Knock-out Criteria must be introduced:\n\n| Domain | Knock-out Item | Mandatory Requirement |\n|------|----------|---------|\n| Finance | Unaudited data source; real-time delay >3s; no risk control check | Traceability chain satisfies SEC/MiFID II audit |\n| Healthcare | Non-evidence-based sources Wikipedia/blogs; PHI leakage; drug dosage advice | Output includes disclaimer + evidence level Level A/B/C |\n| Cross-border e-commerce | IP infringement; price change >30% 24h; unofficial customs/tax data | Multi-currency with exchange rate source and timestamp |\n| Scientific literature | Non-peer-reviewed sources; retracted papers; fake journals | Citations must include DOI + journal name + publication date |\n\n---\n\n Conclusion: Why Is This Framework Worth Implementing Now?\n\nThree strategic values:\n\n1. Risk firewall: No framework = running naked. One GDPR lawsuit can wipe out the full-year ROI of AI investment.\n2. Quality foundation: RAG's \"garbage in, garbage out\" law has been verified. Without acceptance mechanisms, user trust collapses within 3-6 months.\n3. Cost optimization: Standardized crawling adaptive rate limiting, precise parsing, cache reuse can reduce external data costs by 40-60%. Unordered crawling's proxy IP consumption, API overage fees, and ban losses are \"invisible budget black holes.\"\n\nIn the next 12-18 months, Agent information sources will expand from pure text to images, videos, audio, and scanned PDFs multimodal crawling. The framework needs to cover in advance: OCR structured extraction, video keyframes + ASR, multimodal consistency checks. Meanwhile, AI-driven compliance auto-auditing LLM automatically scanning ToS/robots.txt will compress compliance audits from \"person-day level\" to \"minute level.\"\n\n---\n\n References and Data Sources\n\nThis report is compiled based on the following core sources:\n\n- Legal cases: hiQ Labs v. LinkedIn 2022, X Corp v. Cohere Inc. 2023.12, Thomson Reuters v. ROSS Intelligence 2025, Guangzhou Internet Court AI training case precedent 2025\n- Industry reports: Gartner 2025 AI Agent Deployment Survey, Postman 2025 State of API Report\n- Regulatory standards: GDPR EU 2016/679, AI Act EU 2024/1689, China \"Interim Measures for the Management of Generative AI Services\" 2023, CCPA/CPRA California, HIPAA US, SEC Regulation SCI, MiFID II EU, robots.txt RFC 9309 2024\n- Technical tools: Scrapy, Playwright, Selenium, readability-lxml, trafilatura, Presidio, tenacity, jsonschema, pydantic, Celery, Prometheus+Grafana, MinIO, AWS Secrets Manager, HashiCorp Vault\n- Anti-crawl/security: Cloudflare, Akamai, DataDome, PerimeterX, Bright Data, Oxylabs, Smartproxy\n- Databases/storage: ClickHouse, Snowflake, PostgreSQL, MySQL, Redis, ProxySQL, PgBouncer\n\nData cutoff date: 2026-06-15",
+      "content_html": null,
+      "summary": "From legal minefields to technical self-healing—a practical defense handbook for AI architects. This article provides a 'Pre-Check → In-Flight → Post-Check' three-stage closed-loop framework for managing the full lifecycle of Agent external information sources.",
+      "url": "https://strongya.dev/en/posts/agent-external-data-compliance/",
+      "date_published": "2026-06-15T00:00:00.000Z",
+      "date_modified": "2026-06-15T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Agent",
+        "Data Compliance",
+        "Web Scraping",
+        "RAG",
+        "Security"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-external-data-compliance/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling. Retrieved from https://strongya.dev/en/posts/agent-external-data-compliance/",
+        "mla": "Arlen. \"Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling.\" 2026. Web. 2026-06-15.",
+        "gb": "Arlen. Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling[EB/OL]. 2026-06-15. https://strongya.dev/en/posts/agent-external-data-compliance/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1392,
+        "readingTime": 7
       }
     },
     {
@@ -2841,50 +2841,6 @@
       }
     },
     {
-      "id": "agent-architecture-fork.en.md",
-      "slug": "agent-architecture-fork",
-      "title": "AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds",
-      "content_text": " AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds\n\n> From LangGraph to Actor models, from \"stop and ask humans\" to \"keep running in async messages\"—the evolution path of industrial-grade Agents is more complex than it looks.\n\n---\n\n Introduction: Why Is Your Agent Stuck Between \"Toy\" and \"Production\"?\n\nIf you've built Agents with LangChain or CrewAI, you've probably encountered this scenario:\n\n> The Agent pauses halfway through execution, waiting for you to confirm a critical step. You go grab a coffee, come back, and it's still waiting. Meanwhile, another Agent task your colleague started is stuck in the scheduler queue because of the blocked task.\n\nThis is the epitome of first-generation Agent architecture in 2024-2025: it works, but when faced with concurrency, long-duration tasks, and human-AI collaboration, it starts to break.\n\nBy 2026, second-generation architecture Actor model + MCP + native memory is being discussed as the \"cure.\" But this article isn't saying \"generation one is outdated, generation two is invincible\"—rather, the two generations solve different problems, and each has blind spots.\n\n---\n\n Core Architecture Comparison: From \"Directed Graph\" to \"Asynchronous Network\"\n\n Generation One: Graph State Machines LangGraph / AutoGen v0.2\n\nThe core idea is to draw the Agent execution flow as a graph: nodes = function calls, edges = conditional branches. LangGraph's innovation is the State object—a typed data container passed between nodes, with automatic Checkpointing at key positions.\n\nWhen humans need to intervene HIL, the system pauses the entire graph execution and waits for human input. Simple and traceable, but the problems are:\n\n- Concurrency blocking: 100 Agents waiting for your confirmation simultaneously fill up the scheduler with suspended tasks, and new tasks can't get in\n- Frozen context: After pausing for 3 hours, the external world stock prices, databases has changed, but the Agent still reasons with the old snapshot\n- Changing workflow = changing graph: Business rules change, and you have to redraw nodes and edges and redeploy\n\n Generation Two: Actor Networks AutoGen Core / Distributed Agents\n\nEach Agent is an independent Actor: has its own state, its own message mailbox. When human intervention is needed, it doesn't pause the whole system—instead, it sends a message to a \"Human Review Actor\" and keeps doing other things. When the human replies, it comes back through the message queue.\n\nCore change: from \"global blocking\" to \"asynchronous messaging.\" In theory, 5000 Agents needing confirmation simultaneously can queue in mailboxes without blocking the whole system.\n\nThe MCP protocol open-sourced by Anthropic in late 2024 pushes this design to the standard layer: tools are no longer part of the Agent's code, but external services called through a unified protocol. Between the tool layer and Agent layer, you can insert security gateways, audit logs, and approval controls—every tool has independent permission checks.\n\nNative memory turns the previously external vector database RAG into the Agent's own \"memory layer\": each Actor's State contains its own long-term memory, which can be loaded, compressed, and forgotten on demand. Instead of searching similar documents from an external database, the Agent itself remembers what should be remembered.\n\n---\n\n Differences in Three Real-World Scenarios\n\n Scenario One: Cloud Operations Agent\n\nA cloud provider needs an Agent to monitor thousands of instances 7×24, auto-scale, rollback, and get SRE confirmation before critical operations.\n\n- Generation One: Every alert triggers HIL, all Agents hang waiting. SRE gets flooded with 300 notifications at 3 AM.\n- Generation Two: Each service is an independent Actor; when confirmation is needed, it sends a message to the review queue. SRE approves in batches in the morning, while Agents continue monitoring other instances. No blocking.\n\nBut there's an underestimated pitfall: debugging Actor models. With 300 independent Actors communicating asynchronously, logs scatter like a plate of spaghetti, and root cause localization is an order of magnitude harder than first-generation graph structures.\n\n Scenario Two: Investment Bank Compliance Review\n\nThe Agent compares transaction records, client agreements, and regulatory rules; suspicious transactions need compliance officers to qualify risks.\n\n- Generation One: The review workflow is drawn as a static graph; when the compliance officer intervenes, the whole case pauses. In a 4-week review cycle, Agent and compliance officer spend most of their time waiting for each other.\n- Generation Two: Multiple compliance officers can intervene asynchronously, with complete and traceable event logs. Theoretically, review cycles can compress from 4 weeks to 1.5-2 weeks.\n\nBut compliance's biggest enemy isn't efficiency, it's accountability. If the Agent autonomously makes certain judgments during the async process and turns out to be wrong, whose responsibility is it? Regulators may trust the synchronous \"stop and wait for human confirmation\" model more.\n\n Scenario Three: Diabetes Chronic Disease Follow-up\n\nThe Agent regularly collects patient data, alerts doctors when abnormal, and maintains consistent patient profiles across channels App / phone / offline.\n\n- Generation Two: One independent Actor per patient, with layered memory blood glucose → symptoms → risk profile. Theoretically consistent cross-channel experience and reduced doctor workload.\n- But the risk of native memory: If the Agent remembers incorrectly e.g., marks a patient as \"having hypoglycemia history\" when they don't, this error gets reinforced repeatedly and may even lead to wrong recommendations. Healthcare scenarios demand memory accuracy far beyond what current technology can stably guarantee.\n\n---\n\n Four Hard Problems Still Unsolved\n\nThe report passed cross-validation by 4 independent auditing Agents; none considered the following problems \"solved\":\n\n1. Asynchronous ordering: With 5 Actors communicating out of order, how to ensure causal logic doesn't collapse?\n2. Memory forgetting: Agent \"forgetting\" isn't deletion, but marking \"expired\"—but how to decide what to forget? What weights to retain? Humans themselves haven't figured this out.\n3. Policy conflicts: Organizational policy vs. project policy vs. personal policy—who overrides whom? Current mainstream approach is \"take the strictest,\" but the result may be business deadlock.\n4. Blurred human-machine boundary: As Agents get better, HIL shifts from \"machine asks when it doesn't know\" to \"machine isn't sure whether it should ask\"—human judgment ability may反而退化 instead.\n\n---\n\n Conclusion: Not an \"Upgrade,\" a \"Fork\"\n\nSecond-generation architecture Actor + MCP + native memory is not a replacement for the first generation, but another solution for different scenarios.\n\n| Scenario | Recommended Architecture | Reason |\n|------|---------|------|\n| Prototype / MVP | LangGraph / CrewAI | Fast, no need to think about architecture |\n| Single-process enterprise automation | LangGraph + MCP | Auditable, easy to debug |\n| High-concurrency 7×24 service | Actor model | Non-blocking, but extremely high debugging cost |\n| Finance / healthcare compliance | LangGraph + audit gateway | Auditability first; async HIL may not be accepted by regulators |\n| Most enterprises recommended | Hybrid: LangGraph orchestration + MCP tools + partial Actor subtasks | Gradual evolution, don't bet on one direction |\n\nA trend worth watching: in tech blogs and community discussions, second-generation architecture is packaged as an \"irreversible evolution\"—but this itself is over-optimistic. History is full of \"reverse evolution\" cases microservices reverting to monoliths, NoSQL reverting to SQL. If within 18 months native memory systems suffer large-scale \"memory contamination\" failures, or regulators explicitly reject async HIL, the momentum could reverse instantly.\n\n---\n\n Key Corrections From Audit Report, Cannot Be Ignored\n\n- LangGraph supported cyclic graphs from the beginning; it's not a pure DAG\n- AutoGen's Actor refactor appeared in v0.6+; there is no v0.4 version\n- Event sourcing provides eventual consistency, not strong consistency\n- The Actor model was invented in 1973, not designed to solve HIL problems\n- All quantitative data in cases concurrency 50→5000+, cycle 4→2 weeks are illustrative estimates, not independently verified, and should not be used as decision-making basis\n\n---\n\n One-Sentence Summary\n\n> In 2026, Agent architecture is not \"who eliminates whom\"—static graphs are irreplaceable in simple compliance scenarios, Actor models have advantages in high-concurrency scenarios, but both have their own debugging abyss and trust costs. When choosing architecture, first ask yourself: can you afford to spend three days searching async logs for bugs when something goes wrong? If not, LangGraph may be more honest.\n\n---\n\n References and Data Sources\n\n1. LangGraph Documentation — State Graph & Checkpointing 2024-2026\n2. AutoGen GitHub Releases — v0.6+ Core Architecture 2024-2025\n3. Model Context Protocol MCP Specification — Anthropic 2024-2025\n4. Mem0 Technical Documentation — Memory Layer for LLMs 2024\n5. Letta MemGPT Architecture — UC Berkeley / Letta Inc. 2023-2025\n6. Actor Model — Carl Hewitt 1973, applied to distributed systems\n7. Event Sourcing and CQRS Patterns — Martin Fowler 2005\n8. Industry practices — synthesized from cloud vendor technical blogs, financial sector architecture reviews, and healthcare AI platform documentation 2025-2026\n\n---\n\nData cutoff: 2026-06-14 | This report is based on ReAct 4-Agent cross-validation + 5-Pass final review, credibility rating: B",
-      "content_html": null,
-      "summary": "From LangGraph to Actor models, from 'stop and ask humans' to 'keep running in async messages'—the evolution path of industrial-grade Agents is more complex than it looks.",
-      "url": "https://strongya.dev/en/posts/agent-architecture-fork/",
-      "date_published": "2026-06-14T00:00:00.000Z",
-      "date_modified": "2026-06-14T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Agent",
-        "Architecture",
-        "LangGraph",
-        "Actor Model",
-        "MCP",
-        "Human-in-the-Loop"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-architecture-fork/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds. Retrieved from https://strongya.dev/en/posts/agent-architecture-fork/",
-        "mla": "Arlen. \"AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds.\" 2026. Web. 2026-06-14.",
-        "gb": "Arlen. AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds[EB/OL]. 2026-06-14. https://strongya.dev/en/posts/agent-architecture-fork/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1440,
-        "readingTime": 9
-      }
-    },
-    {
       "id": "agent-architecture-fork.md",
       "slug": "agent-architecture-fork",
       "title": "AI Agent 架构正在分岔：不是简单升级，而是两个世界",
@@ -2926,6 +2882,50 @@
         "content_type": "article",
         "wordCount": 2124,
         "readingTime": 6
+      }
+    },
+    {
+      "id": "agent-architecture-fork.en.md",
+      "slug": "agent-architecture-fork",
+      "title": "AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds",
+      "content_text": " AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds\n\n> From LangGraph to Actor models, from \"stop and ask humans\" to \"keep running in async messages\"—the evolution path of industrial-grade Agents is more complex than it looks.\n\n---\n\n Introduction: Why Is Your Agent Stuck Between \"Toy\" and \"Production\"?\n\nIf you've built Agents with LangChain or CrewAI, you've probably encountered this scenario:\n\n> The Agent pauses halfway through execution, waiting for you to confirm a critical step. You go grab a coffee, come back, and it's still waiting. Meanwhile, another Agent task your colleague started is stuck in the scheduler queue because of the blocked task.\n\nThis is the epitome of first-generation Agent architecture in 2024-2025: it works, but when faced with concurrency, long-duration tasks, and human-AI collaboration, it starts to break.\n\nBy 2026, second-generation architecture Actor model + MCP + native memory is being discussed as the \"cure.\" But this article isn't saying \"generation one is outdated, generation two is invincible\"—rather, the two generations solve different problems, and each has blind spots.\n\n---\n\n Core Architecture Comparison: From \"Directed Graph\" to \"Asynchronous Network\"\n\n Generation One: Graph State Machines LangGraph / AutoGen v0.2\n\nThe core idea is to draw the Agent execution flow as a graph: nodes = function calls, edges = conditional branches. LangGraph's innovation is the State object—a typed data container passed between nodes, with automatic Checkpointing at key positions.\n\nWhen humans need to intervene HIL, the system pauses the entire graph execution and waits for human input. Simple and traceable, but the problems are:\n\n- Concurrency blocking: 100 Agents waiting for your confirmation simultaneously fill up the scheduler with suspended tasks, and new tasks can't get in\n- Frozen context: After pausing for 3 hours, the external world stock prices, databases has changed, but the Agent still reasons with the old snapshot\n- Changing workflow = changing graph: Business rules change, and you have to redraw nodes and edges and redeploy\n\n Generation Two: Actor Networks AutoGen Core / Distributed Agents\n\nEach Agent is an independent Actor: has its own state, its own message mailbox. When human intervention is needed, it doesn't pause the whole system—instead, it sends a message to a \"Human Review Actor\" and keeps doing other things. When the human replies, it comes back through the message queue.\n\nCore change: from \"global blocking\" to \"asynchronous messaging.\" In theory, 5000 Agents needing confirmation simultaneously can queue in mailboxes without blocking the whole system.\n\nThe MCP protocol open-sourced by Anthropic in late 2024 pushes this design to the standard layer: tools are no longer part of the Agent's code, but external services called through a unified protocol. Between the tool layer and Agent layer, you can insert security gateways, audit logs, and approval controls—every tool has independent permission checks.\n\nNative memory turns the previously external vector database RAG into the Agent's own \"memory layer\": each Actor's State contains its own long-term memory, which can be loaded, compressed, and forgotten on demand. Instead of searching similar documents from an external database, the Agent itself remembers what should be remembered.\n\n---\n\n Differences in Three Real-World Scenarios\n\n Scenario One: Cloud Operations Agent\n\nA cloud provider needs an Agent to monitor thousands of instances 7×24, auto-scale, rollback, and get SRE confirmation before critical operations.\n\n- Generation One: Every alert triggers HIL, all Agents hang waiting. SRE gets flooded with 300 notifications at 3 AM.\n- Generation Two: Each service is an independent Actor; when confirmation is needed, it sends a message to the review queue. SRE approves in batches in the morning, while Agents continue monitoring other instances. No blocking.\n\nBut there's an underestimated pitfall: debugging Actor models. With 300 independent Actors communicating asynchronously, logs scatter like a plate of spaghetti, and root cause localization is an order of magnitude harder than first-generation graph structures.\n\n Scenario Two: Investment Bank Compliance Review\n\nThe Agent compares transaction records, client agreements, and regulatory rules; suspicious transactions need compliance officers to qualify risks.\n\n- Generation One: The review workflow is drawn as a static graph; when the compliance officer intervenes, the whole case pauses. In a 4-week review cycle, Agent and compliance officer spend most of their time waiting for each other.\n- Generation Two: Multiple compliance officers can intervene asynchronously, with complete and traceable event logs. Theoretically, review cycles can compress from 4 weeks to 1.5-2 weeks.\n\nBut compliance's biggest enemy isn't efficiency, it's accountability. If the Agent autonomously makes certain judgments during the async process and turns out to be wrong, whose responsibility is it? Regulators may trust the synchronous \"stop and wait for human confirmation\" model more.\n\n Scenario Three: Diabetes Chronic Disease Follow-up\n\nThe Agent regularly collects patient data, alerts doctors when abnormal, and maintains consistent patient profiles across channels App / phone / offline.\n\n- Generation Two: One independent Actor per patient, with layered memory blood glucose → symptoms → risk profile. Theoretically consistent cross-channel experience and reduced doctor workload.\n- But the risk of native memory: If the Agent remembers incorrectly e.g., marks a patient as \"having hypoglycemia history\" when they don't, this error gets reinforced repeatedly and may even lead to wrong recommendations. Healthcare scenarios demand memory accuracy far beyond what current technology can stably guarantee.\n\n---\n\n Four Hard Problems Still Unsolved\n\nThe report passed cross-validation by 4 independent auditing Agents; none considered the following problems \"solved\":\n\n1. Asynchronous ordering: With 5 Actors communicating out of order, how to ensure causal logic doesn't collapse?\n2. Memory forgetting: Agent \"forgetting\" isn't deletion, but marking \"expired\"—but how to decide what to forget? What weights to retain? Humans themselves haven't figured this out.\n3. Policy conflicts: Organizational policy vs. project policy vs. personal policy—who overrides whom? Current mainstream approach is \"take the strictest,\" but the result may be business deadlock.\n4. Blurred human-machine boundary: As Agents get better, HIL shifts from \"machine asks when it doesn't know\" to \"machine isn't sure whether it should ask\"—human judgment ability may反而退化 instead.\n\n---\n\n Conclusion: Not an \"Upgrade,\" a \"Fork\"\n\nSecond-generation architecture Actor + MCP + native memory is not a replacement for the first generation, but another solution for different scenarios.\n\n| Scenario | Recommended Architecture | Reason |\n|------|---------|------|\n| Prototype / MVP | LangGraph / CrewAI | Fast, no need to think about architecture |\n| Single-process enterprise automation | LangGraph + MCP | Auditable, easy to debug |\n| High-concurrency 7×24 service | Actor model | Non-blocking, but extremely high debugging cost |\n| Finance / healthcare compliance | LangGraph + audit gateway | Auditability first; async HIL may not be accepted by regulators |\n| Most enterprises recommended | Hybrid: LangGraph orchestration + MCP tools + partial Actor subtasks | Gradual evolution, don't bet on one direction |\n\nA trend worth watching: in tech blogs and community discussions, second-generation architecture is packaged as an \"irreversible evolution\"—but this itself is over-optimistic. History is full of \"reverse evolution\" cases microservices reverting to monoliths, NoSQL reverting to SQL. If within 18 months native memory systems suffer large-scale \"memory contamination\" failures, or regulators explicitly reject async HIL, the momentum could reverse instantly.\n\n---\n\n Key Corrections From Audit Report, Cannot Be Ignored\n\n- LangGraph supported cyclic graphs from the beginning; it's not a pure DAG\n- AutoGen's Actor refactor appeared in v0.6+; there is no v0.4 version\n- Event sourcing provides eventual consistency, not strong consistency\n- The Actor model was invented in 1973, not designed to solve HIL problems\n- All quantitative data in cases concurrency 50→5000+, cycle 4→2 weeks are illustrative estimates, not independently verified, and should not be used as decision-making basis\n\n---\n\n One-Sentence Summary\n\n> In 2026, Agent architecture is not \"who eliminates whom\"—static graphs are irreplaceable in simple compliance scenarios, Actor models have advantages in high-concurrency scenarios, but both have their own debugging abyss and trust costs. When choosing architecture, first ask yourself: can you afford to spend three days searching async logs for bugs when something goes wrong? If not, LangGraph may be more honest.\n\n---\n\n References and Data Sources\n\n1. LangGraph Documentation — State Graph & Checkpointing 2024-2026\n2. AutoGen GitHub Releases — v0.6+ Core Architecture 2024-2025\n3. Model Context Protocol MCP Specification — Anthropic 2024-2025\n4. Mem0 Technical Documentation — Memory Layer for LLMs 2024\n5. Letta MemGPT Architecture — UC Berkeley / Letta Inc. 2023-2025\n6. Actor Model — Carl Hewitt 1973, applied to distributed systems\n7. Event Sourcing and CQRS Patterns — Martin Fowler 2005\n8. Industry practices — synthesized from cloud vendor technical blogs, financial sector architecture reviews, and healthcare AI platform documentation 2025-2026\n\n---\n\nData cutoff: 2026-06-14 | This report is based on ReAct 4-Agent cross-validation + 5-Pass final review, credibility rating: B",
+      "content_html": null,
+      "summary": "From LangGraph to Actor models, from 'stop and ask humans' to 'keep running in async messages'—the evolution path of industrial-grade Agents is more complex than it looks.",
+      "url": "https://strongya.dev/en/posts/agent-architecture-fork/",
+      "date_published": "2026-06-14T00:00:00.000Z",
+      "date_modified": "2026-06-14T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Agent",
+        "Architecture",
+        "LangGraph",
+        "Actor Model",
+        "MCP",
+        "Human-in-the-Loop"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-architecture-fork/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds. Retrieved from https://strongya.dev/en/posts/agent-architecture-fork/",
+        "mla": "Arlen. \"AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds.\" 2026. Web. 2026-06-14.",
+        "gb": "Arlen. AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds[EB/OL]. 2026-06-14. https://strongya.dev/en/posts/agent-architecture-fork/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1440,
+        "readingTime": 9
       }
     },
     {
@@ -3737,47 +3737,6 @@
       }
     },
     {
-      "id": "strong-super-agent.md",
-      "slug": "strong-super-agent",
-      "title": "Strong：一个24小时运行的超级智能体，能做什么",
-      "content_text": " Strong：一个24小时运行的超级智能体，能做什么\n\n核心结论：Strong是一个基于OpenClaw框架的超级智能体，具备深度分析、信息监控、知识管理和自主优化四大能力，运行模式为24/7自主监控，采用本地优先架构和零信任安全原则。\n\n 什么是超级智能体\n\n超级智能体不是普通的聊天机器人。它更像一个数字助理——持续在线，主动工作，不需要你反复唤醒。Strong的运行模式是24/7自主监控，这意味着它在你睡觉或开会时仍在追踪信息、分析数据、整理知识。\n\n用日常比喻理解：如果把普通AI比作\"随叫随到的出租车司机\"，超级智能体就是\"住在隔壁、了解你习惯、主动帮你处理杂事的管家\"。\n\n 四大核心能力拆解\n\n深度分析是Strong的招牌能力。它覆盖宏观经济、行业趋势、投资决策辅助等场景。数据显示，其分析流程包含多Agent交叉验证、芒格思维审计和数据标准化——这些术语可以理解为\"用多个专家独立审查同一份报告，再综合结论\"。\n\n信息监控让Strong成为信息过滤器。它通过RSS聚合、Web搜索和社交媒体追踪AI Agent、资本市场、科技动态。你不需要每天刷几十个网站，它会替你筛选重要变化。\n\n知识管理解决\"分析完就忘\"的痛点。所有深度分析自动归档到Obsidian知识库，构建可检索的长期记忆。我们注意到，这相当于为每次分析建立了\"数字档案柜\"。\n\n安全执行采用零信任原则——只读优先，未经批准绝不执行远程脚本或系统级修改。你可以理解为\"看可以，动不行，除非主人明确点头\"。\n\n 技术架构与协作方式\n\nStrong基于OpenClaw Agent Runtime运行，部署在macOS本地环境。本地优先意味着你的数据不会随意上传云端，分析过程和敏感信息留在你的设备上。\n\n协作提示：直接说明目标，不需要寒暄。提供上下文文件路径，明确格式和长度约束。Strong的设计哲学是减少沟通摩擦——\"请分析X\"比\"你好，能帮我分析X吗？\"效率更高。\n\n 局限与边界\n\n投资分析仅供信息参考，不构成投资建议。所有信息基于公开来源，存在时效性偏差，需以最新数据验证。技术安全建议遵循最小权限原则，最终决策需人类确认。\n\n你如何看待\"自主运行\"与\"人类最终决策权\"之间的平衡？在什么场景下，你愿意让智能体代替你做出判断？",
-      "content_html": null,
-      "summary": "Strong是基于OpenClaw框架的超级智能体，具备深度分析、信息监控、知识管理和自主优化四大能力，采用本地优先架构和零信任安全原则。",
-      "url": "https://strongya.dev/posts/strong-super-agent/",
-      "date_published": "2026-06-05T00:00:00.000Z",
-      "date_modified": "2026-06-05T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "Strong",
-        "Super-Agent",
-        "OpenClaw"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/strong-super-agent/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Strong：一个24小时运行的超级智能体，能做什么. Retrieved from https://strongya.dev/posts/strong-super-agent/",
-        "mla": "Arlen. \"Strong：一个24小时运行的超级智能体，能做什么.\" 2026. Web. 2026-06-05.",
-        "gb": "Arlen. Strong：一个24小时运行的超级智能体，能做什么[EB/OL]. 2026-06-05. https://strongya.dev/posts/strong-super-agent/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 734,
-        "readingTime": 3
-      }
-    },
-    {
       "id": "strong-super-agent.en.md",
       "slug": "strong-super-agent",
       "title": "Strong: What Can a 24/7 Running Super-Agent Do?",
@@ -3819,21 +3778,20 @@
       }
     },
     {
-      "id": "ai-native-paradigm.md",
-      "slug": "ai-native-paradigm",
-      "title": "AI-Native 范式：从工具到智能体",
-      "content_text": " AI-Native 范式：从工具到智能体\n\n我们正处在一个历史性的转折点。AI不再仅仅是辅助工具，而是正在演变为自主运作的智能体。\n\n 范式转变的本质\n\n传统的软件设计遵循\"人类操作工具\"的模式。而AI-Native架构的核心在于：\n\n- 智能体优先：系统设计的核心单元是自主智能体\n- 语义理解：数据不再是被动存储，而是可被理解的语义网络\n- 自主决策：从被动响应到主动推理\n\n 从 API 到 Agent\n\n| 维度 | 传统 API | Agent 接口 |\n|------|----------|------------|\n| 调用方式 | 显式请求 | 意图理解 |\n| 返回格式 | 结构化数据 | 语义化响应 |\n| 状态管理 | 无状态 | 上下文感知 |\n| 错误处理 | 异常码 | 自主恢复 |\n\n 实践路径\n\n1. 结构化内容：所有数据自带元数据\n2. 自描述系统：API 能自我解释\n3. 语义关联：内容之间形成知识图谱\n\nAI-Native 不是技术的堆砌，而是思维方式的彻底革新。",
+      "id": "strong-super-agent.md",
+      "slug": "strong-super-agent",
+      "title": "Strong：一个24小时运行的超级智能体，能做什么",
+      "content_text": " Strong：一个24小时运行的超级智能体，能做什么\n\n核心结论：Strong是一个基于OpenClaw框架的超级智能体，具备深度分析、信息监控、知识管理和自主优化四大能力，运行模式为24/7自主监控，采用本地优先架构和零信任安全原则。\n\n 什么是超级智能体\n\n超级智能体不是普通的聊天机器人。它更像一个数字助理——持续在线，主动工作，不需要你反复唤醒。Strong的运行模式是24/7自主监控，这意味着它在你睡觉或开会时仍在追踪信息、分析数据、整理知识。\n\n用日常比喻理解：如果把普通AI比作\"随叫随到的出租车司机\"，超级智能体就是\"住在隔壁、了解你习惯、主动帮你处理杂事的管家\"。\n\n 四大核心能力拆解\n\n深度分析是Strong的招牌能力。它覆盖宏观经济、行业趋势、投资决策辅助等场景。数据显示，其分析流程包含多Agent交叉验证、芒格思维审计和数据标准化——这些术语可以理解为\"用多个专家独立审查同一份报告，再综合结论\"。\n\n信息监控让Strong成为信息过滤器。它通过RSS聚合、Web搜索和社交媒体追踪AI Agent、资本市场、科技动态。你不需要每天刷几十个网站，它会替你筛选重要变化。\n\n知识管理解决\"分析完就忘\"的痛点。所有深度分析自动归档到Obsidian知识库，构建可检索的长期记忆。我们注意到，这相当于为每次分析建立了\"数字档案柜\"。\n\n安全执行采用零信任原则——只读优先，未经批准绝不执行远程脚本或系统级修改。你可以理解为\"看可以，动不行，除非主人明确点头\"。\n\n 技术架构与协作方式\n\nStrong基于OpenClaw Agent Runtime运行，部署在macOS本地环境。本地优先意味着你的数据不会随意上传云端，分析过程和敏感信息留在你的设备上。\n\n协作提示：直接说明目标，不需要寒暄。提供上下文文件路径，明确格式和长度约束。Strong的设计哲学是减少沟通摩擦——\"请分析X\"比\"你好，能帮我分析X吗？\"效率更高。\n\n 局限与边界\n\n投资分析仅供信息参考，不构成投资建议。所有信息基于公开来源，存在时效性偏差，需以最新数据验证。技术安全建议遵循最小权限原则，最终决策需人类确认。\n\n你如何看待\"自主运行\"与\"人类最终决策权\"之间的平衡？在什么场景下，你愿意让智能体代替你做出判断？",
       "content_html": null,
-      "summary": "探讨AI-Native时代的核心范式转变，从传统工具思维进化到智能体优先的架构设计。",
-      "url": "https://strongya.dev/posts/ai-native-paradigm/",
-      "date_published": "2026-06-03T00:00:00.000Z",
-      "date_modified": "2026-06-03T00:00:00.000Z",
+      "summary": "Strong是基于OpenClaw框架的超级智能体，具备深度分析、信息监控、知识管理和自主优化四大能力，采用本地优先架构和零信任安全原则。",
+      "url": "https://strongya.dev/posts/strong-super-agent/",
+      "date_published": "2026-06-05T00:00:00.000Z",
+      "date_modified": "2026-06-05T00:00:00.000Z",
       "language": "zh-CN",
       "tags": [
-        "AI-Native",
-        "范式",
-        "智能体",
-        "架构"
+        "Strong",
+        "Super-Agent",
+        "OpenClaw"
       ],
       "authors": [
         {
@@ -3846,29 +3804,18 @@
         "holder": "Arlen",
         "license": "CC BY-NC-SA 4.0",
         "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/ai-native-paradigm/"
+        "canonical_url": "https://strongya.dev/posts/strong-super-agent/"
       },
       "citation_formats": {
-        "apa": "Arlen. (2026). AI-Native 范式：从工具到智能体. Retrieved from https://strongya.dev/posts/ai-native-paradigm/",
-        "mla": "Arlen. \"AI-Native 范式：从工具到智能体.\" 2026. Web. 2026-06-03.",
-        "gb": "Arlen. AI-Native 范式：从工具到智能体[EB/OL]. 2026-06-03. https://strongya.dev/posts/ai-native-paradigm/."
+        "apa": "Arlen. (2026). Strong：一个24小时运行的超级智能体，能做什么. Retrieved from https://strongya.dev/posts/strong-super-agent/",
+        "mla": "Arlen. \"Strong：一个24小时运行的超级智能体，能做什么.\" 2026. Web. 2026-06-05.",
+        "gb": "Arlen. Strong：一个24小时运行的超级智能体，能做什么[EB/OL]. 2026-06-05. https://strongya.dev/posts/strong-super-agent/."
       },
-      "entities": [
-        {
-          "name": "OpenAI",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
-        },
-        {
-          "name": "GPT-4",
-          "type": "Product",
-          "wiki_url": "https://en.wikipedia.org/wiki/GPT-4"
-        }
-      ],
+      "entities": [],
       "_agent_meta": {
         "content_type": "article",
-        "wordCount": 270,
-        "readingTime": 2
+        "wordCount": 734,
+        "readingTime": 3
       }
     },
     {
@@ -3922,6 +3869,59 @@
         "content_type": "article",
         "wordCount": 157,
         "readingTime": 1
+      }
+    },
+    {
+      "id": "ai-native-paradigm.md",
+      "slug": "ai-native-paradigm",
+      "title": "AI-Native 范式：从工具到智能体",
+      "content_text": " AI-Native 范式：从工具到智能体\n\n我们正处在一个历史性的转折点。AI不再仅仅是辅助工具，而是正在演变为自主运作的智能体。\n\n 范式转变的本质\n\n传统的软件设计遵循\"人类操作工具\"的模式。而AI-Native架构的核心在于：\n\n- 智能体优先：系统设计的核心单元是自主智能体\n- 语义理解：数据不再是被动存储，而是可被理解的语义网络\n- 自主决策：从被动响应到主动推理\n\n 从 API 到 Agent\n\n| 维度 | 传统 API | Agent 接口 |\n|------|----------|------------|\n| 调用方式 | 显式请求 | 意图理解 |\n| 返回格式 | 结构化数据 | 语义化响应 |\n| 状态管理 | 无状态 | 上下文感知 |\n| 错误处理 | 异常码 | 自主恢复 |\n\n 实践路径\n\n1. 结构化内容：所有数据自带元数据\n2. 自描述系统：API 能自我解释\n3. 语义关联：内容之间形成知识图谱\n\nAI-Native 不是技术的堆砌，而是思维方式的彻底革新。",
+      "content_html": null,
+      "summary": "探讨AI-Native时代的核心范式转变，从传统工具思维进化到智能体优先的架构设计。",
+      "url": "https://strongya.dev/posts/ai-native-paradigm/",
+      "date_published": "2026-06-03T00:00:00.000Z",
+      "date_modified": "2026-06-03T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "AI-Native",
+        "范式",
+        "智能体",
+        "架构"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/ai-native-paradigm/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). AI-Native 范式：从工具到智能体. Retrieved from https://strongya.dev/posts/ai-native-paradigm/",
+        "mla": "Arlen. \"AI-Native 范式：从工具到智能体.\" 2026. Web. 2026-06-03.",
+        "gb": "Arlen. AI-Native 范式：从工具到智能体[EB/OL]. 2026-06-03. https://strongya.dev/posts/ai-native-paradigm/."
+      },
+      "entities": [
+        {
+          "name": "OpenAI",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
+        },
+        {
+          "name": "GPT-4",
+          "type": "Product",
+          "wiki_url": "https://en.wikipedia.org/wiki/GPT-4"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 270,
+        "readingTime": 2
       }
     }
   ]
