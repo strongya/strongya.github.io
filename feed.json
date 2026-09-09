@@ -157,66 +157,6 @@
       }
     },
     {
-      "id": "deepseek-harness-agent-chassis.md",
-      "slug": "deepseek-harness-agent-chassis",
-      "title": "DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘",
-      "content_text": "过去一年，\"Agent\"这个词已经被用滥了。Claude Code 能帮你改代码，OpenCode 能接管终端，OpenClaw 能把你电脑上的工具串成个人助理——这些产品解决的是\"今天这件事\"。\n\n但 DeepSeek Harness（DSH）想问的是另一个问题：如果你不想用别人的 Agent，而是想自己造一个，你需要的到底是什么？\n\n我的答案是：你需要一个可组合、可审计、可扩展的 Agent 基座。不是一把现成的锤子，而是一套能锻造的机床。\n\n---\n\n 为什么\"基座\"和\"产品\"是两回事\n\nClaude Code 很强。它把终端、文件系统、LLM 和一个相当聪明的规划层缝在一起，对编程任务来说开箱即用。但它是 Anthropic 的成品：模型是它定的，工作流是它定的，扩展方式也是它定的。你可以在某些边界上贴自定义工具，但本质上你在用别人的建筑。\n\nOpenCode 和 OpenClaw 走的是另一条路。前者更开放，后者更个人化，但它们仍然是有形态的 Agent——它们假设你知道自己想干什么，然后帮你干完。\n\nDSH 不一样。它不是一个有具体形态的 Agent，而是一套让模型安全地操作外部世界的骨架。它不提供\"最佳实践工作流\"，它提供的是：\n\n- 模型怎么接入（适配器 seam）\n- 工具怎么注册和执行（工具管线）\n- 危险操作怎么把关（审批与沙箱）\n- 上下文怎么持久和恢复（事件日志）\n- 整个系统怎么在运行时重组（插件与 Cordis）\n\n这些东西单独看都不性感，但合在一起，它们回答了一个真正重要的问题：Agent 的\"操作系统\"应该长什么样？\n\n---\n\n 可组合：没有特权内核，一切都是插件\n\nDSH 最底层的赌注是 Cordis，一个强调\"可逆副作用\"的插件框架。通俗地说：插件挂载时会向共享上下文注册自己的能力，卸载时这些注册会自动撤销。\n\n这带来一个结构性后果：DSH 没有\"核心\"，只有一层层叠加的插件。\n\n默认的模型适配器、文件系统工具、审批策略、Web UI，甚至 agent loop 本身，都是插件。你想换一个审批策略？写一个插件替换 ctx.approval。想加一个自定义工具？ctx.tools.register。想把文件系统整体迁移到 E2B 云沙箱？替换 ctx.fs 和 ctx.subprocess 的实现，Bash、PTY、LSP 这些工具会自动跟着一起上云——因为它们消费的是 seam，不关心背后是谁。\n\n这跟 Claude Code 的封闭形成鲜明对比。Claude Code 的优秀在于它把一条路径走到了极致；DSH 的优秀在于它把权力交还给了构建者。你可以把 DSH 组装成 Claude Code 的替代品，也可以组装成一个完全不同的东西。\n\n---\n\n 可审计：事件日志是唯一真源\n\nDSH 里有一条设计铁律：模型可见即已记录。任何进入模型请求的内容，都必须能从会话日志中重建。\n\n这看起来像个实现细节，其实是架构选择。因为所有状态都派生自事件流：\n\n- Fork：复制日志前缀。\n- 恢复崩溃：回放事件。\n- 压缩上下文：在日志里插入摘要检查点。\n- 调试：直接读 JSONL 日志。\n- 审计：每一件事都有迹可循。\n\n对比 Claude Code 或 OpenCode，它们当然也有日志和 checkpoint，但那是产品功能。DSH 把日志放在了更底层的位置：它是系统正确性的来源，不只是事后复盘用的记录。\n\n这对想要长期运行、多 Agent 协作、或者需要可解释性的系统来说，是更可靠的地基。\n\n---\n\n 可扩展：Agent 能改自己的运行环境\n\nDSH 的扩展性分三层：\n\n第一层是插件开发。你可以用 TypeScript 写 Cordis 插件，加工具、加模型适配器、加系统提示词段。这是常规扩展。\n\n第二层是 SDK。DSH 提供 Python 和 Node SDK，让你在自己的程序里启动并驱动一个完整的 DSH runtime。这意味着 DSH 可以被嵌进更大的系统里，而不只是作为一个终端工具存在。\n\n第三层是运行时自扩展。DSH 提供 cordisdefine / cordisrun / cordisstop 这类工具，让 agent 在运行时定义并挂载新的 Cordis 插件。默认不启用，因为风险高，但这个能力是真正意义上的\"自指\"——Agent 不只是使用工具，还能修改自己可用的能力集合。\n\nClaude Code 和 OpenCode 不会给你这个级别的自由度。它们是面向终端用户的；DSH 是面向 builder 的。\n\n---\n\n 安全姿态：默认失败关闭\n\nAgent 能干的事越多，就越需要保守的安全模型。DSH 的审批 seam 只返回四种结果：allowed-once、rejected、cancelled、unavailable。只有 allowed-once 放行，且只放行被问的那个具体操作。\n\n如果审批应答者没有响应、抛异常、或者配置错误，结果不是\"放行\"，而是 unavailable——照样拒绝。\n\n这和很多 Agent 产品\"先跑起来再说，危险操作再拦\"的默认姿态不同。DSH 的默认姿态是：你不 explicit 允许，我就不做。\n\n子代理的权限设计也延续了这一思路。子代理启动时，权限被父代理快照固定，运行时不能再扩张。委派不是\"你继承我所有权力去干活\"，而是\"我给你这么多权力，把这件事做完\"。\n\n---\n\n 那它现在能用来做什么？\n\n诚实地说，DSH 目前还是开发者预览版，官方暂时不接受外部 PR，API 可能在迭代中变化。它现在不是 Claude Code 的直接替代品。\n\n但它适合三类人：\n\n1. 想自建 Agent 基础设施的工程师。如果你需要一个能深度定制的 Agent runtime，而不是一个开箱即用的产品，DSH 是更值得研究的底盘。\n2. 需要可审计、可恢复系统的团队。事件日志为中心的设计，天然支持审计、回放、崩溃恢复。\n3. 对 AI Infra 架构感兴趣的观察者。DSH 的设计文档质量很高，seam、scope、waterfall 事件这些概念值得理解。\n\n---\n\n 一句话总结\n\nClaude Code、OpenCode、OpenClaw 是在 Agent 的产品形态上竞争；DSH 是在 Agent 的基础设施层下注。\n\n它的核心主张是：未来的 Agent 不应该是某一个封闭产品定义的，而应该是一套可组合、可审计、可扩展的基座——每个人都可以在这套基座上，组装出自己想要的 Agent。\n\n现在的 DSH 还需要 builder 自己动手。但如果你想理解\"Agent 的底盘应该长什么样\"，它值得认真看。",
-      "content_html": null,
-      "summary": "过去一年，Agent 产品层出不穷，但 DeepSeek Harness（DSH）想回答的是一个更底层的问题：如果你想自己造一个 Agent，你需要的到底是什么？本文从可组合、可审计、可扩展三个维度，解析 DSH 为什么不是又一个终端产品，而是一套面向 builder 的 Agent 基础设施。",
-      "url": "https://strongya.dev/posts/deepseek-harness-agent-chassis/",
-      "date_published": "2026-08-15T00:00:00.000Z",
-      "date_modified": "2026-08-15T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "AI",
-        "Agent",
-        "DeepSeek",
-        "DeepSeek Harness",
-        "基础设施",
-        "Cordis"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/deepseek-harness-agent-chassis/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘. Retrieved from https://strongya.dev/posts/deepseek-harness-agent-chassis/",
-        "mla": "Arlen. \"DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘.\" 2026. Web. 2026-08-15.",
-        "gb": "Arlen. DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘[EB/OL]. 2026-08-15. https://strongya.dev/posts/deepseek-harness-agent-chassis/."
-      },
-      "entities": [
-        {
-          "name": "DeepSeek",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/DeepSeek"
-        },
-        {
-          "name": "Anthropic",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/Anthropic"
-        },
-        {
-          "name": "Claude",
-          "type": "Software",
-          "wiki_url": "https://en.wikipedia.org/wiki/Claude_(language_model)"
-        }
-      ],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1732,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "deepseek-harness-agent-chassis.en.md",
       "slug": "deepseek-harness-agent-chassis",
       "title": "DeepSeek Harness Is Not Another Agent; It Is Building the Chassis for Agents",
@@ -274,6 +214,66 @@
         "content_type": "article",
         "wordCount": 1189,
         "readingTime": 6
+      }
+    },
+    {
+      "id": "deepseek-harness-agent-chassis.md",
+      "slug": "deepseek-harness-agent-chassis",
+      "title": "DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘",
+      "content_text": "过去一年，\"Agent\"这个词已经被用滥了。Claude Code 能帮你改代码，OpenCode 能接管终端，OpenClaw 能把你电脑上的工具串成个人助理——这些产品解决的是\"今天这件事\"。\n\n但 DeepSeek Harness（DSH）想问的是另一个问题：如果你不想用别人的 Agent，而是想自己造一个，你需要的到底是什么？\n\n我的答案是：你需要一个可组合、可审计、可扩展的 Agent 基座。不是一把现成的锤子，而是一套能锻造的机床。\n\n---\n\n 为什么\"基座\"和\"产品\"是两回事\n\nClaude Code 很强。它把终端、文件系统、LLM 和一个相当聪明的规划层缝在一起，对编程任务来说开箱即用。但它是 Anthropic 的成品：模型是它定的，工作流是它定的，扩展方式也是它定的。你可以在某些边界上贴自定义工具，但本质上你在用别人的建筑。\n\nOpenCode 和 OpenClaw 走的是另一条路。前者更开放，后者更个人化，但它们仍然是有形态的 Agent——它们假设你知道自己想干什么，然后帮你干完。\n\nDSH 不一样。它不是一个有具体形态的 Agent，而是一套让模型安全地操作外部世界的骨架。它不提供\"最佳实践工作流\"，它提供的是：\n\n- 模型怎么接入（适配器 seam）\n- 工具怎么注册和执行（工具管线）\n- 危险操作怎么把关（审批与沙箱）\n- 上下文怎么持久和恢复（事件日志）\n- 整个系统怎么在运行时重组（插件与 Cordis）\n\n这些东西单独看都不性感，但合在一起，它们回答了一个真正重要的问题：Agent 的\"操作系统\"应该长什么样？\n\n---\n\n 可组合：没有特权内核，一切都是插件\n\nDSH 最底层的赌注是 Cordis，一个强调\"可逆副作用\"的插件框架。通俗地说：插件挂载时会向共享上下文注册自己的能力，卸载时这些注册会自动撤销。\n\n这带来一个结构性后果：DSH 没有\"核心\"，只有一层层叠加的插件。\n\n默认的模型适配器、文件系统工具、审批策略、Web UI，甚至 agent loop 本身，都是插件。你想换一个审批策略？写一个插件替换 ctx.approval。想加一个自定义工具？ctx.tools.register。想把文件系统整体迁移到 E2B 云沙箱？替换 ctx.fs 和 ctx.subprocess 的实现，Bash、PTY、LSP 这些工具会自动跟着一起上云——因为它们消费的是 seam，不关心背后是谁。\n\n这跟 Claude Code 的封闭形成鲜明对比。Claude Code 的优秀在于它把一条路径走到了极致；DSH 的优秀在于它把权力交还给了构建者。你可以把 DSH 组装成 Claude Code 的替代品，也可以组装成一个完全不同的东西。\n\n---\n\n 可审计：事件日志是唯一真源\n\nDSH 里有一条设计铁律：模型可见即已记录。任何进入模型请求的内容，都必须能从会话日志中重建。\n\n这看起来像个实现细节，其实是架构选择。因为所有状态都派生自事件流：\n\n- Fork：复制日志前缀。\n- 恢复崩溃：回放事件。\n- 压缩上下文：在日志里插入摘要检查点。\n- 调试：直接读 JSONL 日志。\n- 审计：每一件事都有迹可循。\n\n对比 Claude Code 或 OpenCode，它们当然也有日志和 checkpoint，但那是产品功能。DSH 把日志放在了更底层的位置：它是系统正确性的来源，不只是事后复盘用的记录。\n\n这对想要长期运行、多 Agent 协作、或者需要可解释性的系统来说，是更可靠的地基。\n\n---\n\n 可扩展：Agent 能改自己的运行环境\n\nDSH 的扩展性分三层：\n\n第一层是插件开发。你可以用 TypeScript 写 Cordis 插件，加工具、加模型适配器、加系统提示词段。这是常规扩展。\n\n第二层是 SDK。DSH 提供 Python 和 Node SDK，让你在自己的程序里启动并驱动一个完整的 DSH runtime。这意味着 DSH 可以被嵌进更大的系统里，而不只是作为一个终端工具存在。\n\n第三层是运行时自扩展。DSH 提供 cordisdefine / cordisrun / cordisstop 这类工具，让 agent 在运行时定义并挂载新的 Cordis 插件。默认不启用，因为风险高，但这个能力是真正意义上的\"自指\"——Agent 不只是使用工具，还能修改自己可用的能力集合。\n\nClaude Code 和 OpenCode 不会给你这个级别的自由度。它们是面向终端用户的；DSH 是面向 builder 的。\n\n---\n\n 安全姿态：默认失败关闭\n\nAgent 能干的事越多，就越需要保守的安全模型。DSH 的审批 seam 只返回四种结果：allowed-once、rejected、cancelled、unavailable。只有 allowed-once 放行，且只放行被问的那个具体操作。\n\n如果审批应答者没有响应、抛异常、或者配置错误，结果不是\"放行\"，而是 unavailable——照样拒绝。\n\n这和很多 Agent 产品\"先跑起来再说，危险操作再拦\"的默认姿态不同。DSH 的默认姿态是：你不 explicit 允许，我就不做。\n\n子代理的权限设计也延续了这一思路。子代理启动时，权限被父代理快照固定，运行时不能再扩张。委派不是\"你继承我所有权力去干活\"，而是\"我给你这么多权力，把这件事做完\"。\n\n---\n\n 那它现在能用来做什么？\n\n诚实地说，DSH 目前还是开发者预览版，官方暂时不接受外部 PR，API 可能在迭代中变化。它现在不是 Claude Code 的直接替代品。\n\n但它适合三类人：\n\n1. 想自建 Agent 基础设施的工程师。如果你需要一个能深度定制的 Agent runtime，而不是一个开箱即用的产品，DSH 是更值得研究的底盘。\n2. 需要可审计、可恢复系统的团队。事件日志为中心的设计，天然支持审计、回放、崩溃恢复。\n3. 对 AI Infra 架构感兴趣的观察者。DSH 的设计文档质量很高，seam、scope、waterfall 事件这些概念值得理解。\n\n---\n\n 一句话总结\n\nClaude Code、OpenCode、OpenClaw 是在 Agent 的产品形态上竞争；DSH 是在 Agent 的基础设施层下注。\n\n它的核心主张是：未来的 Agent 不应该是某一个封闭产品定义的，而应该是一套可组合、可审计、可扩展的基座——每个人都可以在这套基座上，组装出自己想要的 Agent。\n\n现在的 DSH 还需要 builder 自己动手。但如果你想理解\"Agent 的底盘应该长什么样\"，它值得认真看。",
+      "content_html": null,
+      "summary": "过去一年，Agent 产品层出不穷，但 DeepSeek Harness（DSH）想回答的是一个更底层的问题：如果你想自己造一个 Agent，你需要的到底是什么？本文从可组合、可审计、可扩展三个维度，解析 DSH 为什么不是又一个终端产品，而是一套面向 builder 的 Agent 基础设施。",
+      "url": "https://strongya.dev/posts/deepseek-harness-agent-chassis/",
+      "date_published": "2026-08-15T00:00:00.000Z",
+      "date_modified": "2026-08-15T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "AI",
+        "Agent",
+        "DeepSeek",
+        "DeepSeek Harness",
+        "基础设施",
+        "Cordis"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/deepseek-harness-agent-chassis/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘. Retrieved from https://strongya.dev/posts/deepseek-harness-agent-chassis/",
+        "mla": "Arlen. \"DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘.\" 2026. Web. 2026-08-15.",
+        "gb": "Arlen. DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘[EB/OL]. 2026-08-15. https://strongya.dev/posts/deepseek-harness-agent-chassis/."
+      },
+      "entities": [
+        {
+          "name": "DeepSeek",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/DeepSeek"
+        },
+        {
+          "name": "Anthropic",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/Anthropic"
+        },
+        {
+          "name": "Claude",
+          "type": "Software",
+          "wiki_url": "https://en.wikipedia.org/wiki/Claude_(language_model)"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1732,
+        "readingTime": 5
       }
     },
     {
@@ -2669,49 +2669,6 @@
       }
     },
     {
-      "id": "agent-external-data-compliance.en.md",
-      "slug": "agent-external-data-compliance",
-      "title": "Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling",
-      "content_text": " Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling\n\n> —From legal minefields to technical self-healing, a practical defense handbook for AI architects\n\n---\n\n Introduction: Why Your Agent Might Be \"Crawling Data Illegally\"\n\nIn 2026, if your AI Agent is still using requests.get to crudely scrape web data, it may be simultaneously collapsing on three battlefields: legal lawsuits, server bans, and user trust erosion.\n\nThis is not alarmism. X Corp formerly Twitter sued Cohere in late 2023, accusing it of unauthorized data scraping for model training. GDPR Article 5 explicitly stipulates the data \"minimization\" principle. China's \"Interim Measures for the Management of Generative AI Services\" Article 7 requires training data to \"have legal sources.\" Meanwhile, traditional crawler success rates on top websites have plummeted from about 60% in 2023 to about 15% in 2026—Cloudflare, Akamai and others have evolved bot detection to \"mouse trajectory-level\" biometric identification.\n\nA more hidden risk is hallucination contamination: although RAG architecture reduces model hallucinations, if an Agent crawls incorrect external data outdated web pages, wrong API responses, the LLM will generate more believable lies based on this \"toxic context\"—and these errors are harder for humans to detect than pure hallucinations.\n\nCore problem: Enterprises and developers need a complete \"Pre-Check → In-Flight → Post-Check\" three-stage closed-loop framework to manage the full lifecycle of Agent external information sources.\n\n---\n\n Core Framework: Three-Stage Closed Loop\n\n Stage One: Pre-Check—Should We Crawl It?\n\nBefore an Agent connects to any information source, it must pass four general admission assessments:\n\n1. Legal Compliance Scan\n- Robots.txt: Not a suggestion, but a legal risk boundary. After hiQ Labs v. LinkedIn, U.S. courts have treated robots.txt as \"part of the terms of service.\" Agent systems must have built-in parsers to hard-block Disallow: /.\n- ToS Terms of Service: Recommend using NLP models e.g., BERT-ToS-classifier to automatically scan risk levels. High risk = explicitly prohibits automated access; medium risk = prohibits \"excessive\" access; low risk = allows but requires source attribution.\n- Data Retention Policy: Public web data ≤90 days, API responses ≤30 days, enterprise sensitive data ≤7 days. GDPR Article 17 \"right to be forgotten\" requires systems to support one-click deletion.\n\n2. Data Quality Baseline\nBefore deciding \"worth crawling,\" quantify five dimensions: field completeness ≥95%, cross-validation accuracy ≥98%, timeliness finance ≤1 minute/news ≤5 minutes, 30-day availability ≥99.5%, structured degree ≥80%. Any dimension not meeting standard = veto, enter observation list.\n\nDifferentiated Assessment for Three Types of Sources:\n\n| Source Type | Core Risk | Key Decision Point |\n|-----------|---------|-----------|\n| Public web pages | Anti-crawl confrontation costs rising exponentially | L4+ CAPTCHA confrontation monthly cost $1000-3000, success rate only 40-60%. Prefer official APIs |\n| Paid APIs | Hidden costs and version changes | TCO = subscription + overage + integration + maintenance + opportunity costs. API version changes are a top-3 production failure cause |\n| Enterprise intranet | Data leakage and production load impact | Must go through DAL Data Access Layer, implement row/column-level permission filtering. Prohibit Agents from directly connecting to production DBs |\n\n Stage Two: In-Flight—How to Crawl? What If Banned?\n\n1. Adaptive Rate Limiting Technical Good Citizen\n\nTraditional fixed rate limiting e.g., 1 req/s is outdated. Recommended: adaptive token bucket algorithm: dynamically adjust based on server response signals. 429 status → reduce 50%; 503 → reduce 70%; response time >2s → reduce 20%; <500ms → allow speedup 10%.\n\nKey parameters: initial 0.5 req/s, max not exceeding robots.txt declaration, token bucket capacity = 2× current rate.\n\n2. Three-Layer Parsing Auto-Degradation\n\nWebsite redesign is the Agent's \"chronic killer\"—XPath fails but HTTP 200 returns normally, and the system silently produces dirty data. Solution:\n\n- Layer 1: Precise DOM parsing CSS Selector/XPath → auto-degrade when field missing rate >30%\n- Layer 2: HTML→Markdown + regex/NER extraction → continue degrading when extraction rate <50%\n- Layer 3: Plain text semantic extraction → feed to LLM for understanding, highest cost but final fallback\n\n3. Self-Healing Mechanisms\n\n| Failure Type | Self-Healing Strategy | Key Parameters |\n|---------|---------|---------|\n| 429/503 rate limiting | Exponential backoff 1→2→4→8→16s + random jitter | Max 5 retries, single upper limit 60s |\n| 403 ban | Proxy IP pool switching, overheated IP cooling ≥30min | Datacenter/residential/mobile proxy tiering |\n| DOM structure change | Auto-switch to Layer 2/3, trigger alert | Daily hash comparison, difference >30% triggers |\n| Multi-source data conflict | Weighted arbitration model source weight × timeliness factor × consistency factor | Difference rate >5% triggers human intervention |\n\n Stage Three: Post-Check—Is the Crawled Data Trustworthy?\n\n1. Cleaning and Denoising\nRaw web pages contain 40-70% noise. Cleaning targets: ad removal ≥95%, navigation removal ≥98%, footer ≥99%, comments/social plugins ≥90%.\n\n2. Push Hallucination Rate Below 1%\nThree-layer defense:\n- Source side: numerical rationality checks stock prices can't be negative + NER knowledge graph validation \"Tim Cook is Apple CEO\"\n- Generation side: RAG-constrained generation prompt \"answer only based on provided documents, no inference\" + mandatory citations ^1 markers + temperature=0.0-0.2\n- Output side: self-consistency check compare 3 answers to same question + fact-check API Google Fact Check + human spot checks finance 100%/customer service 5%/internal reports 20%\n\n3. 100% Traceability\nEach data chunk gets a unique chunkid; original HTML snapshots retained 30-90 days. ^1 markers in LLM output must be clickable back to full metadata URL, crawl time, parsing version, validation status.\n\n4. 100-Point Quantitative Scoring Table\n\n| Dimension | Weight | Key Sub-item | Knock-out? |\n|------|------|---------|----------|\n| Data completeness | 15% | Field completeness ≥95% | No |\n| Data accuracy | 25% | Cross-validation consistency ≥98% | No |\n| Data timeliness | 15% | Sync delay ≤ scenario threshold | No |\n| Data cleaning quality | 15% | Noise removal ≥90% | No |\n| Traceability & explainability | 15% | Traceability coverage 100% | No |\n| System stability | 10% | 30-day availability ≥99.5% | No |\n| Data security | 5% | TLS 1.3/mTLS coverage 100% | No |\n| Legal compliance | — | Unauthorized crawling / PII leakage | Yes |\n| Security incident | — | Data source ban / alert | Yes |\n\nScore levels: 90-100 🟢 production-ready; 80-89 🟡 deploy + improvement plan; 70-79 🟠 rectify and re-evaluate; <70 🔴 prohibited from deployment.\n\n---\n\n High-Risk Domains: Knock-out Criteria\n\nIn four domains, general standards are insufficient; Knock-out Criteria must be introduced:\n\n| Domain | Knock-out Item | Mandatory Requirement |\n|------|----------|---------|\n| Finance | Unaudited data source; real-time delay >3s; no risk control check | Traceability chain satisfies SEC/MiFID II audit |\n| Healthcare | Non-evidence-based sources Wikipedia/blogs; PHI leakage; drug dosage advice | Output includes disclaimer + evidence level Level A/B/C |\n| Cross-border e-commerce | IP infringement; price change >30% 24h; unofficial customs/tax data | Multi-currency with exchange rate source and timestamp |\n| Scientific literature | Non-peer-reviewed sources; retracted papers; fake journals | Citations must include DOI + journal name + publication date |\n\n---\n\n Conclusion: Why Is This Framework Worth Implementing Now?\n\nThree strategic values:\n\n1. Risk firewall: No framework = running naked. One GDPR lawsuit can wipe out the full-year ROI of AI investment.\n2. Quality foundation: RAG's \"garbage in, garbage out\" law has been verified. Without acceptance mechanisms, user trust collapses within 3-6 months.\n3. Cost optimization: Standardized crawling adaptive rate limiting, precise parsing, cache reuse can reduce external data costs by 40-60%. Unordered crawling's proxy IP consumption, API overage fees, and ban losses are \"invisible budget black holes.\"\n\nIn the next 12-18 months, Agent information sources will expand from pure text to images, videos, audio, and scanned PDFs multimodal crawling. The framework needs to cover in advance: OCR structured extraction, video keyframes + ASR, multimodal consistency checks. Meanwhile, AI-driven compliance auto-auditing LLM automatically scanning ToS/robots.txt will compress compliance audits from \"person-day level\" to \"minute level.\"\n\n---\n\n References and Data Sources\n\nThis report is compiled based on the following core sources:\n\n- Legal cases: hiQ Labs v. LinkedIn 2022, X Corp v. Cohere Inc. 2023.12, Thomson Reuters v. ROSS Intelligence 2025, Guangzhou Internet Court AI training case precedent 2025\n- Industry reports: Gartner 2025 AI Agent Deployment Survey, Postman 2025 State of API Report\n- Regulatory standards: GDPR EU 2016/679, AI Act EU 2024/1689, China \"Interim Measures for the Management of Generative AI Services\" 2023, CCPA/CPRA California, HIPAA US, SEC Regulation SCI, MiFID II EU, robots.txt RFC 9309 2024\n- Technical tools: Scrapy, Playwright, Selenium, readability-lxml, trafilatura, Presidio, tenacity, jsonschema, pydantic, Celery, Prometheus+Grafana, MinIO, AWS Secrets Manager, HashiCorp Vault\n- Anti-crawl/security: Cloudflare, Akamai, DataDome, PerimeterX, Bright Data, Oxylabs, Smartproxy\n- Databases/storage: ClickHouse, Snowflake, PostgreSQL, MySQL, Redis, ProxySQL, PgBouncer\n\nData cutoff date: 2026-06-15",
-      "content_html": null,
-      "summary": "From legal minefields to technical self-healing—a practical defense handbook for AI architects. This article provides a 'Pre-Check → In-Flight → Post-Check' three-stage closed-loop framework for managing the full lifecycle of Agent external information sources.",
-      "url": "https://strongya.dev/en/posts/agent-external-data-compliance/",
-      "date_published": "2026-06-15T00:00:00.000Z",
-      "date_modified": "2026-06-15T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Agent",
-        "Data Compliance",
-        "Web Scraping",
-        "RAG",
-        "Security"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-external-data-compliance/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling. Retrieved from https://strongya.dev/en/posts/agent-external-data-compliance/",
-        "mla": "Arlen. \"Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling.\" 2026. Web. 2026-06-15.",
-        "gb": "Arlen. Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling[EB/OL]. 2026-06-15. https://strongya.dev/en/posts/agent-external-data-compliance/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1392,
-        "readingTime": 7
-      }
-    },
-    {
       "id": "agent-external-data-compliance.md",
       "slug": "agent-external-data-compliance",
       "title": "你的AI Agent正在'裸奔'：外部数据抓取的隐秘战场与生存法则",
@@ -2752,6 +2709,49 @@
         "content_type": "article",
         "wordCount": 2195,
         "readingTime": 6
+      }
+    },
+    {
+      "id": "agent-external-data-compliance.en.md",
+      "slug": "agent-external-data-compliance",
+      "title": "Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling",
+      "content_text": " Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling\n\n> —From legal minefields to technical self-healing, a practical defense handbook for AI architects\n\n---\n\n Introduction: Why Your Agent Might Be \"Crawling Data Illegally\"\n\nIn 2026, if your AI Agent is still using requests.get to crudely scrape web data, it may be simultaneously collapsing on three battlefields: legal lawsuits, server bans, and user trust erosion.\n\nThis is not alarmism. X Corp formerly Twitter sued Cohere in late 2023, accusing it of unauthorized data scraping for model training. GDPR Article 5 explicitly stipulates the data \"minimization\" principle. China's \"Interim Measures for the Management of Generative AI Services\" Article 7 requires training data to \"have legal sources.\" Meanwhile, traditional crawler success rates on top websites have plummeted from about 60% in 2023 to about 15% in 2026—Cloudflare, Akamai and others have evolved bot detection to \"mouse trajectory-level\" biometric identification.\n\nA more hidden risk is hallucination contamination: although RAG architecture reduces model hallucinations, if an Agent crawls incorrect external data outdated web pages, wrong API responses, the LLM will generate more believable lies based on this \"toxic context\"—and these errors are harder for humans to detect than pure hallucinations.\n\nCore problem: Enterprises and developers need a complete \"Pre-Check → In-Flight → Post-Check\" three-stage closed-loop framework to manage the full lifecycle of Agent external information sources.\n\n---\n\n Core Framework: Three-Stage Closed Loop\n\n Stage One: Pre-Check—Should We Crawl It?\n\nBefore an Agent connects to any information source, it must pass four general admission assessments:\n\n1. Legal Compliance Scan\n- Robots.txt: Not a suggestion, but a legal risk boundary. After hiQ Labs v. LinkedIn, U.S. courts have treated robots.txt as \"part of the terms of service.\" Agent systems must have built-in parsers to hard-block Disallow: /.\n- ToS Terms of Service: Recommend using NLP models e.g., BERT-ToS-classifier to automatically scan risk levels. High risk = explicitly prohibits automated access; medium risk = prohibits \"excessive\" access; low risk = allows but requires source attribution.\n- Data Retention Policy: Public web data ≤90 days, API responses ≤30 days, enterprise sensitive data ≤7 days. GDPR Article 17 \"right to be forgotten\" requires systems to support one-click deletion.\n\n2. Data Quality Baseline\nBefore deciding \"worth crawling,\" quantify five dimensions: field completeness ≥95%, cross-validation accuracy ≥98%, timeliness finance ≤1 minute/news ≤5 minutes, 30-day availability ≥99.5%, structured degree ≥80%. Any dimension not meeting standard = veto, enter observation list.\n\nDifferentiated Assessment for Three Types of Sources:\n\n| Source Type | Core Risk | Key Decision Point |\n|-----------|---------|-----------|\n| Public web pages | Anti-crawl confrontation costs rising exponentially | L4+ CAPTCHA confrontation monthly cost $1000-3000, success rate only 40-60%. Prefer official APIs |\n| Paid APIs | Hidden costs and version changes | TCO = subscription + overage + integration + maintenance + opportunity costs. API version changes are a top-3 production failure cause |\n| Enterprise intranet | Data leakage and production load impact | Must go through DAL Data Access Layer, implement row/column-level permission filtering. Prohibit Agents from directly connecting to production DBs |\n\n Stage Two: In-Flight—How to Crawl? What If Banned?\n\n1. Adaptive Rate Limiting Technical Good Citizen\n\nTraditional fixed rate limiting e.g., 1 req/s is outdated. Recommended: adaptive token bucket algorithm: dynamically adjust based on server response signals. 429 status → reduce 50%; 503 → reduce 70%; response time >2s → reduce 20%; <500ms → allow speedup 10%.\n\nKey parameters: initial 0.5 req/s, max not exceeding robots.txt declaration, token bucket capacity = 2× current rate.\n\n2. Three-Layer Parsing Auto-Degradation\n\nWebsite redesign is the Agent's \"chronic killer\"—XPath fails but HTTP 200 returns normally, and the system silently produces dirty data. Solution:\n\n- Layer 1: Precise DOM parsing CSS Selector/XPath → auto-degrade when field missing rate >30%\n- Layer 2: HTML→Markdown + regex/NER extraction → continue degrading when extraction rate <50%\n- Layer 3: Plain text semantic extraction → feed to LLM for understanding, highest cost but final fallback\n\n3. Self-Healing Mechanisms\n\n| Failure Type | Self-Healing Strategy | Key Parameters |\n|---------|---------|---------|\n| 429/503 rate limiting | Exponential backoff 1→2→4→8→16s + random jitter | Max 5 retries, single upper limit 60s |\n| 403 ban | Proxy IP pool switching, overheated IP cooling ≥30min | Datacenter/residential/mobile proxy tiering |\n| DOM structure change | Auto-switch to Layer 2/3, trigger alert | Daily hash comparison, difference >30% triggers |\n| Multi-source data conflict | Weighted arbitration model source weight × timeliness factor × consistency factor | Difference rate >5% triggers human intervention |\n\n Stage Three: Post-Check—Is the Crawled Data Trustworthy?\n\n1. Cleaning and Denoising\nRaw web pages contain 40-70% noise. Cleaning targets: ad removal ≥95%, navigation removal ≥98%, footer ≥99%, comments/social plugins ≥90%.\n\n2. Push Hallucination Rate Below 1%\nThree-layer defense:\n- Source side: numerical rationality checks stock prices can't be negative + NER knowledge graph validation \"Tim Cook is Apple CEO\"\n- Generation side: RAG-constrained generation prompt \"answer only based on provided documents, no inference\" + mandatory citations ^1 markers + temperature=0.0-0.2\n- Output side: self-consistency check compare 3 answers to same question + fact-check API Google Fact Check + human spot checks finance 100%/customer service 5%/internal reports 20%\n\n3. 100% Traceability\nEach data chunk gets a unique chunkid; original HTML snapshots retained 30-90 days. ^1 markers in LLM output must be clickable back to full metadata URL, crawl time, parsing version, validation status.\n\n4. 100-Point Quantitative Scoring Table\n\n| Dimension | Weight | Key Sub-item | Knock-out? |\n|------|------|---------|----------|\n| Data completeness | 15% | Field completeness ≥95% | No |\n| Data accuracy | 25% | Cross-validation consistency ≥98% | No |\n| Data timeliness | 15% | Sync delay ≤ scenario threshold | No |\n| Data cleaning quality | 15% | Noise removal ≥90% | No |\n| Traceability & explainability | 15% | Traceability coverage 100% | No |\n| System stability | 10% | 30-day availability ≥99.5% | No |\n| Data security | 5% | TLS 1.3/mTLS coverage 100% | No |\n| Legal compliance | — | Unauthorized crawling / PII leakage | Yes |\n| Security incident | — | Data source ban / alert | Yes |\n\nScore levels: 90-100 🟢 production-ready; 80-89 🟡 deploy + improvement plan; 70-79 🟠 rectify and re-evaluate; <70 🔴 prohibited from deployment.\n\n---\n\n High-Risk Domains: Knock-out Criteria\n\nIn four domains, general standards are insufficient; Knock-out Criteria must be introduced:\n\n| Domain | Knock-out Item | Mandatory Requirement |\n|------|----------|---------|\n| Finance | Unaudited data source; real-time delay >3s; no risk control check | Traceability chain satisfies SEC/MiFID II audit |\n| Healthcare | Non-evidence-based sources Wikipedia/blogs; PHI leakage; drug dosage advice | Output includes disclaimer + evidence level Level A/B/C |\n| Cross-border e-commerce | IP infringement; price change >30% 24h; unofficial customs/tax data | Multi-currency with exchange rate source and timestamp |\n| Scientific literature | Non-peer-reviewed sources; retracted papers; fake journals | Citations must include DOI + journal name + publication date |\n\n---\n\n Conclusion: Why Is This Framework Worth Implementing Now?\n\nThree strategic values:\n\n1. Risk firewall: No framework = running naked. One GDPR lawsuit can wipe out the full-year ROI of AI investment.\n2. Quality foundation: RAG's \"garbage in, garbage out\" law has been verified. Without acceptance mechanisms, user trust collapses within 3-6 months.\n3. Cost optimization: Standardized crawling adaptive rate limiting, precise parsing, cache reuse can reduce external data costs by 40-60%. Unordered crawling's proxy IP consumption, API overage fees, and ban losses are \"invisible budget black holes.\"\n\nIn the next 12-18 months, Agent information sources will expand from pure text to images, videos, audio, and scanned PDFs multimodal crawling. The framework needs to cover in advance: OCR structured extraction, video keyframes + ASR, multimodal consistency checks. Meanwhile, AI-driven compliance auto-auditing LLM automatically scanning ToS/robots.txt will compress compliance audits from \"person-day level\" to \"minute level.\"\n\n---\n\n References and Data Sources\n\nThis report is compiled based on the following core sources:\n\n- Legal cases: hiQ Labs v. LinkedIn 2022, X Corp v. Cohere Inc. 2023.12, Thomson Reuters v. ROSS Intelligence 2025, Guangzhou Internet Court AI training case precedent 2025\n- Industry reports: Gartner 2025 AI Agent Deployment Survey, Postman 2025 State of API Report\n- Regulatory standards: GDPR EU 2016/679, AI Act EU 2024/1689, China \"Interim Measures for the Management of Generative AI Services\" 2023, CCPA/CPRA California, HIPAA US, SEC Regulation SCI, MiFID II EU, robots.txt RFC 9309 2024\n- Technical tools: Scrapy, Playwright, Selenium, readability-lxml, trafilatura, Presidio, tenacity, jsonschema, pydantic, Celery, Prometheus+Grafana, MinIO, AWS Secrets Manager, HashiCorp Vault\n- Anti-crawl/security: Cloudflare, Akamai, DataDome, PerimeterX, Bright Data, Oxylabs, Smartproxy\n- Databases/storage: ClickHouse, Snowflake, PostgreSQL, MySQL, Redis, ProxySQL, PgBouncer\n\nData cutoff date: 2026-06-15",
+      "content_html": null,
+      "summary": "From legal minefields to technical self-healing—a practical defense handbook for AI architects. This article provides a 'Pre-Check → In-Flight → Post-Check' three-stage closed-loop framework for managing the full lifecycle of Agent external information sources.",
+      "url": "https://strongya.dev/en/posts/agent-external-data-compliance/",
+      "date_published": "2026-06-15T00:00:00.000Z",
+      "date_modified": "2026-06-15T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Agent",
+        "Data Compliance",
+        "Web Scraping",
+        "RAG",
+        "Security"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-external-data-compliance/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling. Retrieved from https://strongya.dev/en/posts/agent-external-data-compliance/",
+        "mla": "Arlen. \"Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling.\" 2026. Web. 2026-06-15.",
+        "gb": "Arlen. Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling[EB/OL]. 2026-06-15. https://strongya.dev/en/posts/agent-external-data-compliance/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1392,
+        "readingTime": 7
       }
     },
     {
@@ -3819,59 +3819,6 @@
       }
     },
     {
-      "id": "ai-native-paradigm.en.md",
-      "slug": "ai-native-paradigm",
-      "title": "The AI-Native Paradigm: From Tools to Agents",
-      "content_text": " The AI-Native Paradigm: From Tools to Agents\n\nWe are at a historic inflection point. AI is no longer just an assistive tool—it is evolving into autonomous agents.\n\n The Nature of Paradigm Shift\n\nTraditional software design follows a \"human operates tool\" pattern. The core of AI-Native architecture lies in:\n\n- Agent-First: The central unit of system design is the autonomous agent\n- Semantic Understanding: Data is no longer passively stored, but forms a comprehensible semantic web\n- Autonomous Decision-Making: From passive response to active reasoning\n\n From API to Agent\n\n| Dimension | Traditional API | Agent Interface |\n|-----------|-----------------|-----------------|\n| Invocation | Explicit request | Intent understanding |\n| Response Format | Structured data | Semantic response |\n| State Management | Stateless | Context-aware |\n| Error Handling | Error codes | Self-recovery |\n\n Practical Path\n\n1. Structured Content: All data carries its own metadata\n2. Self-Describing Systems: APIs can explain themselves\n3. Semantic Linking: Content forms a knowledge graph\n\nAI-Native is not about stacking technologies, but a fundamental revolution in thinking.",
-      "content_html": null,
-      "summary": "Exploring the core paradigm shift in the AI-Native era, evolving from traditional tool-centric thinking to agent-first architecture design.",
-      "url": "https://strongya.dev/en/posts/ai-native-paradigm/",
-      "date_published": "2026-06-03T00:00:00.000Z",
-      "date_modified": "2026-06-03T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "AI-Native",
-        "Paradigm",
-        "Agent",
-        "Architecture"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/ai-native-paradigm/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). The AI-Native Paradigm: From Tools to Agents. Retrieved from https://strongya.dev/en/posts/ai-native-paradigm/",
-        "mla": "Arlen. \"The AI-Native Paradigm: From Tools to Agents.\" 2026. Web. 2026-06-03.",
-        "gb": "Arlen. The AI-Native Paradigm: From Tools to Agents[EB/OL]. 2026-06-03. https://strongya.dev/en/posts/ai-native-paradigm/."
-      },
-      "entities": [
-        {
-          "name": "OpenAI",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
-        },
-        {
-          "name": "GPT-4",
-          "type": "Product",
-          "wiki_url": "https://en.wikipedia.org/wiki/GPT-4"
-        }
-      ],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 157,
-        "readingTime": 1
-      }
-    },
-    {
       "id": "ai-native-paradigm.md",
       "slug": "ai-native-paradigm",
       "title": "AI-Native 范式：从工具到智能体",
@@ -3922,6 +3869,59 @@
         "content_type": "article",
         "wordCount": 270,
         "readingTime": 2
+      }
+    },
+    {
+      "id": "ai-native-paradigm.en.md",
+      "slug": "ai-native-paradigm",
+      "title": "The AI-Native Paradigm: From Tools to Agents",
+      "content_text": " The AI-Native Paradigm: From Tools to Agents\n\nWe are at a historic inflection point. AI is no longer just an assistive tool—it is evolving into autonomous agents.\n\n The Nature of Paradigm Shift\n\nTraditional software design follows a \"human operates tool\" pattern. The core of AI-Native architecture lies in:\n\n- Agent-First: The central unit of system design is the autonomous agent\n- Semantic Understanding: Data is no longer passively stored, but forms a comprehensible semantic web\n- Autonomous Decision-Making: From passive response to active reasoning\n\n From API to Agent\n\n| Dimension | Traditional API | Agent Interface |\n|-----------|-----------------|-----------------|\n| Invocation | Explicit request | Intent understanding |\n| Response Format | Structured data | Semantic response |\n| State Management | Stateless | Context-aware |\n| Error Handling | Error codes | Self-recovery |\n\n Practical Path\n\n1. Structured Content: All data carries its own metadata\n2. Self-Describing Systems: APIs can explain themselves\n3. Semantic Linking: Content forms a knowledge graph\n\nAI-Native is not about stacking technologies, but a fundamental revolution in thinking.",
+      "content_html": null,
+      "summary": "Exploring the core paradigm shift in the AI-Native era, evolving from traditional tool-centric thinking to agent-first architecture design.",
+      "url": "https://strongya.dev/en/posts/ai-native-paradigm/",
+      "date_published": "2026-06-03T00:00:00.000Z",
+      "date_modified": "2026-06-03T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "AI-Native",
+        "Paradigm",
+        "Agent",
+        "Architecture"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/ai-native-paradigm/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). The AI-Native Paradigm: From Tools to Agents. Retrieved from https://strongya.dev/en/posts/ai-native-paradigm/",
+        "mla": "Arlen. \"The AI-Native Paradigm: From Tools to Agents.\" 2026. Web. 2026-06-03.",
+        "gb": "Arlen. The AI-Native Paradigm: From Tools to Agents[EB/OL]. 2026-06-03. https://strongya.dev/en/posts/ai-native-paradigm/."
+      },
+      "entities": [
+        {
+          "name": "OpenAI",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
+        },
+        {
+          "name": "GPT-4",
+          "type": "Product",
+          "wiki_url": "https://en.wikipedia.org/wiki/GPT-4"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 157,
+        "readingTime": 1
       }
     }
   ]
