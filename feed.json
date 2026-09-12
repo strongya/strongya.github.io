@@ -1063,47 +1063,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-86-90.md",
-      "slug": "agent-memory-errors-cases-86-90",
-      "title": "《Agent记忆错误的100个案例手册》第 86–90 案例",
-      "content_text": " 《Agent记忆错误的100个案例手册》第 86–90 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 86：记忆一致性与事实锚定错误｜causal-inference-correlation-confusion\n\n场景\n\nAgent记忆中有两条统计事实：\"冰淇淋销量高的月份，溺水事故也多\"和\"冰淇淋销量高的月份，气温也高\"。用户询问\"为什么溺水事故多\"。Agent错误地推断\"因为吃冰淇淋导致溺水\"。\n\n错误表现\n\nAgent给出了荒谬的因果解释，忽略了\"气温高\"这一共同原因。用户质疑Agent的\"逻辑能力\"。\n\n解决方案\n\n1. 在记忆存储时区分\"相关事实\"和\"因果事实\"：相关事实标记为\"关联性：冰淇淋销量∝溺水事故\"，因果事实需要明确的机制解释\n2. 实施\"因果推断校验\"：应用因果推断框架（如Pearl的因果图）避免混淆相关与因果\n3. 对统计关联的结论添加\"可能的其他解释\"：\"冰淇淋销量与溺水事故相关，可能受第三方因素（气温）影响\"\n\n原理\n\n相关不等于因果是统计学第一原理。Agent在缺乏因果推断能力时，会基于相关性做出错误的因果解释。这是\"智能\"系统的常见陷阱。\n\n---\n\n 案例 87：记忆一致性与事实锚定错误｜negation-scope-ambiguity\n\n场景\n\nAgent记忆中有\"不是所有程序员都喜欢咖啡\"。用户询问\"程序员喜欢咖啡吗？\"。Agent解析为\"程序员不喜欢咖啡\"（将否定范围从\"所有\"扩大到\"喜欢\"）。\n\n错误表现\n\nAgent回答\"程序员不喜欢咖啡\"，而原意是\"部分程序员可能不喜欢\"。用户在推荐咖啡给程序员朋友时产生了误导。\n\n解决方案\n\n1. 在事实存储时进行\"标准化\"：将\"不是所有X都Y\"转换为\"存在X不Y\"，减少否定范围歧义\n2. 使用\"逻辑形式\"（Logical Form）存储：将自然语言事实解析为一阶逻辑表达式\n3. 在回答时避免简化否定陈述：\"并非所有程序员都喜欢咖啡，意味着有些喜欢，有些不喜欢\"\n\n原理\n\n自然语言中的否定（Negation）具有复杂的范围（Scope）和焦点（Focus）结构。\"Not all programmers like coffee\" ≠ \"All programmers do not like coffee\"。Agent的解析必须精确处理否定范围。\n\n---\n\n 案例 88：记忆一致性与事实锚定错误｜factual-update-inconsistency-window\n\n场景\n\nAgent正在更新记忆：将\"产品价格为99元\"更新为\"产品价格为129元\"。更新操作分两步：先删除旧事实，再插入新事实。在两步之间，用户发起了查询。\n\n错误表现\n\n第一次查询（删除后插入前）返回\"我不知道产品价格\"，第二次查询（插入后）返回\"产品价格为129元\"。用户困惑\"为什么刚才说不知道，现在又说129？\"\n\n解决方案\n\n1. 事实更新采用原子事务：旧事实的失效和新事实的生效在同一事务中完成，中间状态不可见\n2. 使用\"多版本并发控制\"（MVCC）：查询看到更新前的版本，更新完成后新查询看到新版本\n3. 更新期间对受影响的事实查询返回\"信息更新中，请稍后查询\"\n\n原理\n\n数据库中的事务隔离性（Isolation）原则同样适用于Agent记忆。缺乏隔离性的更新会导致用户观察到不可能的状态（产品价格既不存在又存在）。\n\n---\n\n 案例 89：记忆一致性与事实锚定错误｜abductive-reasoning-false-cause\n\n场景\n\nAgent观察到\"用户今天没有登录\"，记忆中知道\"用户通常每天登录\"。Agent进行溯因推理：最简解释是\"用户忘记了密码\"。但实际上用户是出差没有网络。\n\n错误表现\n\nAgent主动发送\"密码重置\"邮件，用户收到后感到困惑\"我没有忘记密码啊\"，甚至担心账号被盗。\n\n解决方案\n\n1. 对溯因推理的结论标记\"置信度\"和\"替代解释\"：\"可能原因A（置信度30%），也可能原因B（置信度50%）\"\n2. 避免基于单一观察采取行动：在采取行动前收集更多证据（如\"用户是否在其他设备登录\"）\n3. 将溯因结论作为\"假设\"而非\"事实\"处理，需要验证后才可行动\n\n原理\n\n溯因推理（Abductive Reasoning）是\"最佳解释推理\"，但\"最佳\"不等于\"正确\"。在采取行动的场景中，基于未验证假设的主动行为可能打扰用户或造成错误。\n\n---\n\n 案例 90：记忆一致性与事实锚定错误｜consensus-fact-divergent-sources\n\n场景\n\nAgent从两个来源获取了\"公司2024年营收\"：来源A（内部邮件）说是\"1.2亿\"，来源B（财报初稿）说是\"1.5亿\"。Agent将两者都存入记忆，未标记矛盾。用户询问时，Agent随机引用了其中一个。\n\n错误表现\n\n不同用户或不同时间得到不同答案，Agent的可信度受损。内部员工基于\"1.2亿\"做预算，外部投资者基于\"1.5亿\"做估值，造成混乱。\n\n解决方案\n\n1. 建立\"事实一致性监控\"：检测到同一实体的同一属性存在多个值时，标记矛盾并触发人工审核\n2. 为矛盾事实存储\"来源-值\"对，回答时呈现\"不同来源有不同数据：A说1.2亿，B说1.5亿\"\n3. 设定\"权威来源优先级\"：财报 > 内部邮件 > 非正式沟通，优先采用高权威来源\n\n原理\n\n真实世界的信息源往往对同一事实有不同表述。Agent如果不具备矛盾检测和来源评估能力，会成为\"信息杂音\"的放大器。\n\n---\n\n J. 记忆架构与系统设计错误（案例91-100）\n\n\n> 来源：Agent Search",
-      "content_html": null,
-      "summary": "本辑收录 Agent 记忆错误案例 86–90，涵盖 记忆一致性与事实锚定错误 等主题。",
-      "url": "https://strongya.dev/posts/agent-memory-errors-cases-86-90/",
-      "date_published": "2026-07-08T00:00:00.000Z",
-      "date_modified": "2026-07-08T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "Consistency",
-        "Fact Anchoring",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-86-90/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 86–90 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-86-90/",
-        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 86–90 案例.\" 2026. Web. 2026-07-08.",
-        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 86–90 案例[EB/OL]. 2026-07-08. https://strongya.dev/posts/agent-memory-errors-cases-86-90/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1517,
-        "readingTime": 4
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-86-90.en.md",
       "slug": "agent-memory-errors-cases-86-90",
       "title": "Agent Memory Errors Handbook: Cases 86–90",
@@ -1142,6 +1101,47 @@
         "content_type": "article",
         "wordCount": 920,
         "readingTime": 5
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-86-90.md",
+      "slug": "agent-memory-errors-cases-86-90",
+      "title": "《Agent记忆错误的100个案例手册》第 86–90 案例",
+      "content_text": " 《Agent记忆错误的100个案例手册》第 86–90 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 86：记忆一致性与事实锚定错误｜causal-inference-correlation-confusion\n\n场景\n\nAgent记忆中有两条统计事实：\"冰淇淋销量高的月份，溺水事故也多\"和\"冰淇淋销量高的月份，气温也高\"。用户询问\"为什么溺水事故多\"。Agent错误地推断\"因为吃冰淇淋导致溺水\"。\n\n错误表现\n\nAgent给出了荒谬的因果解释，忽略了\"气温高\"这一共同原因。用户质疑Agent的\"逻辑能力\"。\n\n解决方案\n\n1. 在记忆存储时区分\"相关事实\"和\"因果事实\"：相关事实标记为\"关联性：冰淇淋销量∝溺水事故\"，因果事实需要明确的机制解释\n2. 实施\"因果推断校验\"：应用因果推断框架（如Pearl的因果图）避免混淆相关与因果\n3. 对统计关联的结论添加\"可能的其他解释\"：\"冰淇淋销量与溺水事故相关，可能受第三方因素（气温）影响\"\n\n原理\n\n相关不等于因果是统计学第一原理。Agent在缺乏因果推断能力时，会基于相关性做出错误的因果解释。这是\"智能\"系统的常见陷阱。\n\n---\n\n 案例 87：记忆一致性与事实锚定错误｜negation-scope-ambiguity\n\n场景\n\nAgent记忆中有\"不是所有程序员都喜欢咖啡\"。用户询问\"程序员喜欢咖啡吗？\"。Agent解析为\"程序员不喜欢咖啡\"（将否定范围从\"所有\"扩大到\"喜欢\"）。\n\n错误表现\n\nAgent回答\"程序员不喜欢咖啡\"，而原意是\"部分程序员可能不喜欢\"。用户在推荐咖啡给程序员朋友时产生了误导。\n\n解决方案\n\n1. 在事实存储时进行\"标准化\"：将\"不是所有X都Y\"转换为\"存在X不Y\"，减少否定范围歧义\n2. 使用\"逻辑形式\"（Logical Form）存储：将自然语言事实解析为一阶逻辑表达式\n3. 在回答时避免简化否定陈述：\"并非所有程序员都喜欢咖啡，意味着有些喜欢，有些不喜欢\"\n\n原理\n\n自然语言中的否定（Negation）具有复杂的范围（Scope）和焦点（Focus）结构。\"Not all programmers like coffee\" ≠ \"All programmers do not like coffee\"。Agent的解析必须精确处理否定范围。\n\n---\n\n 案例 88：记忆一致性与事实锚定错误｜factual-update-inconsistency-window\n\n场景\n\nAgent正在更新记忆：将\"产品价格为99元\"更新为\"产品价格为129元\"。更新操作分两步：先删除旧事实，再插入新事实。在两步之间，用户发起了查询。\n\n错误表现\n\n第一次查询（删除后插入前）返回\"我不知道产品价格\"，第二次查询（插入后）返回\"产品价格为129元\"。用户困惑\"为什么刚才说不知道，现在又说129？\"\n\n解决方案\n\n1. 事实更新采用原子事务：旧事实的失效和新事实的生效在同一事务中完成，中间状态不可见\n2. 使用\"多版本并发控制\"（MVCC）：查询看到更新前的版本，更新完成后新查询看到新版本\n3. 更新期间对受影响的事实查询返回\"信息更新中，请稍后查询\"\n\n原理\n\n数据库中的事务隔离性（Isolation）原则同样适用于Agent记忆。缺乏隔离性的更新会导致用户观察到不可能的状态（产品价格既不存在又存在）。\n\n---\n\n 案例 89：记忆一致性与事实锚定错误｜abductive-reasoning-false-cause\n\n场景\n\nAgent观察到\"用户今天没有登录\"，记忆中知道\"用户通常每天登录\"。Agent进行溯因推理：最简解释是\"用户忘记了密码\"。但实际上用户是出差没有网络。\n\n错误表现\n\nAgent主动发送\"密码重置\"邮件，用户收到后感到困惑\"我没有忘记密码啊\"，甚至担心账号被盗。\n\n解决方案\n\n1. 对溯因推理的结论标记\"置信度\"和\"替代解释\"：\"可能原因A（置信度30%），也可能原因B（置信度50%）\"\n2. 避免基于单一观察采取行动：在采取行动前收集更多证据（如\"用户是否在其他设备登录\"）\n3. 将溯因结论作为\"假设\"而非\"事实\"处理，需要验证后才可行动\n\n原理\n\n溯因推理（Abductive Reasoning）是\"最佳解释推理\"，但\"最佳\"不等于\"正确\"。在采取行动的场景中，基于未验证假设的主动行为可能打扰用户或造成错误。\n\n---\n\n 案例 90：记忆一致性与事实锚定错误｜consensus-fact-divergent-sources\n\n场景\n\nAgent从两个来源获取了\"公司2024年营收\"：来源A（内部邮件）说是\"1.2亿\"，来源B（财报初稿）说是\"1.5亿\"。Agent将两者都存入记忆，未标记矛盾。用户询问时，Agent随机引用了其中一个。\n\n错误表现\n\n不同用户或不同时间得到不同答案，Agent的可信度受损。内部员工基于\"1.2亿\"做预算，外部投资者基于\"1.5亿\"做估值，造成混乱。\n\n解决方案\n\n1. 建立\"事实一致性监控\"：检测到同一实体的同一属性存在多个值时，标记矛盾并触发人工审核\n2. 为矛盾事实存储\"来源-值\"对，回答时呈现\"不同来源有不同数据：A说1.2亿，B说1.5亿\"\n3. 设定\"权威来源优先级\"：财报 > 内部邮件 > 非正式沟通，优先采用高权威来源\n\n原理\n\n真实世界的信息源往往对同一事实有不同表述。Agent如果不具备矛盾检测和来源评估能力，会成为\"信息杂音\"的放大器。\n\n---\n\n J. 记忆架构与系统设计错误（案例91-100）\n\n\n> 来源：Agent Search",
+      "content_html": null,
+      "summary": "本辑收录 Agent 记忆错误案例 86–90，涵盖 记忆一致性与事实锚定错误 等主题。",
+      "url": "https://strongya.dev/posts/agent-memory-errors-cases-86-90/",
+      "date_published": "2026-07-08T00:00:00.000Z",
+      "date_modified": "2026-07-08T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "Consistency",
+        "Fact Anchoring",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-86-90/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 86–90 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-86-90/",
+        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 86–90 案例.\" 2026. Web. 2026-07-08.",
+        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 86–90 案例[EB/OL]. 2026-07-08. https://strongya.dev/posts/agent-memory-errors-cases-86-90/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1517,
+        "readingTime": 4
       }
     },
     {
@@ -1391,46 +1391,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-66-70.en.md",
-      "slug": "agent-memory-errors-cases-66-70",
-      "title": "Agent Memory Errors Handbook: Cases 66–70",
-      "content_text": " Agent Memory Errors Handbook: Cases 66–70\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 66: Tool Use Memory Errors — Tool Output Format Parsing Fragility\n\nScenario\n\nThe Agent calls an API that previously returned {\"result\": \"...\"}. After an upgrade it returns {\"data\": {\"result\": \"...\"}}. The Agent's memory contains parsing logic based on the old path result, so the new call fails.\n\nError Manifestation\n\nThe Agent stores unparsed raw JSON in memory, and all downstream operations fail. The error \"Cannot read property 'result' of undefined\" is exposed to the user.\n\nSolution\n\n1. Parse tool output from JSON Schema rather than hardcoded paths, using validation and automatic mapping\n2. Check output format versions and trigger parsing-logic updates on mismatch\n3. Provide parse-failure fallback: present raw output as text and warn that the format may have changed\n\nPrinciple\n\nThird-party API output formats change. Instance-based parsing logic is fragile. Schema-based parsing and graceful degradation are more robust.\n\n---\n\n Case 67: Tool Use Memory Errors — Tool Credential Rotation Desync\n\nScenario\n\nEnterprise IT rotates API keys quarterly. After the new key takes effect, the Agent's memory still holds the old key. Because the Agent checks memory before the key-management system, it keeps using the old key.\n\nError Manifestation\n\nThe API returns 401 authentication failures. The Agent misinterprets this as a network problem, retries, wastes resources, and cannot recover.\n\nSolution\n\n1. Never store tool credentials in Agent memory; fetch them from the KMS in real time before each call\n2. If caching is necessary, set TTL aligned with the rotation cycle\n3. Trigger credential refresh on 401 errors: get the latest credential from the KMS and retry once\n\nPrinciple\n\nCredential rotation is a security best practice but conflicts with Agent memory reuse. Agent memory should not become a way to bypass security policy.\n\n---\n\n Case 68: Tool Use Memory Errors — Parallel Tool Call Result Merging Error\n\nScenario\n\nThe Agent calls three APIs in parallel: T1 fetches user profile, T2 fetches orders, T3 fetches coupons. All three finish simultaneously and results are merged into context. Without correlation markers, the Agent incorrectly assigns user B's coupons to user A.\n\nError Manifestation\n\nThe Agent shows user A user B's coupons, including a partially masked phone number, causing information leakage.\n\nSolution\n\n1. Assign request IDs to parallel tool calls and correlate results by request ID, not by position\n2. Include query context e.g., user ID in each result and validate consistency on merge\n3. Use structured result containers: {\"tool\": \"T1\", \"requestid\": \"uuid\", \"result\": {...}}\n\nPrinciple\n\nParallel calls improve efficiency but sacrifice order determinism. Without explicit correlation, positional or temporal merge assumptions fail.\n\n---\n\n Case 69: Tool Use Memory Errors — Tool Dependency Cycle Infinite Loop\n\nScenario\n\nThe tool set contains T1 \"query article summary\" which depends on T2 \"get article content,\" and T2 is misconfigured to depend back on T1. Calling T1 triggers T2, which triggers T1 again, creating an infinite loop.\n\nError Manifestation\n\nThe Agent issues thousands of API calls in seconds, exhausts quota, latency spikes, and the process OOM-crashes.\n\nSolution\n\n1. Detect cycles in the dependency graph during tool registration and reject or warn on cycles\n2. Set a maximum tool-call depth e.g., 10 and terminate with an error when exceeded\n3. Maintain a call-stack trace and interrupt immediately on cycle detection\n\nPrinciple\n\nTool dependency cycles are like infinite recursion. Without limits they exhaust resources quickly. Acyclicity DAG is a basic constraint of tool-system design.\n\n---\n\n Case 70: Tool Use Memory Errors — Tool Side Effect Undo Failure\n\nScenario\n\nThe Agent executes a multi-step task: create temp file → process data → delete temp file. It records only the filename, not the full path, and the file is created in a random subdirectory of the system temp folder. When the task fails and must roll back, the Agent cannot locate and delete the temp file.\n\nError Manifestation\n\nTemp files accumulate for months until disk space is exhausted, causing system failure.\n\nSolution\n\n1. Maintain a side-effect log for each tool call, recording resource identifiers and states of created/modified/deleted resources\n2. Implement compensating transactions: define rollback actions for each operation\n3. Use resource leasing: created resources have TTLs and are cleaned automatically, not relying on the Agent to delete them\n\nPrinciple\n\nTool calls have side effects such as file creation, email sending, and database updates. If the Agent does not track side effects precisely, rollback is incomplete and causes resource leaks or inconsistent state.\n\n\n> Source: Agent Search",
-      "content_html": null,
-      "summary": "This installment covers Agent memory error cases 66–70, including Tool Use Memory Errors.",
-      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/",
-      "date_published": "2026-07-04T00:00:00.000Z",
-      "date_modified": "2026-07-04T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Tool Use",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 66–70. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/",
-        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 66–70.\" 2026. Web. 2026-07-04.",
-        "gb": "Arlen. Agent Memory Errors Handbook: Cases 66–70[EB/OL]. 2026-07-04. https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 751,
-        "readingTime": 4
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-66-70.md",
       "slug": "agent-memory-errors-cases-66-70",
       "title": "《Agent记忆错误的100个案例手册》第 66–70 案例",
@@ -1467,6 +1427,46 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 1431,
+        "readingTime": 4
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-66-70.en.md",
+      "slug": "agent-memory-errors-cases-66-70",
+      "title": "Agent Memory Errors Handbook: Cases 66–70",
+      "content_text": " Agent Memory Errors Handbook: Cases 66–70\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 66: Tool Use Memory Errors — Tool Output Format Parsing Fragility\n\nScenario\n\nThe Agent calls an API that previously returned {\"result\": \"...\"}. After an upgrade it returns {\"data\": {\"result\": \"...\"}}. The Agent's memory contains parsing logic based on the old path result, so the new call fails.\n\nError Manifestation\n\nThe Agent stores unparsed raw JSON in memory, and all downstream operations fail. The error \"Cannot read property 'result' of undefined\" is exposed to the user.\n\nSolution\n\n1. Parse tool output from JSON Schema rather than hardcoded paths, using validation and automatic mapping\n2. Check output format versions and trigger parsing-logic updates on mismatch\n3. Provide parse-failure fallback: present raw output as text and warn that the format may have changed\n\nPrinciple\n\nThird-party API output formats change. Instance-based parsing logic is fragile. Schema-based parsing and graceful degradation are more robust.\n\n---\n\n Case 67: Tool Use Memory Errors — Tool Credential Rotation Desync\n\nScenario\n\nEnterprise IT rotates API keys quarterly. After the new key takes effect, the Agent's memory still holds the old key. Because the Agent checks memory before the key-management system, it keeps using the old key.\n\nError Manifestation\n\nThe API returns 401 authentication failures. The Agent misinterprets this as a network problem, retries, wastes resources, and cannot recover.\n\nSolution\n\n1. Never store tool credentials in Agent memory; fetch them from the KMS in real time before each call\n2. If caching is necessary, set TTL aligned with the rotation cycle\n3. Trigger credential refresh on 401 errors: get the latest credential from the KMS and retry once\n\nPrinciple\n\nCredential rotation is a security best practice but conflicts with Agent memory reuse. Agent memory should not become a way to bypass security policy.\n\n---\n\n Case 68: Tool Use Memory Errors — Parallel Tool Call Result Merging Error\n\nScenario\n\nThe Agent calls three APIs in parallel: T1 fetches user profile, T2 fetches orders, T3 fetches coupons. All three finish simultaneously and results are merged into context. Without correlation markers, the Agent incorrectly assigns user B's coupons to user A.\n\nError Manifestation\n\nThe Agent shows user A user B's coupons, including a partially masked phone number, causing information leakage.\n\nSolution\n\n1. Assign request IDs to parallel tool calls and correlate results by request ID, not by position\n2. Include query context e.g., user ID in each result and validate consistency on merge\n3. Use structured result containers: {\"tool\": \"T1\", \"requestid\": \"uuid\", \"result\": {...}}\n\nPrinciple\n\nParallel calls improve efficiency but sacrifice order determinism. Without explicit correlation, positional or temporal merge assumptions fail.\n\n---\n\n Case 69: Tool Use Memory Errors — Tool Dependency Cycle Infinite Loop\n\nScenario\n\nThe tool set contains T1 \"query article summary\" which depends on T2 \"get article content,\" and T2 is misconfigured to depend back on T1. Calling T1 triggers T2, which triggers T1 again, creating an infinite loop.\n\nError Manifestation\n\nThe Agent issues thousands of API calls in seconds, exhausts quota, latency spikes, and the process OOM-crashes.\n\nSolution\n\n1. Detect cycles in the dependency graph during tool registration and reject or warn on cycles\n2. Set a maximum tool-call depth e.g., 10 and terminate with an error when exceeded\n3. Maintain a call-stack trace and interrupt immediately on cycle detection\n\nPrinciple\n\nTool dependency cycles are like infinite recursion. Without limits they exhaust resources quickly. Acyclicity DAG is a basic constraint of tool-system design.\n\n---\n\n Case 70: Tool Use Memory Errors — Tool Side Effect Undo Failure\n\nScenario\n\nThe Agent executes a multi-step task: create temp file → process data → delete temp file. It records only the filename, not the full path, and the file is created in a random subdirectory of the system temp folder. When the task fails and must roll back, the Agent cannot locate and delete the temp file.\n\nError Manifestation\n\nTemp files accumulate for months until disk space is exhausted, causing system failure.\n\nSolution\n\n1. Maintain a side-effect log for each tool call, recording resource identifiers and states of created/modified/deleted resources\n2. Implement compensating transactions: define rollback actions for each operation\n3. Use resource leasing: created resources have TTLs and are cleaned automatically, not relying on the Agent to delete them\n\nPrinciple\n\nTool calls have side effects such as file creation, email sending, and database updates. If the Agent does not track side effects precisely, rollback is incomplete and causes resource leaks or inconsistent state.\n\n\n> Source: Agent Search",
+      "content_html": null,
+      "summary": "This installment covers Agent memory error cases 66–70, including Tool Use Memory Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/",
+      "date_published": "2026-07-04T00:00:00.000Z",
+      "date_modified": "2026-07-04T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Tool Use",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 66–70. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 66–70.\" 2026. Web. 2026-07-04.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 66–70[EB/OL]. 2026-07-04. https://strongya.dev/en/posts/agent-memory-errors-cases-66-70/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 751,
         "readingTime": 4
       }
     },
@@ -3489,47 +3489,6 @@
       }
     },
     {
-      "id": "prompt-engineering-deep-analysis-report.md",
-      "slug": "prompt-engineering-deep-analysis-report",
-      "title": "Prompt Engineering 的五年真相：没有万能方法，只有场景适配",
-      "content_text": " Prompt Engineering 的五年真相：没有万能方法，只有场景适配\n\n> 基于25篇学术论文（2022-2026）的系统分析\n\n 核心结论\n\n数据显示，Prompt Engineering 的核心矛盾在于：一个方法在数学推理中表现卓越，换到模式识别任务中反而有害。我们注意到，2024-2026年的研究趋势正在从\"寻找最佳通用方法\"转向\"为特定场景匹配最优策略\"。\n\n 为什么 Chain-of-Thought 不是万能钥匙\n\nChain-of-Thought（CoT） 就像给模型一张草稿纸——在数学推理中，它让模型一步步推导，效果显著。数据显示，标准 CoT 在 GSM8k 等数学 benchmark 上大幅超越直接回答。\n\n但 The Curse of CoT 论文揭示了一个反直觉的发现：在基于模式的上下文学习（ICL）中，CoT 及其变体（ReAct、ToT）一致性地表现不如直接回答。原因是显式推理增加了示范与答案之间的上下文距离，干扰了少样本学习结构。\n\n关键洞察：模型在 CoT 中同时使用显式推理和隐式推理，但前者引入了噪声。\n\n Few-shot：被低估的性价比之王\n\n我们注意到一个被忽视的事实：即使是1个精心选择的示例，也能显著降低 prompt sensitivity（POSIX 论文）。在代码漏洞检测中，20-shot 的检索增强方法将 F1 从 36.35% 提升到 74.05%，甚至超越了 fine-tuned 模型（59.31%）。\n\n但示例选择有陷阱。研究显示存在 majority label bias（多数标签偏见）和 recency bias（近因偏见）——如果示例中某类标签过多，或某类示例总是放在最后，模型会偏向这些标签。\n\n实践建议：平衡标签分布，随机化示例顺序，使用语义相似的检索示例而非随机选择。\n\n 2024-2026 的五大新趋势\n\nLong CoT 与推理时代\n\nOpenAI o1/o3-mini 和 DeepSeek-R1 标志着推理 LLM 的崛起。Long CoT 通过深度推理、广泛探索和可行反思三大特征处理复杂任务。但争议仍在：推理链长度与准确率之间没有明确关系，过度延长可能引入不必要的复杂性（overthinking）。\n\nDiffusion-styled CoT\n\nDiffCoT 将 CoT 重新建模为迭代去噪过程——就像图像生成中的扩散模型一样，逐步修正中间步骤。滑动窗口机制实现统一生成和回顾性修正，解决了传统 CoT 的曝光偏差和错误累积问题。\n\n重新思考 Prompt Sensitivity\n\nFlaw or Artifact? 论文挑战了传统认知：许多报告的 prompt sensitivity 实际上来自评估方法的缺陷（如基于正则的答案提取），而非模型本身的问题。使用 LLM-as-a-Judge 可大幅减少方差，提高排名一致性。\n\n局部优化取代全局优化\n\nLocal Prompt Optimization 识别 prompt 中的关键 token，仅优化这些 token 而非全局。在数学推理任务上显著提升，且收敛更快。\n\n自主 Prompt Engineering\n\nGPT-4 可自主应用 prompt engineering 技术（Expert Prompting、CoT、ToT），无需外部数据即可动态优化。但局限明显：在复杂任务上表现不稳定（如 Checkmate in One 下降 14.8%）。\n\n 场景-方法速查表\n\n数学/逻辑推理\n- 首选：Long CoT（复杂问题）或标准 CoT（中等复杂度）\n- 进阶：Contrastive CoT（展示正确和错误推理路径）\n- 避免：在模式 ICL 中使用 CoT\n\n代码漏洞检测\n- 首选：检索增强 Few-shot（F1 74.05%）\n- 次选：标准 CoT\n- 避免：Adaptive CoT（会抑制召回率，导致漏检）\n\n文本分类/情感分析\n- 首选：人工编写的 Few-shot 示例\n- 次选：Prompt Consistency Regularization（多同义 prompt 一致性）\n- 注意：GPT-3.5 比 GPT-4 更受示例选择影响\n\n多模态任务\n- 首选：数据增强（在训练数据中加入 prompt 扰动）\n- 注意：多模态模型对 prompt 变化异常敏感\n\n 安全任务中的特殊考量\n\n在漏洞检测等安全任务中，prompt 设计是一级部署问题。PromptAudit 研究发现：\n- 标准 CoT 表现最强\n- Adaptive CoT 抑制召回率（漏检风险）\n- Self-consistency 导致过度弃权（降低有效覆盖率）\n\n实践意义：在安全领域，选择能最大化召回率的方法，而非追求最高准确率。\n\n 评估方法的升级\n\n许多\"prompt sensitivity\"实际上是评估 artifact。建议采用：\n- LLM-as-a-Judge 替代启发式评估（正则、精确匹配）\n- 实例级分析而非仅报告数据集级聚合指标\n- PromptAudit 框架：固定数据集、解码、解析，仅变化 prompting 策略\n\n 写在最后\n\nPrompt Engineering 正在从\"艺术\"走向\"科学\"。数据显示，2024-2026 年的研究重点从寻找通用最佳实践转向理解方法-场景匹配机制。我们注意到，一个关键转变正在发生：研究者开始质疑先前假设，重新评估\"常识\"——这正是领域成熟的标志。\n\n开放讨论：在你的实际应用中，是否遇到过 CoT 反而降低性能的情况？你是如何发现某个特定方法在你的场景中无效的？欢迎分享你的观察——数据比观点更有价值。",
-      "content_html": null,
-      "summary": "基于25篇学术论文（2022-2026）的系统分析：不存在跨任务通用的最优方法，Chain-of-Thought 不是万能钥匙，场景适配才是正解。",
-      "url": "https://strongya.dev/posts/prompt-engineering-deep-analysis-report/",
-      "date_published": "2026-06-06T00:00:00.000Z",
-      "date_modified": "2026-06-06T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "Prompt Engineering",
-        "LLM",
-        "Deep Research"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/prompt-engineering-deep-analysis-report/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Prompt Engineering 的五年真相：没有万能方法，只有场景适配. Retrieved from https://strongya.dev/posts/prompt-engineering-deep-analysis-report/",
-        "mla": "Arlen. \"Prompt Engineering 的五年真相：没有万能方法，只有场景适配.\" 2026. Web. 2026-06-06.",
-        "gb": "Arlen. Prompt Engineering 的五年真相：没有万能方法，只有场景适配[EB/OL]. 2026-06-06. https://strongya.dev/posts/prompt-engineering-deep-analysis-report/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1329,
-        "readingTime": 4
-      }
-    },
-    {
       "id": "prompt-engineering-deep-analysis-report.en.md",
       "slug": "prompt-engineering-deep-analysis-report",
       "title": "Five Years of Truth About Prompt Engineering: No Universal Method, Only Scenario Adaptation",
@@ -3568,6 +3527,47 @@
         "content_type": "article",
         "wordCount": 844,
         "readingTime": 5
+      }
+    },
+    {
+      "id": "prompt-engineering-deep-analysis-report.md",
+      "slug": "prompt-engineering-deep-analysis-report",
+      "title": "Prompt Engineering 的五年真相：没有万能方法，只有场景适配",
+      "content_text": " Prompt Engineering 的五年真相：没有万能方法，只有场景适配\n\n> 基于25篇学术论文（2022-2026）的系统分析\n\n 核心结论\n\n数据显示，Prompt Engineering 的核心矛盾在于：一个方法在数学推理中表现卓越，换到模式识别任务中反而有害。我们注意到，2024-2026年的研究趋势正在从\"寻找最佳通用方法\"转向\"为特定场景匹配最优策略\"。\n\n 为什么 Chain-of-Thought 不是万能钥匙\n\nChain-of-Thought（CoT） 就像给模型一张草稿纸——在数学推理中，它让模型一步步推导，效果显著。数据显示，标准 CoT 在 GSM8k 等数学 benchmark 上大幅超越直接回答。\n\n但 The Curse of CoT 论文揭示了一个反直觉的发现：在基于模式的上下文学习（ICL）中，CoT 及其变体（ReAct、ToT）一致性地表现不如直接回答。原因是显式推理增加了示范与答案之间的上下文距离，干扰了少样本学习结构。\n\n关键洞察：模型在 CoT 中同时使用显式推理和隐式推理，但前者引入了噪声。\n\n Few-shot：被低估的性价比之王\n\n我们注意到一个被忽视的事实：即使是1个精心选择的示例，也能显著降低 prompt sensitivity（POSIX 论文）。在代码漏洞检测中，20-shot 的检索增强方法将 F1 从 36.35% 提升到 74.05%，甚至超越了 fine-tuned 模型（59.31%）。\n\n但示例选择有陷阱。研究显示存在 majority label bias（多数标签偏见）和 recency bias（近因偏见）——如果示例中某类标签过多，或某类示例总是放在最后，模型会偏向这些标签。\n\n实践建议：平衡标签分布，随机化示例顺序，使用语义相似的检索示例而非随机选择。\n\n 2024-2026 的五大新趋势\n\nLong CoT 与推理时代\n\nOpenAI o1/o3-mini 和 DeepSeek-R1 标志着推理 LLM 的崛起。Long CoT 通过深度推理、广泛探索和可行反思三大特征处理复杂任务。但争议仍在：推理链长度与准确率之间没有明确关系，过度延长可能引入不必要的复杂性（overthinking）。\n\nDiffusion-styled CoT\n\nDiffCoT 将 CoT 重新建模为迭代去噪过程——就像图像生成中的扩散模型一样，逐步修正中间步骤。滑动窗口机制实现统一生成和回顾性修正，解决了传统 CoT 的曝光偏差和错误累积问题。\n\n重新思考 Prompt Sensitivity\n\nFlaw or Artifact? 论文挑战了传统认知：许多报告的 prompt sensitivity 实际上来自评估方法的缺陷（如基于正则的答案提取），而非模型本身的问题。使用 LLM-as-a-Judge 可大幅减少方差，提高排名一致性。\n\n局部优化取代全局优化\n\nLocal Prompt Optimization 识别 prompt 中的关键 token，仅优化这些 token 而非全局。在数学推理任务上显著提升，且收敛更快。\n\n自主 Prompt Engineering\n\nGPT-4 可自主应用 prompt engineering 技术（Expert Prompting、CoT、ToT），无需外部数据即可动态优化。但局限明显：在复杂任务上表现不稳定（如 Checkmate in One 下降 14.8%）。\n\n 场景-方法速查表\n\n数学/逻辑推理\n- 首选：Long CoT（复杂问题）或标准 CoT（中等复杂度）\n- 进阶：Contrastive CoT（展示正确和错误推理路径）\n- 避免：在模式 ICL 中使用 CoT\n\n代码漏洞检测\n- 首选：检索增强 Few-shot（F1 74.05%）\n- 次选：标准 CoT\n- 避免：Adaptive CoT（会抑制召回率，导致漏检）\n\n文本分类/情感分析\n- 首选：人工编写的 Few-shot 示例\n- 次选：Prompt Consistency Regularization（多同义 prompt 一致性）\n- 注意：GPT-3.5 比 GPT-4 更受示例选择影响\n\n多模态任务\n- 首选：数据增强（在训练数据中加入 prompt 扰动）\n- 注意：多模态模型对 prompt 变化异常敏感\n\n 安全任务中的特殊考量\n\n在漏洞检测等安全任务中，prompt 设计是一级部署问题。PromptAudit 研究发现：\n- 标准 CoT 表现最强\n- Adaptive CoT 抑制召回率（漏检风险）\n- Self-consistency 导致过度弃权（降低有效覆盖率）\n\n实践意义：在安全领域，选择能最大化召回率的方法，而非追求最高准确率。\n\n 评估方法的升级\n\n许多\"prompt sensitivity\"实际上是评估 artifact。建议采用：\n- LLM-as-a-Judge 替代启发式评估（正则、精确匹配）\n- 实例级分析而非仅报告数据集级聚合指标\n- PromptAudit 框架：固定数据集、解码、解析，仅变化 prompting 策略\n\n 写在最后\n\nPrompt Engineering 正在从\"艺术\"走向\"科学\"。数据显示，2024-2026 年的研究重点从寻找通用最佳实践转向理解方法-场景匹配机制。我们注意到，一个关键转变正在发生：研究者开始质疑先前假设，重新评估\"常识\"——这正是领域成熟的标志。\n\n开放讨论：在你的实际应用中，是否遇到过 CoT 反而降低性能的情况？你是如何发现某个特定方法在你的场景中无效的？欢迎分享你的观察——数据比观点更有价值。",
+      "content_html": null,
+      "summary": "基于25篇学术论文（2022-2026）的系统分析：不存在跨任务通用的最优方法，Chain-of-Thought 不是万能钥匙，场景适配才是正解。",
+      "url": "https://strongya.dev/posts/prompt-engineering-deep-analysis-report/",
+      "date_published": "2026-06-06T00:00:00.000Z",
+      "date_modified": "2026-06-06T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "Prompt Engineering",
+        "LLM",
+        "Deep Research"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/prompt-engineering-deep-analysis-report/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Prompt Engineering 的五年真相：没有万能方法，只有场景适配. Retrieved from https://strongya.dev/posts/prompt-engineering-deep-analysis-report/",
+        "mla": "Arlen. \"Prompt Engineering 的五年真相：没有万能方法，只有场景适配.\" 2026. Web. 2026-06-06.",
+        "gb": "Arlen. Prompt Engineering 的五年真相：没有万能方法，只有场景适配[EB/OL]. 2026-06-06. https://strongya.dev/posts/prompt-engineering-deep-analysis-report/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1329,
+        "readingTime": 4
       }
     },
     {
