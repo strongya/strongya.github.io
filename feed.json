@@ -27,71 +27,6 @@
   "attribution_required": true,
   "items": [
     {
-      "id": "dsh-model-interface-layer.md",
-      "slug": "dsh-model-interface-layer",
-      "title": "DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」",
-      "content_text": " DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」\n\n如果你用过 Claude、DeepSeek、OpenAI 或者本地跑的 LM Studio，你会发现它们都号称「对话」，但说话方式完全不一样。\n\n不是回答内容不一样，而是它们的 API 格式、流式输出、错误码、甚至「思考过程要不要展示」都各说各话。就像你开一家公司，客户有中国人、日本人、法国人，每个人递来的合同格式不同、发票格式不同、投诉信的写法也不同。\n\nDeepSeek Harness（DSH）的模型接口层，本质上就是这家公司里的翻译官管理制度：它规定了一种内部通用语言，让上层业务只关心「我要打个电话」，而不用管电话那头是 DeepSeek、OpenAI 还是你家阳台上的 LM Studio。\n\n---\n\n 一句话：接口层在解决什么问题？\n\n> DSH 不想知道对面是哪家大模型，所以它只讲「普通话」；每家模型配一个守规矩的「翻译官」；换模型 = 换翻译官，主体代码一行不动。\n\n这个设计的价值很直接：如果你今天在设置里把 DeepSeek 换成 LM Studio，聊天、压缩、起标题这些功能完全不需要重写。 不是魔法，是接口层提前把差异吃掉了。\n\n---\n\n 没有接口层，会多乱？\n\n想象一下：DSH 的每个功能——agent 循环、上下文压缩、标题生成、工具调用——都要单独为 DeepSeek 写一版，再为 OpenAI 写一版，再为 LM Studio 写一版。\n\n任何一个模型厂商改点 API 格式，你就要全项目搜代码改一遍。新模型出来了？再写一版。错了一个错误码？下游处理全崩。\n\nDSH 的解法是：让上层只说一种语言，让翻译官去处理方言。\n\n\nDSH 主体（agent 循环、压缩、UI）\n        │  只说普通话\n        ▼\n   ctx.llm（接口层总机）\n        │  按 provider 名字找翻译官\n        ▼\n   ┌────────────┬──────────────┬───────────┐\n   DeepSeek     万能翻译官        LM Studio\n   专职翻译官    （pi-ai）        （走 OpenAI 兼容）\n\n\n这个结构看起来简单，但它把「模型接入」从一项散落的脏活，变成了一套可插拔的插件系统。\n\n---\n\n DSH 的「普通话」只有三样东西\n\nDSH 没有试图兼容每个模型的全部字段，而是强行规定了最小公共集。任何模型要接入，都必须把自己的输出翻译成这三样东西：\n\n 1. 标准信纸：Message\n\n一条消息 = 编号 + 角色（system/user/assistant）+ 内容块 + 出处。格式写死，不可变。这是所有对话的原材料。\n\n 2. 内容块：ContentBlock\n\n信纸里能装的内容只有五种：文字、思考、图片、工具调用、工具结果。没有第六种。\n\n这个限制很重要。它意味着上层代码不需要猜「这次模型返回的是字符串还是对象」，只需要处理这五种类型中的一种。\n\n 3. 通话单：GenerateOptions\n\n一次调模型的完整打包：用哪家模型、聊天记录、系统提示词、工具清单、温度……所有参数一次性塑封，调用中途不许偷改。\n\n塑封的意义不只是防手贱，更是为了调试时能复现。如果某次调用结果奇怪，你可以把这份通话单拿出来回放，而不是追问「当时温度是不是被别的地方改了」。\n\n---\n\n 流式回答被切成 7 种「碎片」\n\n大模型说话不是一次性说完，而是一个字一个字往外蹦。DSH 把这些蹦出来的字统一称为 StreamChunk，并且严格规定只有 7 种：\n\n| 碎片 | 人话 |\n|---|---|\n| block-start | 「我要开始说一段话了」 |\n| text-delta | 文字增量（\"今\"、\"天\"、\"气\"……） |\n| reasoning-delta | 思考增量（模型的内心 OS） |\n| tool-call-delta | 工具调用增量（参数是一截截原始 JSON 字符串） |\n| block-end | 「这段说完了」，并且直接附带拼好的完整块 |\n| usage | 本次话费单（token 用量） |\n| finish | 「我说完了/出错了/被你挂了」 |\n\n这里有几个设计非常精巧：\n\n第一，碎片带序号。 模型可以同时交错说话、思考、写三个工具调用，但序号保证不会串台。\n\n第二，block-end 直接带成品。 收信的人不用自己拼碎片，拿到就是完整块。这避免了一个非常常见的 bug：各个子系统各自拼装，拼法不一致导致数据对不上。\n\n第三，工具调用参数永远是原始字符串。 因为模型就是按字符流生成 JSON 的，强行提前解析成对象，流到一半 JSON 不完整就会炸。保持字符串形式，永远安全。\n\n---\n\n 总机背后的「公司总部」\n\npackages/llm/llm 是接口层本体，里面每个文件对应一个明确的岗位：\n\n- src/index.ts：总台 + 调度室。ctx.llm 管翻译官花名册，是打模型电话的唯一入口。\n- src/types.ts：普通话词典。所有类型定义的家。\n- src/message.ts：标准信纸厂。构造和检查消息格式。\n- src/content.ts：信件检查工具。递归检查一封信里有没有图片，全公司共用一把尺子。\n- src/assembler.ts：唯一的碎纸拼装员。把碎片拼回完整消息，只此一家，防止各处自己拼出 bug。\n- src/call-config.ts：通话参数单 + 塑封机。参数一旦定稿就深冻结，偷改直接抛异常。\n- src/error.ts：统一故障单。所有错误带稳定错误码，下游按码处理，不许读报错文案猜。\n- src/adapter-failure.ts：故障单誊写台。翻译官抛出的千奇百怪错误，统一誊成标准格式再交楼上。\n- src/retry-policy.ts：重试规则表模板。每个翻译官入职时交一张，总台存档，换人也按旧表执行。\n- src/attribution.ts：统一工牌。每次给模型厂商打电话都戴 User-Agent，只写公开信息，不带密钥和会话号。\n- src/brand.ts：防伪钢印。给各种 ID 打类型钢印，防止把「工具调用 id」当成「请求 id」用混。\n- src/never.ts：质检哨兵。如果有人在词典里加了一种新碎片，所有没处理它的地方编译直接报错，想漏都不行。\n\n这个岗位分工非常细，细到有点强迫症。但正是这种强迫症，让接口层能够长期稳定地接住不同模型的古怪行为。\n\n---\n\n 翻译官长什么样？\n\n 专职翻译官：llm-deepseek\n\nDeepSeek 官方 API 有它自己的 SSE 流、错误格式、字段命名。DSH 的 llm-deepseek 只干四件事：\n\n1. adapter.ts：打电话（fetch + SSE 直连）。\n2. serialize.ts：去程翻译，把标准信纸转成 DeepSeek 方言。\n3. translate.ts：回程翻译，把 DeepSeek 的 SSE 事件转成 7 种标准碎片。\n4. sse.ts：电报解码器，处理粘包、UTF-8 边界、DONE 等细节。\n\n密钥和地址不归翻译官保管，它每次打电话时现取。这让它可以热切换配置，不用重启。\n\n 万能翻译官：llm-pi-ai\n\nLM Studio、自建网关、任何 OpenAI 兼容端点，全走 llm-pi-ai。它不是一个模型一个适配器，而是靠一份「路由 → 配置」字典解决所有兼容端点。这意味着你接 LM Studio 不需要写任何代码，填个地址和模型名就行。\n\n 两个不吃翻译饭但很重要的同事\n\n- llm-retry：重试调度员。监听失败广播，按该翻译官存档的规则表决定要不要重拨。每次重拨都开一个新的编号轮次，留下完整档案。\n- token-meter：电费计量员。从会话日志给每个会话独立数 token，压缩等部门共用它的表。\n\n---\n\n 翻译官入职必须遵守的 8 条铁律\n\n想当 DSH 的翻译官，不能随心所欲。DSH 规定了 8 条适配器约定，本质上是接口层的「行为契约」：\n\n1. 先报话费，再说「完了」，说完闭嘴。 usage 必须在 finish 之前，finish 之后空无一物。\n2. 工具参数永远是原始 JSON 字符串。 即使厂商给了拼好的对象，也得拆回字符串再一截截送。\n3. 报错只有两条路： 要么抛 LlmError，要么最后一片说 finish { kind: 'error' }。\n4. 不许自己偷偷重试。 一次调用就是一次尝试，重试归调度员管。\n5. 卡住 5 分钟算超时。 超时报 TIMEOUT，用户取消报 ABORTED，不许搞混。\n6. 「上下文太长」只有一个代号： CONTEXTWINDOWEXCEEDED，下游只认代号。\n7. 一句话都没返回也算失败。 默认会重试，不许假装成功。\n8. 每次打电话戴工牌。 而且有自动化测试盯着证明你戴了。\n\n这些规则听起来琐碎，但它们是接口层能够稳定托底的原因。每个翻译官都按同一个剧本演出，上层才不需要为每个模型写特殊处理。\n\n---\n\n 一通电话的完整旅程\n\n把上面这些串起来，一次模型调用其实是这样的：\n\n1. agent 循环用标准信纸写好消息。\n2. 从会话日志重建通话单——塑封，不许偷改。\n3. 总机按 provider 名找到对应翻译官。\n4. 电话过 llm/stream 安检传送带（重试、回放、路由在此拦截）。\n5. 翻译官去程翻译，打给模型厂商。\n6. 碎片陆续回来 → 拼装员拼成完整消息 → 原始碎片同时记进日志。\n7. 计量员记话费。\n8. 出故障？开统一故障单 → 调度员按规则表决定重不重拨。\n\n因为每一步都记了日志，所以断线重开、fork 会话、快照测试都能一字不差地重演。这是 DSH「模型可见即已记录」铁律在模型层的落地。\n\n---\n\n 小白 FAQ\n\nQ：界面上「缓存命中 X%」哪来的？\nA：话费单（TokenUsage）里有专门的「缓存命中」格子，但要翻译官上报才有数。DeepSeek 官方 API 会上报；LM Studio/llama.cpp 不上报 → 永远 0%。是「没上报」，不是「没缓存」。\n\nQ：为什么工具参数是字符串不是对象？\nA：因为模型就是一个字符一个字符往外蹦的。强行提前解析成对象，流到一半 JSON 不完整就会炸。原始字符串怎么来怎么存，永远安全。\n\nQ：我想接自己的模型怎么办？\nA：写一个翻译官：继承 LlmAdapter、实现 stream、在插件里注册。遵守 8 条铁律即可。官方有 docs/cookbook/adding-an-llm-adapter.zh.md 手把手教程。\n\nQ：请求中途换了模型配置会怎样？\nA：不会怎样。prepareCall 保证查能力、记档案、打电话全程用同一个翻译官。热更新也拆不散；新配置从下一通电话生效。\n\nQ：思考过程和回答为什么要分开？\nA：因为思考通常不该直接展示，也不该原样进压缩摘要。分开成两种块，UI 可以折叠它、压缩可以跳过它、厂商回放它，各取所需。\n\n---\n\n 一句话总结\n\nDSH 的模型接口层不是在做「多模型支持」这种产品功能，而是在做模型接入的基础设施。它用一个强制的通用语言、一套严格的翻译官契约、一个唯一的总台入口，把「模型接入」从散落各地的脏活，变成了一件可测试、可替换、可审计的干净事。\n\n对想自己造 Agent 的人来说，这个设计意味着：你可以自由换模型，而不用重写业务逻辑。你的 Agent 不会被任何一家大模型厂商绑架。\n\n---\n\n参考：DSH v0.1.0-rc.5 packages/llm/，docs/subsystems/llm-streaming.zh.md",
-      "content_html": null,
-      "summary": "DeepSeek Harness 的模型接口层通过统一抽象 Message、ContentBlock、GenerateOptions 与 StreamChunk，把 DeepSeek、OpenAI、LM Studio 等差异各异的模型接入变成可插拔的翻译官系统。本文用小白也能听懂的方式，解释接口层如何解决多模型接入的脏活，以及 8 条适配器铁律如何保证上层业务换模型时一行代码不动。",
-      "url": "https://strongya.dev/posts/dsh-model-interface-layer/",
-      "date_published": "2026-08-16T00:00:00.000Z",
-      "date_modified": "2026-08-16T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "AI",
-        "Agent",
-        "DeepSeek",
-        "DeepSeek Harness",
-        "LLM",
-        "架构"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/dsh-model-interface-layer/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」. Retrieved from https://strongya.dev/posts/dsh-model-interface-layer/",
-        "mla": "Arlen. \"DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」.\" 2026. Web. 2026-08-16.",
-        "gb": "Arlen. DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」[EB/OL]. 2026-08-16. https://strongya.dev/posts/dsh-model-interface-layer/."
-      },
-      "entities": [
-        {
-          "name": "DeepSeek",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/DeepSeek"
-        },
-        {
-          "name": "OpenAI",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
-        },
-        {
-          "name": "Anthropic",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/Anthropic"
-        },
-        {
-          "name": "Claude",
-          "type": "Software",
-          "wiki_url": "https://en.wikipedia.org/wiki/Claude_(language_model)"
-        }
-      ],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 2948,
-        "readingTime": 8
-      }
-    },
-    {
       "id": "dsh-model-interface-layer.en.md",
       "slug": "dsh-model-interface-layer",
       "title": "DSH's Model Interface Layer: Why Every LLM Needs a 'Translator'",
@@ -154,6 +89,71 @@
         "content_type": "article",
         "wordCount": 2024,
         "readingTime": 11
+      }
+    },
+    {
+      "id": "dsh-model-interface-layer.md",
+      "slug": "dsh-model-interface-layer",
+      "title": "DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」",
+      "content_text": " DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」\n\n如果你用过 Claude、DeepSeek、OpenAI 或者本地跑的 LM Studio，你会发现它们都号称「对话」，但说话方式完全不一样。\n\n不是回答内容不一样，而是它们的 API 格式、流式输出、错误码、甚至「思考过程要不要展示」都各说各话。就像你开一家公司，客户有中国人、日本人、法国人，每个人递来的合同格式不同、发票格式不同、投诉信的写法也不同。\n\nDeepSeek Harness（DSH）的模型接口层，本质上就是这家公司里的翻译官管理制度：它规定了一种内部通用语言，让上层业务只关心「我要打个电话」，而不用管电话那头是 DeepSeek、OpenAI 还是你家阳台上的 LM Studio。\n\n---\n\n 一句话：接口层在解决什么问题？\n\n> DSH 不想知道对面是哪家大模型，所以它只讲「普通话」；每家模型配一个守规矩的「翻译官」；换模型 = 换翻译官，主体代码一行不动。\n\n这个设计的价值很直接：如果你今天在设置里把 DeepSeek 换成 LM Studio，聊天、压缩、起标题这些功能完全不需要重写。 不是魔法，是接口层提前把差异吃掉了。\n\n---\n\n 没有接口层，会多乱？\n\n想象一下：DSH 的每个功能——agent 循环、上下文压缩、标题生成、工具调用——都要单独为 DeepSeek 写一版，再为 OpenAI 写一版，再为 LM Studio 写一版。\n\n任何一个模型厂商改点 API 格式，你就要全项目搜代码改一遍。新模型出来了？再写一版。错了一个错误码？下游处理全崩。\n\nDSH 的解法是：让上层只说一种语言，让翻译官去处理方言。\n\n\nDSH 主体（agent 循环、压缩、UI）\n        │  只说普通话\n        ▼\n   ctx.llm（接口层总机）\n        │  按 provider 名字找翻译官\n        ▼\n   ┌────────────┬──────────────┬───────────┐\n   DeepSeek     万能翻译官        LM Studio\n   专职翻译官    （pi-ai）        （走 OpenAI 兼容）\n\n\n这个结构看起来简单，但它把「模型接入」从一项散落的脏活，变成了一套可插拔的插件系统。\n\n---\n\n DSH 的「普通话」只有三样东西\n\nDSH 没有试图兼容每个模型的全部字段，而是强行规定了最小公共集。任何模型要接入，都必须把自己的输出翻译成这三样东西：\n\n 1. 标准信纸：Message\n\n一条消息 = 编号 + 角色（system/user/assistant）+ 内容块 + 出处。格式写死，不可变。这是所有对话的原材料。\n\n 2. 内容块：ContentBlock\n\n信纸里能装的内容只有五种：文字、思考、图片、工具调用、工具结果。没有第六种。\n\n这个限制很重要。它意味着上层代码不需要猜「这次模型返回的是字符串还是对象」，只需要处理这五种类型中的一种。\n\n 3. 通话单：GenerateOptions\n\n一次调模型的完整打包：用哪家模型、聊天记录、系统提示词、工具清单、温度……所有参数一次性塑封，调用中途不许偷改。\n\n塑封的意义不只是防手贱，更是为了调试时能复现。如果某次调用结果奇怪，你可以把这份通话单拿出来回放，而不是追问「当时温度是不是被别的地方改了」。\n\n---\n\n 流式回答被切成 7 种「碎片」\n\n大模型说话不是一次性说完，而是一个字一个字往外蹦。DSH 把这些蹦出来的字统一称为 StreamChunk，并且严格规定只有 7 种：\n\n| 碎片 | 人话 |\n|---|---|\n| block-start | 「我要开始说一段话了」 |\n| text-delta | 文字增量（\"今\"、\"天\"、\"气\"……） |\n| reasoning-delta | 思考增量（模型的内心 OS） |\n| tool-call-delta | 工具调用增量（参数是一截截原始 JSON 字符串） |\n| block-end | 「这段说完了」，并且直接附带拼好的完整块 |\n| usage | 本次话费单（token 用量） |\n| finish | 「我说完了/出错了/被你挂了」 |\n\n这里有几个设计非常精巧：\n\n第一，碎片带序号。 模型可以同时交错说话、思考、写三个工具调用，但序号保证不会串台。\n\n第二，block-end 直接带成品。 收信的人不用自己拼碎片，拿到就是完整块。这避免了一个非常常见的 bug：各个子系统各自拼装，拼法不一致导致数据对不上。\n\n第三，工具调用参数永远是原始字符串。 因为模型就是按字符流生成 JSON 的，强行提前解析成对象，流到一半 JSON 不完整就会炸。保持字符串形式，永远安全。\n\n---\n\n 总机背后的「公司总部」\n\npackages/llm/llm 是接口层本体，里面每个文件对应一个明确的岗位：\n\n- src/index.ts：总台 + 调度室。ctx.llm 管翻译官花名册，是打模型电话的唯一入口。\n- src/types.ts：普通话词典。所有类型定义的家。\n- src/message.ts：标准信纸厂。构造和检查消息格式。\n- src/content.ts：信件检查工具。递归检查一封信里有没有图片，全公司共用一把尺子。\n- src/assembler.ts：唯一的碎纸拼装员。把碎片拼回完整消息，只此一家，防止各处自己拼出 bug。\n- src/call-config.ts：通话参数单 + 塑封机。参数一旦定稿就深冻结，偷改直接抛异常。\n- src/error.ts：统一故障单。所有错误带稳定错误码，下游按码处理，不许读报错文案猜。\n- src/adapter-failure.ts：故障单誊写台。翻译官抛出的千奇百怪错误，统一誊成标准格式再交楼上。\n- src/retry-policy.ts：重试规则表模板。每个翻译官入职时交一张，总台存档，换人也按旧表执行。\n- src/attribution.ts：统一工牌。每次给模型厂商打电话都戴 User-Agent，只写公开信息，不带密钥和会话号。\n- src/brand.ts：防伪钢印。给各种 ID 打类型钢印，防止把「工具调用 id」当成「请求 id」用混。\n- src/never.ts：质检哨兵。如果有人在词典里加了一种新碎片，所有没处理它的地方编译直接报错，想漏都不行。\n\n这个岗位分工非常细，细到有点强迫症。但正是这种强迫症，让接口层能够长期稳定地接住不同模型的古怪行为。\n\n---\n\n 翻译官长什么样？\n\n 专职翻译官：llm-deepseek\n\nDeepSeek 官方 API 有它自己的 SSE 流、错误格式、字段命名。DSH 的 llm-deepseek 只干四件事：\n\n1. adapter.ts：打电话（fetch + SSE 直连）。\n2. serialize.ts：去程翻译，把标准信纸转成 DeepSeek 方言。\n3. translate.ts：回程翻译，把 DeepSeek 的 SSE 事件转成 7 种标准碎片。\n4. sse.ts：电报解码器，处理粘包、UTF-8 边界、DONE 等细节。\n\n密钥和地址不归翻译官保管，它每次打电话时现取。这让它可以热切换配置，不用重启。\n\n 万能翻译官：llm-pi-ai\n\nLM Studio、自建网关、任何 OpenAI 兼容端点，全走 llm-pi-ai。它不是一个模型一个适配器，而是靠一份「路由 → 配置」字典解决所有兼容端点。这意味着你接 LM Studio 不需要写任何代码，填个地址和模型名就行。\n\n 两个不吃翻译饭但很重要的同事\n\n- llm-retry：重试调度员。监听失败广播，按该翻译官存档的规则表决定要不要重拨。每次重拨都开一个新的编号轮次，留下完整档案。\n- token-meter：电费计量员。从会话日志给每个会话独立数 token，压缩等部门共用它的表。\n\n---\n\n 翻译官入职必须遵守的 8 条铁律\n\n想当 DSH 的翻译官，不能随心所欲。DSH 规定了 8 条适配器约定，本质上是接口层的「行为契约」：\n\n1. 先报话费，再说「完了」，说完闭嘴。 usage 必须在 finish 之前，finish 之后空无一物。\n2. 工具参数永远是原始 JSON 字符串。 即使厂商给了拼好的对象，也得拆回字符串再一截截送。\n3. 报错只有两条路： 要么抛 LlmError，要么最后一片说 finish { kind: 'error' }。\n4. 不许自己偷偷重试。 一次调用就是一次尝试，重试归调度员管。\n5. 卡住 5 分钟算超时。 超时报 TIMEOUT，用户取消报 ABORTED，不许搞混。\n6. 「上下文太长」只有一个代号： CONTEXTWINDOWEXCEEDED，下游只认代号。\n7. 一句话都没返回也算失败。 默认会重试，不许假装成功。\n8. 每次打电话戴工牌。 而且有自动化测试盯着证明你戴了。\n\n这些规则听起来琐碎，但它们是接口层能够稳定托底的原因。每个翻译官都按同一个剧本演出，上层才不需要为每个模型写特殊处理。\n\n---\n\n 一通电话的完整旅程\n\n把上面这些串起来，一次模型调用其实是这样的：\n\n1. agent 循环用标准信纸写好消息。\n2. 从会话日志重建通话单——塑封，不许偷改。\n3. 总机按 provider 名找到对应翻译官。\n4. 电话过 llm/stream 安检传送带（重试、回放、路由在此拦截）。\n5. 翻译官去程翻译，打给模型厂商。\n6. 碎片陆续回来 → 拼装员拼成完整消息 → 原始碎片同时记进日志。\n7. 计量员记话费。\n8. 出故障？开统一故障单 → 调度员按规则表决定重不重拨。\n\n因为每一步都记了日志，所以断线重开、fork 会话、快照测试都能一字不差地重演。这是 DSH「模型可见即已记录」铁律在模型层的落地。\n\n---\n\n 小白 FAQ\n\nQ：界面上「缓存命中 X%」哪来的？\nA：话费单（TokenUsage）里有专门的「缓存命中」格子，但要翻译官上报才有数。DeepSeek 官方 API 会上报；LM Studio/llama.cpp 不上报 → 永远 0%。是「没上报」，不是「没缓存」。\n\nQ：为什么工具参数是字符串不是对象？\nA：因为模型就是一个字符一个字符往外蹦的。强行提前解析成对象，流到一半 JSON 不完整就会炸。原始字符串怎么来怎么存，永远安全。\n\nQ：我想接自己的模型怎么办？\nA：写一个翻译官：继承 LlmAdapter、实现 stream、在插件里注册。遵守 8 条铁律即可。官方有 docs/cookbook/adding-an-llm-adapter.zh.md 手把手教程。\n\nQ：请求中途换了模型配置会怎样？\nA：不会怎样。prepareCall 保证查能力、记档案、打电话全程用同一个翻译官。热更新也拆不散；新配置从下一通电话生效。\n\nQ：思考过程和回答为什么要分开？\nA：因为思考通常不该直接展示，也不该原样进压缩摘要。分开成两种块，UI 可以折叠它、压缩可以跳过它、厂商回放它，各取所需。\n\n---\n\n 一句话总结\n\nDSH 的模型接口层不是在做「多模型支持」这种产品功能，而是在做模型接入的基础设施。它用一个强制的通用语言、一套严格的翻译官契约、一个唯一的总台入口，把「模型接入」从散落各地的脏活，变成了一件可测试、可替换、可审计的干净事。\n\n对想自己造 Agent 的人来说，这个设计意味着：你可以自由换模型，而不用重写业务逻辑。你的 Agent 不会被任何一家大模型厂商绑架。\n\n---\n\n参考：DSH v0.1.0-rc.5 packages/llm/，docs/subsystems/llm-streaming.zh.md",
+      "content_html": null,
+      "summary": "DeepSeek Harness 的模型接口层通过统一抽象 Message、ContentBlock、GenerateOptions 与 StreamChunk，把 DeepSeek、OpenAI、LM Studio 等差异各异的模型接入变成可插拔的翻译官系统。本文用小白也能听懂的方式，解释接口层如何解决多模型接入的脏活，以及 8 条适配器铁律如何保证上层业务换模型时一行代码不动。",
+      "url": "https://strongya.dev/posts/dsh-model-interface-layer/",
+      "date_published": "2026-08-16T00:00:00.000Z",
+      "date_modified": "2026-08-16T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "AI",
+        "Agent",
+        "DeepSeek",
+        "DeepSeek Harness",
+        "LLM",
+        "架构"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/dsh-model-interface-layer/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」. Retrieved from https://strongya.dev/posts/dsh-model-interface-layer/",
+        "mla": "Arlen. \"DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」.\" 2026. Web. 2026-08-16.",
+        "gb": "Arlen. DSH 的模型接口层：为什么每家大模型都需要一个「翻译官」[EB/OL]. 2026-08-16. https://strongya.dev/posts/dsh-model-interface-layer/."
+      },
+      "entities": [
+        {
+          "name": "DeepSeek",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/DeepSeek"
+        },
+        {
+          "name": "OpenAI",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
+        },
+        {
+          "name": "Anthropic",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/Anthropic"
+        },
+        {
+          "name": "Claude",
+          "type": "Software",
+          "wiki_url": "https://en.wikipedia.org/wiki/Claude_(language_model)"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 2948,
+        "readingTime": 8
       }
     },
     {
@@ -1879,47 +1879,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-36-40.md",
-      "slug": "agent-memory-errors-cases-36-40",
-      "title": "《Agent记忆错误的100个案例手册》第 36–40 案例",
-      "content_text": " 《Agent记忆错误的100个案例手册》第 36–40 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 36：向量数据库与索引错误｜sharding-boundary-query-ambiguity\n\n场景\n\n向量数据库按时间范围分片：shard1存储2023年文档，shard2存储2024年文档。用户查询\"2024年初的市场趋势\"，由于\"年初\"的模糊性，相关文档分布在两个分片中。在每个分片内部进行Top-K检索（每个分片取Top-5），但全局最优结果可能被分片内部的局部排序压制。\n\n错误表现\n\nAgent的回答过度偏向2024年1月的内容，忽略了2023年12月的关键趋势铺垫，分析缺乏连贯性。\n\n解决方案\n\n1. 实施\"全局重排序\"：分片检索后，将所有分片的结果汇集进行统一重排序，而非简单取各分片Top-K\n2. 对跨边界查询使用重叠分片策略：分片边界保留重叠区域（如12月文档同时存在于Q4和次年Q1分片）\n3. 在查询路由层进行智能分发：对可能跨分片的查询发送到多个分片并合并结果\n\n原理\n\n分片（Sharding）将全局排序问题分解为局部排序，但局部最优不等于全局最优。跨分片边界的查询需要特殊处理，否则会因分片策略产生系统性偏差。\n\n---\n\n 案例 37：向量数据库与索引错误｜embedding-cold-start-sparse-data\n\n场景\n\nAgent上线初期，知识库中只有10篇文档。用户查询与其中某篇有部分词汇重叠，但由于向量空间中数据点过于稀疏，该查询与这篇文档的相似度得分为0.85，而与一篇几乎无关的文档得分也有0.65（稀疏空间中的相对距离被压缩）。\n\n错误表现\n\nAgent对低置信度的结果过于自信，将无关文档作为依据，回答质量低下。随着文档量增加到1000篇后，同一查询的相似度分布才趋于合理。\n\n解决方案\n\n1. 冷启动阶段使用稀疏检索（BM25）而非稠密向量检索，避免embedding空间稀疏性问题\n2. 设定最小文档量阈值：知识库文档数低于阈值时，切换到规则-based或模板-based回答模式\n3. 对相似度分数进行\"数据量校准\"：根据知识库规模动态调整相似度阈值\n\n原理\n\n相似度的绝对值只有在足够的参照系下才有意义。在稀疏空间中，所有向量的两两相似度趋向于集中（因为缺乏对比），导致阈值判断失效。\n\n---\n\n 案例 38：向量数据库与索引错误｜ivf-partial-search-cluster-miss\n\n场景\n\n使用IVF（Inverted File Index）索引，将向量空间划分为100个聚类。用户查询被分配到聚类23进行搜索（只搜索该聚类内的文档，而非全库）。但某相关文档由于处于聚类边界，被划分到了相邻的聚类24。\n\n错误表现\n\nAgent未能检索到这篇边界文档，虽然它与查询高度相关。增加搜索的聚类数量（nprobe）可以解决问题，但会增加延迟。\n\n解决方案\n\n1. 在IVF索引查询时增加nprobe参数（如从1增加到5-10），搜索多个邻近聚类\n2. 使用IVF-PQ（乘积量化）的组合索引，在增加nprobe的同时通过PQ保持较低内存占用\n3. 对聚类边界区域进行特殊处理：在索引构建时识别边界向量并复制到邻近聚类\n\n原理\n\nIVF通过聚类实现快速检索，但聚类边界处的向量可能被\"错误分类\"到相邻聚类。nprobe参数控制了搜索的聚类数量，是精度-延迟的权衡点。\n\n---\n\n 案例 39：向量数据库与索引错误｜ann-search-recall-precision-tradeoff\n\n场景\n\n为达到<50ms的延迟要求，将HNSW的ef参数（搜索时探索的邻居数）从200调到50。在Benchmark测试中，Recall@10从95%下降到72%。但在实际业务中，由于查询分布与测试集不同，真实Recall只有45%。\n\n错误表现\n\nAgent频繁遗漏关键文档，用户询问\"XX政策在哪里\"时，Agent回答\"没有找到相关政策\"，但政策实际上存在于知识库中。\n\n解决方案\n\n1. 使用真实业务查询进行ANN参数调优，而非仅依赖标准Benchmark\n2. 实施\"精度-延迟自适应\"策略：对简单查询使用低ef参数，对复杂/重要查询使用高ef参数\n3. 建立Recall监控仪表盘：持续监控Top-K检索的期望Recall，低于阈值时自动告警并调整参数\n\n原理\n\n近似最近邻（ANN）搜索是近似算法，通过牺牲精度换取速度。ef参数直接控制搜索的彻底程度。业务查询分布与学术Benchmark往往不同，需要基于真实数据调优。\n\n---\n\n 案例 40：向量数据库与索引错误｜vector-index-version-skew-read-after-write\n\n场景\n\nAgent集群使用多副本向量数据库。用户上传文档后，写入请求被路由到副本A，索引更新成功。但随后的查询请求被负载均衡器路由到副本B，副本B的索引尚未同步更新（复制延迟500ms）。\n\n错误表现\n\n用户上传文档后立即查询\"我刚上传的文档里说了什么\"，Agent返回\"未找到相关文档\"，用户认为上传失败，重复上传导致重复内容。\n\n解决方案\n\n1. 写入后读取（Read-After-Write）场景使用\"写后读一致性\"路由：写入后的N秒内，相关查询固定路由到写入副本\n2. 在应用层实现\"写入确认等待\"：文档上传后，轮询所有副本确认索引同步完成再返回成功\n3. 使用向量数据库的\"一致性级别\"配置：将查询的一致性级别设为\"quorum\"或\"all\"\n\n原理\n\n分布式系统的副本间存在复制延迟（Replication Lag）。在写入后立即查询的场景下，如果没有一致性保障，用户会体验到\"数据丢失\"的假象。\n\n---\n\n E. 多Agent与协作记忆错误（案例41-50）\n\n\n> 来源：Agent Search",
-      "content_html": null,
-      "summary": "本辑收录 Agent 记忆错误案例 36–40，涵盖 向量数据库与索引错误 等主题。",
-      "url": "https://strongya.dev/posts/agent-memory-errors-cases-36-40/",
-      "date_published": "2026-06-28T00:00:00.000Z",
-      "date_modified": "2026-06-28T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "Vector Database",
-        "Indexing",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-36-40/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 36–40 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-36-40/",
-        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 36–40 案例.\" 2026. Web. 2026-06-28.",
-        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 36–40 案例[EB/OL]. 2026-06-28. https://strongya.dev/posts/agent-memory-errors-cases-36-40/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1631,
-        "readingTime": 4
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-36-40.en.md",
       "slug": "agent-memory-errors-cases-36-40",
       "title": "Agent Memory Errors Handbook: Cases 36–40",
@@ -1957,6 +1916,47 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 765,
+        "readingTime": 4
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-36-40.md",
+      "slug": "agent-memory-errors-cases-36-40",
+      "title": "《Agent记忆错误的100个案例手册》第 36–40 案例",
+      "content_text": " 《Agent记忆错误的100个案例手册》第 36–40 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 36：向量数据库与索引错误｜sharding-boundary-query-ambiguity\n\n场景\n\n向量数据库按时间范围分片：shard1存储2023年文档，shard2存储2024年文档。用户查询\"2024年初的市场趋势\"，由于\"年初\"的模糊性，相关文档分布在两个分片中。在每个分片内部进行Top-K检索（每个分片取Top-5），但全局最优结果可能被分片内部的局部排序压制。\n\n错误表现\n\nAgent的回答过度偏向2024年1月的内容，忽略了2023年12月的关键趋势铺垫，分析缺乏连贯性。\n\n解决方案\n\n1. 实施\"全局重排序\"：分片检索后，将所有分片的结果汇集进行统一重排序，而非简单取各分片Top-K\n2. 对跨边界查询使用重叠分片策略：分片边界保留重叠区域（如12月文档同时存在于Q4和次年Q1分片）\n3. 在查询路由层进行智能分发：对可能跨分片的查询发送到多个分片并合并结果\n\n原理\n\n分片（Sharding）将全局排序问题分解为局部排序，但局部最优不等于全局最优。跨分片边界的查询需要特殊处理，否则会因分片策略产生系统性偏差。\n\n---\n\n 案例 37：向量数据库与索引错误｜embedding-cold-start-sparse-data\n\n场景\n\nAgent上线初期，知识库中只有10篇文档。用户查询与其中某篇有部分词汇重叠，但由于向量空间中数据点过于稀疏，该查询与这篇文档的相似度得分为0.85，而与一篇几乎无关的文档得分也有0.65（稀疏空间中的相对距离被压缩）。\n\n错误表现\n\nAgent对低置信度的结果过于自信，将无关文档作为依据，回答质量低下。随着文档量增加到1000篇后，同一查询的相似度分布才趋于合理。\n\n解决方案\n\n1. 冷启动阶段使用稀疏检索（BM25）而非稠密向量检索，避免embedding空间稀疏性问题\n2. 设定最小文档量阈值：知识库文档数低于阈值时，切换到规则-based或模板-based回答模式\n3. 对相似度分数进行\"数据量校准\"：根据知识库规模动态调整相似度阈值\n\n原理\n\n相似度的绝对值只有在足够的参照系下才有意义。在稀疏空间中，所有向量的两两相似度趋向于集中（因为缺乏对比），导致阈值判断失效。\n\n---\n\n 案例 38：向量数据库与索引错误｜ivf-partial-search-cluster-miss\n\n场景\n\n使用IVF（Inverted File Index）索引，将向量空间划分为100个聚类。用户查询被分配到聚类23进行搜索（只搜索该聚类内的文档，而非全库）。但某相关文档由于处于聚类边界，被划分到了相邻的聚类24。\n\n错误表现\n\nAgent未能检索到这篇边界文档，虽然它与查询高度相关。增加搜索的聚类数量（nprobe）可以解决问题，但会增加延迟。\n\n解决方案\n\n1. 在IVF索引查询时增加nprobe参数（如从1增加到5-10），搜索多个邻近聚类\n2. 使用IVF-PQ（乘积量化）的组合索引，在增加nprobe的同时通过PQ保持较低内存占用\n3. 对聚类边界区域进行特殊处理：在索引构建时识别边界向量并复制到邻近聚类\n\n原理\n\nIVF通过聚类实现快速检索，但聚类边界处的向量可能被\"错误分类\"到相邻聚类。nprobe参数控制了搜索的聚类数量，是精度-延迟的权衡点。\n\n---\n\n 案例 39：向量数据库与索引错误｜ann-search-recall-precision-tradeoff\n\n场景\n\n为达到<50ms的延迟要求，将HNSW的ef参数（搜索时探索的邻居数）从200调到50。在Benchmark测试中，Recall@10从95%下降到72%。但在实际业务中，由于查询分布与测试集不同，真实Recall只有45%。\n\n错误表现\n\nAgent频繁遗漏关键文档，用户询问\"XX政策在哪里\"时，Agent回答\"没有找到相关政策\"，但政策实际上存在于知识库中。\n\n解决方案\n\n1. 使用真实业务查询进行ANN参数调优，而非仅依赖标准Benchmark\n2. 实施\"精度-延迟自适应\"策略：对简单查询使用低ef参数，对复杂/重要查询使用高ef参数\n3. 建立Recall监控仪表盘：持续监控Top-K检索的期望Recall，低于阈值时自动告警并调整参数\n\n原理\n\n近似最近邻（ANN）搜索是近似算法，通过牺牲精度换取速度。ef参数直接控制搜索的彻底程度。业务查询分布与学术Benchmark往往不同，需要基于真实数据调优。\n\n---\n\n 案例 40：向量数据库与索引错误｜vector-index-version-skew-read-after-write\n\n场景\n\nAgent集群使用多副本向量数据库。用户上传文档后，写入请求被路由到副本A，索引更新成功。但随后的查询请求被负载均衡器路由到副本B，副本B的索引尚未同步更新（复制延迟500ms）。\n\n错误表现\n\n用户上传文档后立即查询\"我刚上传的文档里说了什么\"，Agent返回\"未找到相关文档\"，用户认为上传失败，重复上传导致重复内容。\n\n解决方案\n\n1. 写入后读取（Read-After-Write）场景使用\"写后读一致性\"路由：写入后的N秒内，相关查询固定路由到写入副本\n2. 在应用层实现\"写入确认等待\"：文档上传后，轮询所有副本确认索引同步完成再返回成功\n3. 使用向量数据库的\"一致性级别\"配置：将查询的一致性级别设为\"quorum\"或\"all\"\n\n原理\n\n分布式系统的副本间存在复制延迟（Replication Lag）。在写入后立即查询的场景下，如果没有一致性保障，用户会体验到\"数据丢失\"的假象。\n\n---\n\n E. 多Agent与协作记忆错误（案例41-50）\n\n\n> 来源：Agent Search",
+      "content_html": null,
+      "summary": "本辑收录 Agent 记忆错误案例 36–40，涵盖 向量数据库与索引错误 等主题。",
+      "url": "https://strongya.dev/posts/agent-memory-errors-cases-36-40/",
+      "date_published": "2026-06-28T00:00:00.000Z",
+      "date_modified": "2026-06-28T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "Vector Database",
+        "Indexing",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-36-40/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 36–40 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-36-40/",
+        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 36–40 案例.\" 2026. Web. 2026-06-28.",
+        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 36–40 案例[EB/OL]. 2026-06-28. https://strongya.dev/posts/agent-memory-errors-cases-36-40/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1631,
         "readingTime": 4
       }
     },
@@ -2669,49 +2669,6 @@
       }
     },
     {
-      "id": "agent-external-data-compliance.en.md",
-      "slug": "agent-external-data-compliance",
-      "title": "Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling",
-      "content_text": " Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling\n\n> —From legal minefields to technical self-healing, a practical defense handbook for AI architects\n\n---\n\n Introduction: Why Your Agent Might Be \"Crawling Data Illegally\"\n\nIn 2026, if your AI Agent is still using requests.get to crudely scrape web data, it may be simultaneously collapsing on three battlefields: legal lawsuits, server bans, and user trust erosion.\n\nThis is not alarmism. X Corp formerly Twitter sued Cohere in late 2023, accusing it of unauthorized data scraping for model training. GDPR Article 5 explicitly stipulates the data \"minimization\" principle. China's \"Interim Measures for the Management of Generative AI Services\" Article 7 requires training data to \"have legal sources.\" Meanwhile, traditional crawler success rates on top websites have plummeted from about 60% in 2023 to about 15% in 2026—Cloudflare, Akamai and others have evolved bot detection to \"mouse trajectory-level\" biometric identification.\n\nA more hidden risk is hallucination contamination: although RAG architecture reduces model hallucinations, if an Agent crawls incorrect external data outdated web pages, wrong API responses, the LLM will generate more believable lies based on this \"toxic context\"—and these errors are harder for humans to detect than pure hallucinations.\n\nCore problem: Enterprises and developers need a complete \"Pre-Check → In-Flight → Post-Check\" three-stage closed-loop framework to manage the full lifecycle of Agent external information sources.\n\n---\n\n Core Framework: Three-Stage Closed Loop\n\n Stage One: Pre-Check—Should We Crawl It?\n\nBefore an Agent connects to any information source, it must pass four general admission assessments:\n\n1. Legal Compliance Scan\n- Robots.txt: Not a suggestion, but a legal risk boundary. After hiQ Labs v. LinkedIn, U.S. courts have treated robots.txt as \"part of the terms of service.\" Agent systems must have built-in parsers to hard-block Disallow: /.\n- ToS Terms of Service: Recommend using NLP models e.g., BERT-ToS-classifier to automatically scan risk levels. High risk = explicitly prohibits automated access; medium risk = prohibits \"excessive\" access; low risk = allows but requires source attribution.\n- Data Retention Policy: Public web data ≤90 days, API responses ≤30 days, enterprise sensitive data ≤7 days. GDPR Article 17 \"right to be forgotten\" requires systems to support one-click deletion.\n\n2. Data Quality Baseline\nBefore deciding \"worth crawling,\" quantify five dimensions: field completeness ≥95%, cross-validation accuracy ≥98%, timeliness finance ≤1 minute/news ≤5 minutes, 30-day availability ≥99.5%, structured degree ≥80%. Any dimension not meeting standard = veto, enter observation list.\n\nDifferentiated Assessment for Three Types of Sources:\n\n| Source Type | Core Risk | Key Decision Point |\n|-----------|---------|-----------|\n| Public web pages | Anti-crawl confrontation costs rising exponentially | L4+ CAPTCHA confrontation monthly cost $1000-3000, success rate only 40-60%. Prefer official APIs |\n| Paid APIs | Hidden costs and version changes | TCO = subscription + overage + integration + maintenance + opportunity costs. API version changes are a top-3 production failure cause |\n| Enterprise intranet | Data leakage and production load impact | Must go through DAL Data Access Layer, implement row/column-level permission filtering. Prohibit Agents from directly connecting to production DBs |\n\n Stage Two: In-Flight—How to Crawl? What If Banned?\n\n1. Adaptive Rate Limiting Technical Good Citizen\n\nTraditional fixed rate limiting e.g., 1 req/s is outdated. Recommended: adaptive token bucket algorithm: dynamically adjust based on server response signals. 429 status → reduce 50%; 503 → reduce 70%; response time >2s → reduce 20%; <500ms → allow speedup 10%.\n\nKey parameters: initial 0.5 req/s, max not exceeding robots.txt declaration, token bucket capacity = 2× current rate.\n\n2. Three-Layer Parsing Auto-Degradation\n\nWebsite redesign is the Agent's \"chronic killer\"—XPath fails but HTTP 200 returns normally, and the system silently produces dirty data. Solution:\n\n- Layer 1: Precise DOM parsing CSS Selector/XPath → auto-degrade when field missing rate >30%\n- Layer 2: HTML→Markdown + regex/NER extraction → continue degrading when extraction rate <50%\n- Layer 3: Plain text semantic extraction → feed to LLM for understanding, highest cost but final fallback\n\n3. Self-Healing Mechanisms\n\n| Failure Type | Self-Healing Strategy | Key Parameters |\n|---------|---------|---------|\n| 429/503 rate limiting | Exponential backoff 1→2→4→8→16s + random jitter | Max 5 retries, single upper limit 60s |\n| 403 ban | Proxy IP pool switching, overheated IP cooling ≥30min | Datacenter/residential/mobile proxy tiering |\n| DOM structure change | Auto-switch to Layer 2/3, trigger alert | Daily hash comparison, difference >30% triggers |\n| Multi-source data conflict | Weighted arbitration model source weight × timeliness factor × consistency factor | Difference rate >5% triggers human intervention |\n\n Stage Three: Post-Check—Is the Crawled Data Trustworthy?\n\n1. Cleaning and Denoising\nRaw web pages contain 40-70% noise. Cleaning targets: ad removal ≥95%, navigation removal ≥98%, footer ≥99%, comments/social plugins ≥90%.\n\n2. Push Hallucination Rate Below 1%\nThree-layer defense:\n- Source side: numerical rationality checks stock prices can't be negative + NER knowledge graph validation \"Tim Cook is Apple CEO\"\n- Generation side: RAG-constrained generation prompt \"answer only based on provided documents, no inference\" + mandatory citations ^1 markers + temperature=0.0-0.2\n- Output side: self-consistency check compare 3 answers to same question + fact-check API Google Fact Check + human spot checks finance 100%/customer service 5%/internal reports 20%\n\n3. 100% Traceability\nEach data chunk gets a unique chunkid; original HTML snapshots retained 30-90 days. ^1 markers in LLM output must be clickable back to full metadata URL, crawl time, parsing version, validation status.\n\n4. 100-Point Quantitative Scoring Table\n\n| Dimension | Weight | Key Sub-item | Knock-out? |\n|------|------|---------|----------|\n| Data completeness | 15% | Field completeness ≥95% | No |\n| Data accuracy | 25% | Cross-validation consistency ≥98% | No |\n| Data timeliness | 15% | Sync delay ≤ scenario threshold | No |\n| Data cleaning quality | 15% | Noise removal ≥90% | No |\n| Traceability & explainability | 15% | Traceability coverage 100% | No |\n| System stability | 10% | 30-day availability ≥99.5% | No |\n| Data security | 5% | TLS 1.3/mTLS coverage 100% | No |\n| Legal compliance | — | Unauthorized crawling / PII leakage | Yes |\n| Security incident | — | Data source ban / alert | Yes |\n\nScore levels: 90-100 🟢 production-ready; 80-89 🟡 deploy + improvement plan; 70-79 🟠 rectify and re-evaluate; <70 🔴 prohibited from deployment.\n\n---\n\n High-Risk Domains: Knock-out Criteria\n\nIn four domains, general standards are insufficient; Knock-out Criteria must be introduced:\n\n| Domain | Knock-out Item | Mandatory Requirement |\n|------|----------|---------|\n| Finance | Unaudited data source; real-time delay >3s; no risk control check | Traceability chain satisfies SEC/MiFID II audit |\n| Healthcare | Non-evidence-based sources Wikipedia/blogs; PHI leakage; drug dosage advice | Output includes disclaimer + evidence level Level A/B/C |\n| Cross-border e-commerce | IP infringement; price change >30% 24h; unofficial customs/tax data | Multi-currency with exchange rate source and timestamp |\n| Scientific literature | Non-peer-reviewed sources; retracted papers; fake journals | Citations must include DOI + journal name + publication date |\n\n---\n\n Conclusion: Why Is This Framework Worth Implementing Now?\n\nThree strategic values:\n\n1. Risk firewall: No framework = running naked. One GDPR lawsuit can wipe out the full-year ROI of AI investment.\n2. Quality foundation: RAG's \"garbage in, garbage out\" law has been verified. Without acceptance mechanisms, user trust collapses within 3-6 months.\n3. Cost optimization: Standardized crawling adaptive rate limiting, precise parsing, cache reuse can reduce external data costs by 40-60%. Unordered crawling's proxy IP consumption, API overage fees, and ban losses are \"invisible budget black holes.\"\n\nIn the next 12-18 months, Agent information sources will expand from pure text to images, videos, audio, and scanned PDFs multimodal crawling. The framework needs to cover in advance: OCR structured extraction, video keyframes + ASR, multimodal consistency checks. Meanwhile, AI-driven compliance auto-auditing LLM automatically scanning ToS/robots.txt will compress compliance audits from \"person-day level\" to \"minute level.\"\n\n---\n\n References and Data Sources\n\nThis report is compiled based on the following core sources:\n\n- Legal cases: hiQ Labs v. LinkedIn 2022, X Corp v. Cohere Inc. 2023.12, Thomson Reuters v. ROSS Intelligence 2025, Guangzhou Internet Court AI training case precedent 2025\n- Industry reports: Gartner 2025 AI Agent Deployment Survey, Postman 2025 State of API Report\n- Regulatory standards: GDPR EU 2016/679, AI Act EU 2024/1689, China \"Interim Measures for the Management of Generative AI Services\" 2023, CCPA/CPRA California, HIPAA US, SEC Regulation SCI, MiFID II EU, robots.txt RFC 9309 2024\n- Technical tools: Scrapy, Playwright, Selenium, readability-lxml, trafilatura, Presidio, tenacity, jsonschema, pydantic, Celery, Prometheus+Grafana, MinIO, AWS Secrets Manager, HashiCorp Vault\n- Anti-crawl/security: Cloudflare, Akamai, DataDome, PerimeterX, Bright Data, Oxylabs, Smartproxy\n- Databases/storage: ClickHouse, Snowflake, PostgreSQL, MySQL, Redis, ProxySQL, PgBouncer\n\nData cutoff date: 2026-06-15",
-      "content_html": null,
-      "summary": "From legal minefields to technical self-healing—a practical defense handbook for AI architects. This article provides a 'Pre-Check → In-Flight → Post-Check' three-stage closed-loop framework for managing the full lifecycle of Agent external information sources.",
-      "url": "https://strongya.dev/en/posts/agent-external-data-compliance/",
-      "date_published": "2026-06-15T00:00:00.000Z",
-      "date_modified": "2026-06-15T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Agent",
-        "Data Compliance",
-        "Web Scraping",
-        "RAG",
-        "Security"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-external-data-compliance/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling. Retrieved from https://strongya.dev/en/posts/agent-external-data-compliance/",
-        "mla": "Arlen. \"Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling.\" 2026. Web. 2026-06-15.",
-        "gb": "Arlen. Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling[EB/OL]. 2026-06-15. https://strongya.dev/en/posts/agent-external-data-compliance/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1392,
-        "readingTime": 7
-      }
-    },
-    {
       "id": "agent-external-data-compliance.md",
       "slug": "agent-external-data-compliance",
       "title": "你的AI Agent正在'裸奔'：外部数据抓取的隐秘战场与生存法则",
@@ -2752,6 +2709,49 @@
         "content_type": "article",
         "wordCount": 2195,
         "readingTime": 6
+      }
+    },
+    {
+      "id": "agent-external-data-compliance.en.md",
+      "slug": "agent-external-data-compliance",
+      "title": "Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling",
+      "content_text": " Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling\n\n> —From legal minefields to technical self-healing, a practical defense handbook for AI architects\n\n---\n\n Introduction: Why Your Agent Might Be \"Crawling Data Illegally\"\n\nIn 2026, if your AI Agent is still using requests.get to crudely scrape web data, it may be simultaneously collapsing on three battlefields: legal lawsuits, server bans, and user trust erosion.\n\nThis is not alarmism. X Corp formerly Twitter sued Cohere in late 2023, accusing it of unauthorized data scraping for model training. GDPR Article 5 explicitly stipulates the data \"minimization\" principle. China's \"Interim Measures for the Management of Generative AI Services\" Article 7 requires training data to \"have legal sources.\" Meanwhile, traditional crawler success rates on top websites have plummeted from about 60% in 2023 to about 15% in 2026—Cloudflare, Akamai and others have evolved bot detection to \"mouse trajectory-level\" biometric identification.\n\nA more hidden risk is hallucination contamination: although RAG architecture reduces model hallucinations, if an Agent crawls incorrect external data outdated web pages, wrong API responses, the LLM will generate more believable lies based on this \"toxic context\"—and these errors are harder for humans to detect than pure hallucinations.\n\nCore problem: Enterprises and developers need a complete \"Pre-Check → In-Flight → Post-Check\" three-stage closed-loop framework to manage the full lifecycle of Agent external information sources.\n\n---\n\n Core Framework: Three-Stage Closed Loop\n\n Stage One: Pre-Check—Should We Crawl It?\n\nBefore an Agent connects to any information source, it must pass four general admission assessments:\n\n1. Legal Compliance Scan\n- Robots.txt: Not a suggestion, but a legal risk boundary. After hiQ Labs v. LinkedIn, U.S. courts have treated robots.txt as \"part of the terms of service.\" Agent systems must have built-in parsers to hard-block Disallow: /.\n- ToS Terms of Service: Recommend using NLP models e.g., BERT-ToS-classifier to automatically scan risk levels. High risk = explicitly prohibits automated access; medium risk = prohibits \"excessive\" access; low risk = allows but requires source attribution.\n- Data Retention Policy: Public web data ≤90 days, API responses ≤30 days, enterprise sensitive data ≤7 days. GDPR Article 17 \"right to be forgotten\" requires systems to support one-click deletion.\n\n2. Data Quality Baseline\nBefore deciding \"worth crawling,\" quantify five dimensions: field completeness ≥95%, cross-validation accuracy ≥98%, timeliness finance ≤1 minute/news ≤5 minutes, 30-day availability ≥99.5%, structured degree ≥80%. Any dimension not meeting standard = veto, enter observation list.\n\nDifferentiated Assessment for Three Types of Sources:\n\n| Source Type | Core Risk | Key Decision Point |\n|-----------|---------|-----------|\n| Public web pages | Anti-crawl confrontation costs rising exponentially | L4+ CAPTCHA confrontation monthly cost $1000-3000, success rate only 40-60%. Prefer official APIs |\n| Paid APIs | Hidden costs and version changes | TCO = subscription + overage + integration + maintenance + opportunity costs. API version changes are a top-3 production failure cause |\n| Enterprise intranet | Data leakage and production load impact | Must go through DAL Data Access Layer, implement row/column-level permission filtering. Prohibit Agents from directly connecting to production DBs |\n\n Stage Two: In-Flight—How to Crawl? What If Banned?\n\n1. Adaptive Rate Limiting Technical Good Citizen\n\nTraditional fixed rate limiting e.g., 1 req/s is outdated. Recommended: adaptive token bucket algorithm: dynamically adjust based on server response signals. 429 status → reduce 50%; 503 → reduce 70%; response time >2s → reduce 20%; <500ms → allow speedup 10%.\n\nKey parameters: initial 0.5 req/s, max not exceeding robots.txt declaration, token bucket capacity = 2× current rate.\n\n2. Three-Layer Parsing Auto-Degradation\n\nWebsite redesign is the Agent's \"chronic killer\"—XPath fails but HTTP 200 returns normally, and the system silently produces dirty data. Solution:\n\n- Layer 1: Precise DOM parsing CSS Selector/XPath → auto-degrade when field missing rate >30%\n- Layer 2: HTML→Markdown + regex/NER extraction → continue degrading when extraction rate <50%\n- Layer 3: Plain text semantic extraction → feed to LLM for understanding, highest cost but final fallback\n\n3. Self-Healing Mechanisms\n\n| Failure Type | Self-Healing Strategy | Key Parameters |\n|---------|---------|---------|\n| 429/503 rate limiting | Exponential backoff 1→2→4→8→16s + random jitter | Max 5 retries, single upper limit 60s |\n| 403 ban | Proxy IP pool switching, overheated IP cooling ≥30min | Datacenter/residential/mobile proxy tiering |\n| DOM structure change | Auto-switch to Layer 2/3, trigger alert | Daily hash comparison, difference >30% triggers |\n| Multi-source data conflict | Weighted arbitration model source weight × timeliness factor × consistency factor | Difference rate >5% triggers human intervention |\n\n Stage Three: Post-Check—Is the Crawled Data Trustworthy?\n\n1. Cleaning and Denoising\nRaw web pages contain 40-70% noise. Cleaning targets: ad removal ≥95%, navigation removal ≥98%, footer ≥99%, comments/social plugins ≥90%.\n\n2. Push Hallucination Rate Below 1%\nThree-layer defense:\n- Source side: numerical rationality checks stock prices can't be negative + NER knowledge graph validation \"Tim Cook is Apple CEO\"\n- Generation side: RAG-constrained generation prompt \"answer only based on provided documents, no inference\" + mandatory citations ^1 markers + temperature=0.0-0.2\n- Output side: self-consistency check compare 3 answers to same question + fact-check API Google Fact Check + human spot checks finance 100%/customer service 5%/internal reports 20%\n\n3. 100% Traceability\nEach data chunk gets a unique chunkid; original HTML snapshots retained 30-90 days. ^1 markers in LLM output must be clickable back to full metadata URL, crawl time, parsing version, validation status.\n\n4. 100-Point Quantitative Scoring Table\n\n| Dimension | Weight | Key Sub-item | Knock-out? |\n|------|------|---------|----------|\n| Data completeness | 15% | Field completeness ≥95% | No |\n| Data accuracy | 25% | Cross-validation consistency ≥98% | No |\n| Data timeliness | 15% | Sync delay ≤ scenario threshold | No |\n| Data cleaning quality | 15% | Noise removal ≥90% | No |\n| Traceability & explainability | 15% | Traceability coverage 100% | No |\n| System stability | 10% | 30-day availability ≥99.5% | No |\n| Data security | 5% | TLS 1.3/mTLS coverage 100% | No |\n| Legal compliance | — | Unauthorized crawling / PII leakage | Yes |\n| Security incident | — | Data source ban / alert | Yes |\n\nScore levels: 90-100 🟢 production-ready; 80-89 🟡 deploy + improvement plan; 70-79 🟠 rectify and re-evaluate; <70 🔴 prohibited from deployment.\n\n---\n\n High-Risk Domains: Knock-out Criteria\n\nIn four domains, general standards are insufficient; Knock-out Criteria must be introduced:\n\n| Domain | Knock-out Item | Mandatory Requirement |\n|------|----------|---------|\n| Finance | Unaudited data source; real-time delay >3s; no risk control check | Traceability chain satisfies SEC/MiFID II audit |\n| Healthcare | Non-evidence-based sources Wikipedia/blogs; PHI leakage; drug dosage advice | Output includes disclaimer + evidence level Level A/B/C |\n| Cross-border e-commerce | IP infringement; price change >30% 24h; unofficial customs/tax data | Multi-currency with exchange rate source and timestamp |\n| Scientific literature | Non-peer-reviewed sources; retracted papers; fake journals | Citations must include DOI + journal name + publication date |\n\n---\n\n Conclusion: Why Is This Framework Worth Implementing Now?\n\nThree strategic values:\n\n1. Risk firewall: No framework = running naked. One GDPR lawsuit can wipe out the full-year ROI of AI investment.\n2. Quality foundation: RAG's \"garbage in, garbage out\" law has been verified. Without acceptance mechanisms, user trust collapses within 3-6 months.\n3. Cost optimization: Standardized crawling adaptive rate limiting, precise parsing, cache reuse can reduce external data costs by 40-60%. Unordered crawling's proxy IP consumption, API overage fees, and ban losses are \"invisible budget black holes.\"\n\nIn the next 12-18 months, Agent information sources will expand from pure text to images, videos, audio, and scanned PDFs multimodal crawling. The framework needs to cover in advance: OCR structured extraction, video keyframes + ASR, multimodal consistency checks. Meanwhile, AI-driven compliance auto-auditing LLM automatically scanning ToS/robots.txt will compress compliance audits from \"person-day level\" to \"minute level.\"\n\n---\n\n References and Data Sources\n\nThis report is compiled based on the following core sources:\n\n- Legal cases: hiQ Labs v. LinkedIn 2022, X Corp v. Cohere Inc. 2023.12, Thomson Reuters v. ROSS Intelligence 2025, Guangzhou Internet Court AI training case precedent 2025\n- Industry reports: Gartner 2025 AI Agent Deployment Survey, Postman 2025 State of API Report\n- Regulatory standards: GDPR EU 2016/679, AI Act EU 2024/1689, China \"Interim Measures for the Management of Generative AI Services\" 2023, CCPA/CPRA California, HIPAA US, SEC Regulation SCI, MiFID II EU, robots.txt RFC 9309 2024\n- Technical tools: Scrapy, Playwright, Selenium, readability-lxml, trafilatura, Presidio, tenacity, jsonschema, pydantic, Celery, Prometheus+Grafana, MinIO, AWS Secrets Manager, HashiCorp Vault\n- Anti-crawl/security: Cloudflare, Akamai, DataDome, PerimeterX, Bright Data, Oxylabs, Smartproxy\n- Databases/storage: ClickHouse, Snowflake, PostgreSQL, MySQL, Redis, ProxySQL, PgBouncer\n\nData cutoff date: 2026-06-15",
+      "content_html": null,
+      "summary": "From legal minefields to technical self-healing—a practical defense handbook for AI architects. This article provides a 'Pre-Check → In-Flight → Post-Check' three-stage closed-loop framework for managing the full lifecycle of Agent external information sources.",
+      "url": "https://strongya.dev/en/posts/agent-external-data-compliance/",
+      "date_published": "2026-06-15T00:00:00.000Z",
+      "date_modified": "2026-06-15T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Agent",
+        "Data Compliance",
+        "Web Scraping",
+        "RAG",
+        "Security"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-external-data-compliance/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling. Retrieved from https://strongya.dev/en/posts/agent-external-data-compliance/",
+        "mla": "Arlen. \"Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling.\" 2026. Web. 2026-06-15.",
+        "gb": "Arlen. Your AI Agent Is Running Naked: The Hidden Battlefield and Survival Rules of External Data Crawling[EB/OL]. 2026-06-15. https://strongya.dev/en/posts/agent-external-data-compliance/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1392,
+        "readingTime": 7
       }
     },
     {
@@ -2929,76 +2929,6 @@
       }
     },
     {
-      "id": "from-rpa-to-ai.en.md",
-      "slug": "from-rpa-to-ai",
-      "title": "From RPA to AI: A Layered, Incremental Path for Enterprise Automation",
-      "content_text": " From RPA to AI: A Layered, Incremental Path for Enterprise Automation\n\n> Subtitle: A Systematic Analysis Based on the Model-FSM-WF-RPA-HITL Five-Layer Architecture\n>\n> Reading Recommendation: Suitable for technical decision-makers, architects, and product managers. About 15 minutes.\n\n---\n\n Introduction: Why Does Enterprise Automation Need to Be \"Layered and Incremental\"?\n\nImagine you are the CTO of a bank, facing a mountain of loan approval applications. The traditional approach is to hire more human reviewers, but labor costs keep rising and human errors are hard to eliminate. So you decide to introduce AI—but here is the problem: AI \"hallucinates.\" It can produce risk assessments that look reasonable but are actually wrong. If you let AI automatically approve loans directly, a single mistake could mean huge losses and regulatory penalties.\n\nThis is not a fictional scenario. It is the \"intelligence vs. compliance\" paradox that every enterprise trying to embrace AI faces.\n\nThe five-layer architecture proposed in this report—Model + FSM + WF + RPA + HITL—is designed to solve this problem. It is neither a radical \"replace everything with AI\" approach, nor a passive \"maintain the status quo\" strategy. It is an engineering path that \"advances intelligence while absolutely ensuring compliance.\"\n\n---\n\n Core Framework: How the Five Layers Work Together\n\n 2.1 Understanding the Five Layers with a Metaphor\n\nThink of this system as a human body:\n\n- Model Multimodal Brain: Responsible for \"seeing, listening, and thinking\"—recognizing ID cards, analyzing financial statements, predicting risks. But it occasionally \"dreams\" hallucinates, so it cannot make the final decision directly.\n- FSM Neural Reflex Arc: Responsible for \"instinctive reactions\"—like pulling your hand back immediately when you touch something hot. It ensures that at critical nodes, the system will not perform dangerous actions, no matter what the brain \"thinks.\"\n- WF Blood Vessels and Skeleton: Responsible for \"whole-body coordination\"—from application to disbursement, across multiple departments and systems, ensuring the process does not \"lose a limb.\"\n- RPA Limbs: Responsible for \"operating the external world\"—logging into old credit systems, entering data into 20-year-old mainframes. There is no API, so it can only \"look at the screen and click the mouse\" like a human.\n- HITL Supreme Arbiter: Responsible for the \"final signature\"—when the AI is uncertain, the amount is too large, or a compliance red line is involved, a human reviewer must approve it.\n\n 2.2 Key Design Philosophy: Why Not \"Full AI\"?\n\nThe first mistake many enterprises make is trying to replace all processes with one large model in one step. This is dangerous.\n\nThe four core principles of this architecture:\n\n1. Layered Decoupling: Each layer only talks to adjacent layers and does not skip levels. The brain does not directly command the limbs; it goes through the nervous system FSM/WF.\n2. Deterministic Safety Net: No matter how smart AI is, FSM acts as a \"safety net\" to ensure core processes do not get out of control.\n3. Incremental Intelligence Enhancement: Start with simple automation RPA, then gradually add AI capabilities, rather than replacing everything at once.\n4. Human-Machine Complementarity: AI handles massive routine cases 80%, while humans focus on key decisions 20%.\n\n---\n\n Case Studies: How Two Real Scenarios Land\n\n 3.1 Intelligent Bank Credit: An Approval Revolution from 30 Minutes to 5 Minutes\n\nBackground: A bank processes thousands of loan applications daily. Under the traditional model, a single manual review takes 30 minutes, causing serious backlogs.\n\nHow the Five-Layer Architecture Lands:\n\n| Layer | What It Does | Effect |\n|-------|--------------|--------|\n| RPA | Automatically logs into the central bank credit system and the bank's legacy mainframes to collect customer data | Data collection time drops from 30 minutes to 5–15 minutes |\n| Model | GPT-4V recognizes ID cards and bank statements; XGBoost calculates credit scores; LLM generates risk control reports | 60–70% of low-risk applications are auto-approved |\n| FSM | Sets a state lock at the \"risk assessment\" node: score < threshold → auto-reject; gray list → manual review | Ensures high-risk customers are not mistakenly approved |\n| WF | Uses Temporal to orchestrate the full flow: application → document review → risk assessment → final manual review → disbursement → post-loan monitoring | Supports multi-week long-cycle processes with resume capability |\n| HITL | Applications over 500,000 or classified as \"gray list\" by ML are forcibly escalated to the credit manager | Manual approval time drops from 30 minutes to 5–10 minutes |\n\nKey Results:\n\n- Overall approval efficiency improves by 50–80%\n- Bad debt rate after human intervention decreases by 10–30%\n- About 20–30% enter manual review neither 100% AI-dependent nor 100% manual\n\n 3.2 High-End Manufacturing Quality Inspection: From \"Human Eyes\" to \"AI Eyes\"\n\nBackground: An automotive parts factory relies on manual visual inspection, which has a high miss rate, and worker fatigue increases the false detection rate.\n\nHow the Five-Layer Architecture Lands:\n\n| Layer | What It Does | Effect |\n|-------|--------------|--------|\n| Model | Industrial cameras + YOLOv8 identify surface defects with >99% detection rate | Miss rate reduced by over 90% |\n| FSM | Controls the robotic arm: Idle → Moving → Grasping → Inspecting → Error/E-Stop | Microsecond-level state synchronization ensures safety |\n| RPA | Enters detection results into closed-source foreign MES/ERP systems | Breaks data silos |\n| HITL | When CV confidence is 50% ambiguous, notifies the workshop director via tablet for damage assessment | Avoids rejecting good products |\n\nKey Results:\n\n- Manual visual inspection workload reduced by over 80%\n- From photo capture to judgment result returned in <500ms, not blocking the production line\n\n---\n\n Common Pitfalls: Four Traps to Avoid\n\n 4.1 Pitfall 1: Letting AI Make Final Decisions Directly\n\nProblem: Large models can \"hallucinate\"—generating outputs that look plausible but are false. If AI directly decides \"whether to approve a loan,\" it may classify a high-risk customer as low-risk.\n\nSolutions:\n\n- Multi-Layer Validation: AI output → format validation → content validation → range validation → FSM state transition. If any layer fails, either retry or escalate to human.\n- Guardrails Mechanism: Use Guardrails AI or NeMo Guardrails to automatically detect toxicity, bias, and format errors.\n- Quantitative Targets: Format error rate <0.1%, final downgrade-to-human ratio <5%.\n\n 4.2 Pitfall 2: Long Processes \"Forgetting\"\n\nProblem: Loan approvals can span weeks or even months, during which the AI's context is completely lost. Materials the customer submitted last week are \"forgotten\" by the AI this week.\n\nSolutions:\n\n- Temporal Persistence: Records all events like a \"black box.\" After the process sleeps for months, it can instantly resume state.\n- Three-Layer Context: Global context customer ID, etc. stored in database; stage context state history stored in event stream; immediate context token consumption cached for 24 hours.\n- Quantitative Targets: State recovery time <1 second, long-cycle workflow survival rate >99.9%.\n\n 4.3 Pitfall 3: RPA \"Breaks at the Slightest Touch\"\n\nProblem: Minor UI changes in the target system button moved, color changed break RPA. Maintenance costs are high, and failures trigger a flood of manual alerts.\n\nSolutions:\n\n- Visual RPA: Shift from \"element positioning\" to \"intent understanding\"—\"look at the screen\" like a human, rather than \"memorize coordinates.\"\n- Automatic Degradation: RPA fails → classify failure type → UI changes go to human; system unresponsiveness triggers exponential backoff retry 1 minute → 2 minutes → 4 minutes → 8 minutes.\n- Health Monitoring: Automatically \"probe\" target systems daily to detect UI changes early.\n- Quantitative Targets: RPA success rate >98% visual RPA, UI-change-induced failures <2%.\n\n 4.4 Pitfall 4: Human-in-the-Loop Becomes a Formality\n\nProblem: Manual review is too slow, losing the advantage of high concurrency; or humans habitually click \"approve\" blindly, turning HITL into a \"rubber stamp.\"\n\nSolutions:\n\n- Dynamic Confidence: High confidence >90% auto-passes; medium confidence 50–90% goes through standard manual review; low confidence <50% auto-rejects or escalates to experts.\n- Explicit Highlighting: Must display model reasoning basis, confidence score, and risk warnings—so reviewers \"know why the AI made this judgment.\"\n- Intelligent Assistance: Evidence highlighting, intelligent form pre-filling, historical similar case recommendations—helping reviewers decide faster.\n- Quantitative Targets: Manual approval time <10 minutes, reduced by 30–50% with intelligent assistance, blind click rate <20%.\n\n---\n\n Conclusion: This Is Not \"Full AI,\" but \"Smart Incrementalism\"\n\nBefore true AGI arrives, what enterprises need is not radical automation that \"bets it all,\" but a smart strategy of \"risk-controlled, step-by-step validation, continuous evolution.\"\n\nThe core value of this five-layer architecture:\n\n1. Risk Controllable: FSM's deterministic safety net ensures core processes do not get out of control\n2. Incremental Evolution: Gradually inject intelligence from RPA → WF → FSM → Model, reducing transformation risk\n3. Human-Machine Complementarity: AI handles massive routine cases 80%, humans focus on key decisions 20%\n4. Data Flywheel: Manual review results continuously optimize AI, forming a positive cycle\n\n Future Evolution Directions\n\n| Current | Future | Timeline |\n|---------|--------|----------|\n| RPA operating UIs | Embodied intelligence directly operating the physical world | 3–5 years |\n| Hard-coded workflows | AI dynamically generating flexible workflows | 2–3 years |\n| Manually designed state machines | Automatically learning optimal state transition rules | 3–5 years |\n| Passive human approval | AI proactively asking questions, deep human-machine collaboration | 1–2 years |\n| Single-model deployment | Dynamic multi-model orchestration, automatically selecting the best | 1–2 years |\n\n Final Recommendations for Decision-Makers\n\n- This is not a technology issue, but an organizational issue: Redefine \"human-machine division of labor\" and budget for organizational change.\n- Data quality determines AI evolution speed: The quality of manual review directly affects model optimization; establish reviewer incentive mechanisms.\n- It is not a one-time project: It is a cycle of \"build → operate → optimize\"; reserve an annual operations budget.\n- Trust comes from transparency: Gradually build human-machine trust through explainable AI and HITL safety nets.\n\n---\n\n Appendix: References and Sources\n\n Technical Frameworks and Tools\n\n1. Guardrails AI: Official documentation https://www.guardrailsai.com/, GitHub repository\n2. NeMo Guardrails: NVIDIA official documentation https://developer.nvidia.com/nemo-guardrails\n3. Temporal.io: Official documentation https://docs.temporal.io/, Event Sourcing mechanism whitepaper\n4. Camunda: Official documentation https://docs.camunda.io/, BPMN 2.0 standard specification\n5. LangGraph: LangChain official documentation https://langchain-ai.github.io/langgraph/\n6. UiPath: Official documentation https://docs.uipath.com/, AI Center product documentation\n7. Yingdao RPA: Official documentation https://www.yingdao.com/\n\n Industry Cases and Data\n\n8. Bank Credit Risk Control: Industry practice reports, RPA efficiency improvement data\n9. ML Risk Models: XGBoost/LightGBM credit scoring applications, KS >0.3 and AUC >0.7 industry standards\n10. HITL Efficiency Optimization: Manual approval time reduced by 30–50%\n11. High-End Manufacturing Quality Inspection: Semiconductor/automotive industry CV applications, detection rate >99%, false positive rate <0.5%\n12. MES/ERP Integration: OPC-UA/REST API/MQTT industrial communication protocol standards\n\n Academic and Technical References\n\n13. Event Sourcing Pattern: Martin Fowler's \"Event Sourcing\" blog post\n14. BPMN 2.0 Specification: OMG official standard document\n15. YOLO Object Detection: Redmon et al. \"You Only Look Once\"\n16. PaddleOCR: Baidu open-source OCR framework\n17. XGBoost: Chen & Guestrin \"XGBoost: A Scalable Tree Boosting System\"\n\n Data Source Notes and Limitations\n\n- Specific data points come from industry practice reports, technical whitepapers, and official case studies\n- Because web search tools were unavailable in the current environment, some data is based on internal knowledge bases and industry common standards\n- It is recommended to verify exact data for specific scenarios through POC before production deployment\n- This report has passed ReAct multi-agent cross-validation logic audit + Munger scan + data validation + de-narrativization, with a final credibility rating of A-\n- Missing data to be supplemented in future versions: implementation costs, team skill requirements, failure cases, domestic tool alternatives, etc.",
-      "content_html": null,
-      "summary": "Proposes a Model-FSM-WF-RPA-HITL five-layer architecture that offers a risk-controlled, incremental engineering path for enterprise automation evolution from RPA to AI, illustrated through banking credit and high-end manufacturing quality inspection scenarios.",
-      "url": "https://strongya.dev/en/posts/from-rpa-to-ai/",
-      "date_published": "2026-06-12T00:00:00.000Z",
-      "date_modified": "2026-06-12T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "RPA",
-        "AI",
-        "Enterprise Automation",
-        "Workflow",
-        "HITL",
-        "Architecture"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/from-rpa-to-ai/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). From RPA to AI: A Layered, Incremental Path for Enterprise Automation. Retrieved from https://strongya.dev/en/posts/from-rpa-to-ai/",
-        "mla": "Arlen. \"From RPA to AI: A Layered, Incremental Path for Enterprise Automation.\" 2026. Web. 2026-06-12.",
-        "gb": "Arlen. From RPA to AI: A Layered, Incremental Path for Enterprise Automation[EB/OL]. 2026-06-12. https://strongya.dev/en/posts/from-rpa-to-ai/."
-      },
-      "entities": [
-        {
-          "name": "OpenAI",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
-        },
-        {
-          "name": "Nvidia",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/Nvidia"
-        },
-        {
-          "name": "UiPath",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/UiPath"
-        },
-        {
-          "name": "XGBoost",
-          "type": "Technology",
-          "wiki_url": "https://en.wikipedia.org/wiki/XGBoost"
-        },
-        {
-          "name": "You Only Look Once",
-          "type": "Technology",
-          "wiki_url": "https://en.wikipedia.org/wiki/You_Only_Look_Once"
-        }
-      ],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1892,
-        "readingTime": 10
-      }
-    },
-    {
       "id": "from-rpa-to-ai.md",
       "slug": "from-rpa-to-ai",
       "title": "从RPA到AI：一种分层渐进的企业自动化演进路径",
@@ -3066,6 +2996,76 @@
         "content_type": "article",
         "wordCount": 2801,
         "readingTime": 7
+      }
+    },
+    {
+      "id": "from-rpa-to-ai.en.md",
+      "slug": "from-rpa-to-ai",
+      "title": "From RPA to AI: A Layered, Incremental Path for Enterprise Automation",
+      "content_text": " From RPA to AI: A Layered, Incremental Path for Enterprise Automation\n\n> Subtitle: A Systematic Analysis Based on the Model-FSM-WF-RPA-HITL Five-Layer Architecture\n>\n> Reading Recommendation: Suitable for technical decision-makers, architects, and product managers. About 15 minutes.\n\n---\n\n Introduction: Why Does Enterprise Automation Need to Be \"Layered and Incremental\"?\n\nImagine you are the CTO of a bank, facing a mountain of loan approval applications. The traditional approach is to hire more human reviewers, but labor costs keep rising and human errors are hard to eliminate. So you decide to introduce AI—but here is the problem: AI \"hallucinates.\" It can produce risk assessments that look reasonable but are actually wrong. If you let AI automatically approve loans directly, a single mistake could mean huge losses and regulatory penalties.\n\nThis is not a fictional scenario. It is the \"intelligence vs. compliance\" paradox that every enterprise trying to embrace AI faces.\n\nThe five-layer architecture proposed in this report—Model + FSM + WF + RPA + HITL—is designed to solve this problem. It is neither a radical \"replace everything with AI\" approach, nor a passive \"maintain the status quo\" strategy. It is an engineering path that \"advances intelligence while absolutely ensuring compliance.\"\n\n---\n\n Core Framework: How the Five Layers Work Together\n\n 2.1 Understanding the Five Layers with a Metaphor\n\nThink of this system as a human body:\n\n- Model Multimodal Brain: Responsible for \"seeing, listening, and thinking\"—recognizing ID cards, analyzing financial statements, predicting risks. But it occasionally \"dreams\" hallucinates, so it cannot make the final decision directly.\n- FSM Neural Reflex Arc: Responsible for \"instinctive reactions\"—like pulling your hand back immediately when you touch something hot. It ensures that at critical nodes, the system will not perform dangerous actions, no matter what the brain \"thinks.\"\n- WF Blood Vessels and Skeleton: Responsible for \"whole-body coordination\"—from application to disbursement, across multiple departments and systems, ensuring the process does not \"lose a limb.\"\n- RPA Limbs: Responsible for \"operating the external world\"—logging into old credit systems, entering data into 20-year-old mainframes. There is no API, so it can only \"look at the screen and click the mouse\" like a human.\n- HITL Supreme Arbiter: Responsible for the \"final signature\"—when the AI is uncertain, the amount is too large, or a compliance red line is involved, a human reviewer must approve it.\n\n 2.2 Key Design Philosophy: Why Not \"Full AI\"?\n\nThe first mistake many enterprises make is trying to replace all processes with one large model in one step. This is dangerous.\n\nThe four core principles of this architecture:\n\n1. Layered Decoupling: Each layer only talks to adjacent layers and does not skip levels. The brain does not directly command the limbs; it goes through the nervous system FSM/WF.\n2. Deterministic Safety Net: No matter how smart AI is, FSM acts as a \"safety net\" to ensure core processes do not get out of control.\n3. Incremental Intelligence Enhancement: Start with simple automation RPA, then gradually add AI capabilities, rather than replacing everything at once.\n4. Human-Machine Complementarity: AI handles massive routine cases 80%, while humans focus on key decisions 20%.\n\n---\n\n Case Studies: How Two Real Scenarios Land\n\n 3.1 Intelligent Bank Credit: An Approval Revolution from 30 Minutes to 5 Minutes\n\nBackground: A bank processes thousands of loan applications daily. Under the traditional model, a single manual review takes 30 minutes, causing serious backlogs.\n\nHow the Five-Layer Architecture Lands:\n\n| Layer | What It Does | Effect |\n|-------|--------------|--------|\n| RPA | Automatically logs into the central bank credit system and the bank's legacy mainframes to collect customer data | Data collection time drops from 30 minutes to 5–15 minutes |\n| Model | GPT-4V recognizes ID cards and bank statements; XGBoost calculates credit scores; LLM generates risk control reports | 60–70% of low-risk applications are auto-approved |\n| FSM | Sets a state lock at the \"risk assessment\" node: score < threshold → auto-reject; gray list → manual review | Ensures high-risk customers are not mistakenly approved |\n| WF | Uses Temporal to orchestrate the full flow: application → document review → risk assessment → final manual review → disbursement → post-loan monitoring | Supports multi-week long-cycle processes with resume capability |\n| HITL | Applications over 500,000 or classified as \"gray list\" by ML are forcibly escalated to the credit manager | Manual approval time drops from 30 minutes to 5–10 minutes |\n\nKey Results:\n\n- Overall approval efficiency improves by 50–80%\n- Bad debt rate after human intervention decreases by 10–30%\n- About 20–30% enter manual review neither 100% AI-dependent nor 100% manual\n\n 3.2 High-End Manufacturing Quality Inspection: From \"Human Eyes\" to \"AI Eyes\"\n\nBackground: An automotive parts factory relies on manual visual inspection, which has a high miss rate, and worker fatigue increases the false detection rate.\n\nHow the Five-Layer Architecture Lands:\n\n| Layer | What It Does | Effect |\n|-------|--------------|--------|\n| Model | Industrial cameras + YOLOv8 identify surface defects with >99% detection rate | Miss rate reduced by over 90% |\n| FSM | Controls the robotic arm: Idle → Moving → Grasping → Inspecting → Error/E-Stop | Microsecond-level state synchronization ensures safety |\n| RPA | Enters detection results into closed-source foreign MES/ERP systems | Breaks data silos |\n| HITL | When CV confidence is 50% ambiguous, notifies the workshop director via tablet for damage assessment | Avoids rejecting good products |\n\nKey Results:\n\n- Manual visual inspection workload reduced by over 80%\n- From photo capture to judgment result returned in <500ms, not blocking the production line\n\n---\n\n Common Pitfalls: Four Traps to Avoid\n\n 4.1 Pitfall 1: Letting AI Make Final Decisions Directly\n\nProblem: Large models can \"hallucinate\"—generating outputs that look plausible but are false. If AI directly decides \"whether to approve a loan,\" it may classify a high-risk customer as low-risk.\n\nSolutions:\n\n- Multi-Layer Validation: AI output → format validation → content validation → range validation → FSM state transition. If any layer fails, either retry or escalate to human.\n- Guardrails Mechanism: Use Guardrails AI or NeMo Guardrails to automatically detect toxicity, bias, and format errors.\n- Quantitative Targets: Format error rate <0.1%, final downgrade-to-human ratio <5%.\n\n 4.2 Pitfall 2: Long Processes \"Forgetting\"\n\nProblem: Loan approvals can span weeks or even months, during which the AI's context is completely lost. Materials the customer submitted last week are \"forgotten\" by the AI this week.\n\nSolutions:\n\n- Temporal Persistence: Records all events like a \"black box.\" After the process sleeps for months, it can instantly resume state.\n- Three-Layer Context: Global context customer ID, etc. stored in database; stage context state history stored in event stream; immediate context token consumption cached for 24 hours.\n- Quantitative Targets: State recovery time <1 second, long-cycle workflow survival rate >99.9%.\n\n 4.3 Pitfall 3: RPA \"Breaks at the Slightest Touch\"\n\nProblem: Minor UI changes in the target system button moved, color changed break RPA. Maintenance costs are high, and failures trigger a flood of manual alerts.\n\nSolutions:\n\n- Visual RPA: Shift from \"element positioning\" to \"intent understanding\"—\"look at the screen\" like a human, rather than \"memorize coordinates.\"\n- Automatic Degradation: RPA fails → classify failure type → UI changes go to human; system unresponsiveness triggers exponential backoff retry 1 minute → 2 minutes → 4 minutes → 8 minutes.\n- Health Monitoring: Automatically \"probe\" target systems daily to detect UI changes early.\n- Quantitative Targets: RPA success rate >98% visual RPA, UI-change-induced failures <2%.\n\n 4.4 Pitfall 4: Human-in-the-Loop Becomes a Formality\n\nProblem: Manual review is too slow, losing the advantage of high concurrency; or humans habitually click \"approve\" blindly, turning HITL into a \"rubber stamp.\"\n\nSolutions:\n\n- Dynamic Confidence: High confidence >90% auto-passes; medium confidence 50–90% goes through standard manual review; low confidence <50% auto-rejects or escalates to experts.\n- Explicit Highlighting: Must display model reasoning basis, confidence score, and risk warnings—so reviewers \"know why the AI made this judgment.\"\n- Intelligent Assistance: Evidence highlighting, intelligent form pre-filling, historical similar case recommendations—helping reviewers decide faster.\n- Quantitative Targets: Manual approval time <10 minutes, reduced by 30–50% with intelligent assistance, blind click rate <20%.\n\n---\n\n Conclusion: This Is Not \"Full AI,\" but \"Smart Incrementalism\"\n\nBefore true AGI arrives, what enterprises need is not radical automation that \"bets it all,\" but a smart strategy of \"risk-controlled, step-by-step validation, continuous evolution.\"\n\nThe core value of this five-layer architecture:\n\n1. Risk Controllable: FSM's deterministic safety net ensures core processes do not get out of control\n2. Incremental Evolution: Gradually inject intelligence from RPA → WF → FSM → Model, reducing transformation risk\n3. Human-Machine Complementarity: AI handles massive routine cases 80%, humans focus on key decisions 20%\n4. Data Flywheel: Manual review results continuously optimize AI, forming a positive cycle\n\n Future Evolution Directions\n\n| Current | Future | Timeline |\n|---------|--------|----------|\n| RPA operating UIs | Embodied intelligence directly operating the physical world | 3–5 years |\n| Hard-coded workflows | AI dynamically generating flexible workflows | 2–3 years |\n| Manually designed state machines | Automatically learning optimal state transition rules | 3–5 years |\n| Passive human approval | AI proactively asking questions, deep human-machine collaboration | 1–2 years |\n| Single-model deployment | Dynamic multi-model orchestration, automatically selecting the best | 1–2 years |\n\n Final Recommendations for Decision-Makers\n\n- This is not a technology issue, but an organizational issue: Redefine \"human-machine division of labor\" and budget for organizational change.\n- Data quality determines AI evolution speed: The quality of manual review directly affects model optimization; establish reviewer incentive mechanisms.\n- It is not a one-time project: It is a cycle of \"build → operate → optimize\"; reserve an annual operations budget.\n- Trust comes from transparency: Gradually build human-machine trust through explainable AI and HITL safety nets.\n\n---\n\n Appendix: References and Sources\n\n Technical Frameworks and Tools\n\n1. Guardrails AI: Official documentation https://www.guardrailsai.com/, GitHub repository\n2. NeMo Guardrails: NVIDIA official documentation https://developer.nvidia.com/nemo-guardrails\n3. Temporal.io: Official documentation https://docs.temporal.io/, Event Sourcing mechanism whitepaper\n4. Camunda: Official documentation https://docs.camunda.io/, BPMN 2.0 standard specification\n5. LangGraph: LangChain official documentation https://langchain-ai.github.io/langgraph/\n6. UiPath: Official documentation https://docs.uipath.com/, AI Center product documentation\n7. Yingdao RPA: Official documentation https://www.yingdao.com/\n\n Industry Cases and Data\n\n8. Bank Credit Risk Control: Industry practice reports, RPA efficiency improvement data\n9. ML Risk Models: XGBoost/LightGBM credit scoring applications, KS >0.3 and AUC >0.7 industry standards\n10. HITL Efficiency Optimization: Manual approval time reduced by 30–50%\n11. High-End Manufacturing Quality Inspection: Semiconductor/automotive industry CV applications, detection rate >99%, false positive rate <0.5%\n12. MES/ERP Integration: OPC-UA/REST API/MQTT industrial communication protocol standards\n\n Academic and Technical References\n\n13. Event Sourcing Pattern: Martin Fowler's \"Event Sourcing\" blog post\n14. BPMN 2.0 Specification: OMG official standard document\n15. YOLO Object Detection: Redmon et al. \"You Only Look Once\"\n16. PaddleOCR: Baidu open-source OCR framework\n17. XGBoost: Chen & Guestrin \"XGBoost: A Scalable Tree Boosting System\"\n\n Data Source Notes and Limitations\n\n- Specific data points come from industry practice reports, technical whitepapers, and official case studies\n- Because web search tools were unavailable in the current environment, some data is based on internal knowledge bases and industry common standards\n- It is recommended to verify exact data for specific scenarios through POC before production deployment\n- This report has passed ReAct multi-agent cross-validation logic audit + Munger scan + data validation + de-narrativization, with a final credibility rating of A-\n- Missing data to be supplemented in future versions: implementation costs, team skill requirements, failure cases, domestic tool alternatives, etc.",
+      "content_html": null,
+      "summary": "Proposes a Model-FSM-WF-RPA-HITL five-layer architecture that offers a risk-controlled, incremental engineering path for enterprise automation evolution from RPA to AI, illustrated through banking credit and high-end manufacturing quality inspection scenarios.",
+      "url": "https://strongya.dev/en/posts/from-rpa-to-ai/",
+      "date_published": "2026-06-12T00:00:00.000Z",
+      "date_modified": "2026-06-12T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "RPA",
+        "AI",
+        "Enterprise Automation",
+        "Workflow",
+        "HITL",
+        "Architecture"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/from-rpa-to-ai/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). From RPA to AI: A Layered, Incremental Path for Enterprise Automation. Retrieved from https://strongya.dev/en/posts/from-rpa-to-ai/",
+        "mla": "Arlen. \"From RPA to AI: A Layered, Incremental Path for Enterprise Automation.\" 2026. Web. 2026-06-12.",
+        "gb": "Arlen. From RPA to AI: A Layered, Incremental Path for Enterprise Automation[EB/OL]. 2026-06-12. https://strongya.dev/en/posts/from-rpa-to-ai/."
+      },
+      "entities": [
+        {
+          "name": "OpenAI",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
+        },
+        {
+          "name": "Nvidia",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/Nvidia"
+        },
+        {
+          "name": "UiPath",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/UiPath"
+        },
+        {
+          "name": "XGBoost",
+          "type": "Technology",
+          "wiki_url": "https://en.wikipedia.org/wiki/XGBoost"
+        },
+        {
+          "name": "You Only Look Once",
+          "type": "Technology",
+          "wiki_url": "https://en.wikipedia.org/wiki/You_Only_Look_Once"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1892,
+        "readingTime": 10
       }
     },
     {
