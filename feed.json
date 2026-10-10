@@ -1961,47 +1961,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-31-35.en.md",
-      "slug": "agent-memory-errors-cases-31-35",
-      "title": "Agent Memory Errors Handbook: Cases 31–35",
-      "content_text": " Agent Memory Errors Handbook: Cases 31–35\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 31: Vector Database & Indexing Errors — Hnsw Graph Connectivity Island\n\nScenario\n\nIn a vector library using an HNSW index, a batch of documents has poor embeddings very small norms. With a small M parameter, they fail to establish enough connections to the main graph during construction. These vectors become islands: they exist in the database but cannot be reached by search traversal.\n\nError Manifestation\n\nWhen users query topics covered by these documents, the documents are missing from results even when highly relevant. Admins can see the records but cannot retrieve them via search.\n\nSolution\n\n1. Check graph connectivity during HNSW construction: force-connect isolated components or rebuild their embeddings\n2. Regularly inspect vector-norm distributions and normalize or re-encode outliers\n3. Increase HNSW's M and efConstruction parameters to improve graph density\n\nPrinciple\n\nHNSW is a graph-based approximate nearest-neighbor algorithm whose search reachability depends on graph connectivity. Poor embeddings or a small M create search blind spots.\n\n---\n\n Case 32: Vector Database & Indexing Errors — Embedding Quantization Precision Loss\n\nScenario\n\nTo save storage, float32 embeddings are quantized to int8, cutting space by 75%. Quality is usually unaffected, but a query-document pair with original similarity 0.71 just above the 0.7 threshold drops to 0.69 after quantization and is filtered out.\n\nError Manifestation\n\nThe same query-document pair retrieves in environment A unquantized but returns \"I don't know\" in environment B quantized, producing unpredictable behavior.\n\nSolution\n\n1. Analyze the similarity distribution before quantization; ensure boundary-case misclassification is acceptable\n2. Use adaptive quantization: lower precision in dense regions and higher precision in sparse regions\n3. Run retrieval-consistency tests after quantization and set acceptable recall-difference thresholds\n\nPrinciple\n\nQuantization trades precision for efficiency and introduces quantization error. Vector pairs near the similarity threshold are most vulnerable.\n\n---\n\n Case 33: Vector Database & Indexing Errors — Vector Dimensionality Mismatch Silent Failure\n\nScenario\n\nDuring a system upgrade the embedding model changes from 768 to 1,024 dimensions, but old data in the vector database is not re-indexed. New queries produce 1,024-dimensional vectors while the database expects 768. Because client validation is loose, vectors are silently truncated or padded.\n\nError Manifestation\n\nAll queries return empty or random results without errors. Operations staff spend hours discovering the dimension mismatch.\n\nSolution\n\n1. Store dimension metadata in the vector database and enforce strict dimension checks on insert/query, raising clear errors on mismatch\n2. Make re-indexing mandatory during model upgrades and bind index version to model version\n3. Add application-layer health checks using known queries to detect retrieval-quality anomalies\n\nPrinciple\n\nVector dimension is the identity of the embedding space. Dimension mismatch means vectors are not comparable, and inner-product or cosine-similarity scores are meaningless. Silent truncation/padding hides this fundamental error.\n\n---\n\n Case 34: Vector Database & Indexing Errors — Cosine Similarity Magnitude Bias\n\nScenario\n\nThe Agent uses cosine similarity to score query-document relevance. One document embedding has a large norm 10 because it contains many generic words; a high-quality specialized document has norm 1. The user's specialized query is more relevant to the second, but cosine similarity ignores magnitude and gives both similar scores.\n\nError Manifestation\n\nThe generic, longer document ranks higher, and the Agent cites generic content rather than precise technical detail.\n\nSolution\n\n1. Use dot product or Euclidean distance so magnitude affects the score\n2. L2-normalize embeddings before using cosine similarity to eliminate magnitude differences\n3. At the reranking stage add an independent document-quality score information density, source authority combined with similarity\n\nPrinciple\n\nCosine similarity normalizes away vector magnitude. Long documents tend to have larger magnitudes because more token vectors are summed, but that does not imply higher quality. Cosine similarity is limited when information density matters.\n\n---\n\n Case 35: Vector Database & Indexing Errors — Index Stale Deleted Documents Ghost\n\nScenario\n\nA user deletes an outdated policy document from the knowledge base, but vector-index deletion is asynchronous via a message queue. During the five minutes before the queue is consumed, the user makes a related query.\n\nError Manifestation\n\nThe Agent retrieves the deleted document and answers based on it. The user clicks the document link and gets a 404, questioning reliability. Five minutes later the same query no longer returns the document, creating inconsistent behavior.\n\nSolution\n\n1. Use soft deletion: mark the primary record deleted first and filter soft-deleted records during retrieval while the index lags\n2. Use vector-database transactions so vector-index deletion commits with primary-database deletion\n3. Add a grace period after deletion during which related queries show a \"content may be outdated\" notice\n\nPrinciple\n\nAsynchronous index updates improve performance but create temporary inconsistency. For deletions, this inconsistency manifests as ghost data.\n\n\n> Source: Agent Search",
-      "content_html": null,
-      "summary": "This installment covers Agent memory error cases 31–35, including Vector Database & Indexing Errors.",
-      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/",
-      "date_published": "2026-06-27T00:00:00.000Z",
-      "date_modified": "2026-06-27T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Vector Database",
-        "Indexing",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 31–35. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/",
-        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 31–35.\" 2026. Web. 2026-06-27.",
-        "gb": "Arlen. Agent Memory Errors Handbook: Cases 31–35[EB/OL]. 2026-06-27. https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 806,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-31-35.md",
       "slug": "agent-memory-errors-cases-31-35",
       "title": "《Agent记忆错误的100个案例手册》第 31–35 案例",
@@ -2043,19 +2002,19 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-26-30.en.md",
-      "slug": "agent-memory-errors-cases-26-30",
-      "title": "Agent Memory Errors Handbook: Cases 26–30",
-      "content_text": " Agent Memory Errors Handbook: Cases 26–30\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 26: Short-term Memory / Context Errors — In Context Learning Example Contamination\n\nScenario\n\nThe Agent uses few-shot prompting with three fixed examples in the system prompt. In one conversation the user's input happens to resemble a format from an example e.g., a JSON schema. The LLM confuses the user input with the examples and treats it as part of a fourth example.\n\nError Manifestation\n\nThe Agent's output format is contaminated by the \"fourth example\" and starts mimicking the non-standard format in the user input instead of following the defined output spec.\n\nSolution\n\n1. Use explicit example separators such as === Example 1 === ... === End Example ===\n2. Isolate examples from user input with special tokens such as <|endofprompt|>\n3. Use dynamic example selection: pick the most relevant examples from a library rather than using fixed examples\n\nPrinciple\n\nThe strength of in-context learning is also its weakness: LLMs cannot strictly distinguish template examples from user data. Format contamination is a known risk of few-shot prompting.\n\n---\n\n Case 27: Short-term Memory / Context Errors — Conversation Branch Merged Without Resolution\n\nScenario\n\nThe user and Agent discuss whether remote work should be universal. The user first gives arguments supporting remote work Branch A, then arguments against it Branch B, and finally asks, \"What do you think?\" The Agent's context contains both branches but does not mark them as opposing assumptions.\n\nError Manifestation\n\nThe Agent replies with both \"Remote work indeed improves efficiency\" and \"But face-to-face collaboration is irreplaceable\" without clarifying that these are two different perspectives. The user finds the stance vague.\n\nSolution\n\n1. Use a conversation tree rather than linear context, tagging each point with its branch and assumption\n2. When merging branches, explicitly label \"Under assumption X\" and \"Under assumption Y,\" or ask which branch to discuss\n3. Use belief-state tracking: maintain support/oppose/pending labels for each proposition\n\nPrinciple\n\nReal conversations are non-linear and include hypotheticals and role-play. Linear context cannot represent branching structure, and merging branches creates logical conflicts. Conversation trees are a more precise model.\n\n---\n\n Case 28: Short-term Memory / Context Errors — Summarization Induced Fact Substitution\n\nScenario\n\nAfter a long conversation, the Agent compresses the context. The user originally said, \"I like PyTorch, but company projects require TensorFlow.\" For brevity, the summary becomes \"User develops with TensorFlow.\"\n\nError Manifestation\n\nLater, the Agent recommends TensorFlow tools and resources based on the summary, ignoring the user's actual preference for PyTorch. The user feels the Agent was not really listening.\n\nSolution\n\n1. Apply a fact-fidelity constraint: instruct the summarizer to compress wording without changing facts\n2. Use extractive summarization instead of abstractive summarization so key sentences remain verbatim\n3. Back-translate the summary into a longer text and check factual consistency with the original\n\nPrinciple\n\nAbstractive summarization may perform semantic approximation during compression. Even when the gist is preserved, small changes in specific facts—preferences, numbers, names—can bias later reasoning.\n\n---\n\n Case 29: Short-term Memory / Context Errors — Context Window Fragmentation Tool Calls\n\nScenario\n\nThe Agent uses a tool chain for complex tasks. Each tool call includes the tool definition JSON Schema, parameters, and results. In one data-analysis task the Agent calls ten tools; each call's schema and result consume 500 tokens, totaling 5,000 tokens. With the system prompt included, less than 1,000 tokens remain for the user's conversation.\n\nError Manifestation\n\nThe user's next input is truncated. The Agent sees only the first half of the question, misunderstands the intent, and gives a wrong analysis.\n\nSolution\n\n1. Compress tool-call history: keep only tool name, key parameters, and result summary; drop full schemas and redundant output\n2. Use a tool-memory cache: store frequently used results externally and keep only reference IDs in context\n3. Allocate an independent context budget for tool calls e.g., at most 30% and compress the oldest tool records first when exceeded\n\nPrinciple\n\nTool calls consume large amounts of context. Without management, tool history crowds out user content, producing the experience of the user being cut off mid-sentence.\n\n---\n\n Case 30: Short-term Memory / Context Errors — Temporal Marker Ambiguity Resolution\n\nScenario\n\nOn Monday the user says, \"Yesterday I went to the doctor.\" The Agent records \"User went to the doctor yesterday.\" On Wednesday the user asks, \"When was my last doctor visit?\" The Agent computes \"yesterday\" from the current context as Tuesday, but the user's \"yesterday\" meant Sunday.\n\nError Manifestation\n\nThe Agent answers, \"You went to the doctor on Tuesday.\" The user corrects, \"I went on Sunday.\" The Agent appears confused about time.\n\nSolution\n\n1. Normalize times when recording: convert relative expressions yesterday, next Wednesday to absolute timestamps\n2. Store both the original expression and the normalized timestamp; choose the appropriate expression when answering\n3. Set validity periods for time-sensitive records, e.g., automatically archive \"meeting tomorrow\" after the meeting passes\n\nPrinciple\n\nNatural-language time expressions are relative to speech time. Agents must anchor them to absolute time; otherwise temporal references drift as the session progresses.\n\n\n> Source: Agent Search",
+      "id": "agent-memory-errors-cases-31-35.en.md",
+      "slug": "agent-memory-errors-cases-31-35",
+      "title": "Agent Memory Errors Handbook: Cases 31–35",
+      "content_text": " Agent Memory Errors Handbook: Cases 31–35\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 31: Vector Database & Indexing Errors — Hnsw Graph Connectivity Island\n\nScenario\n\nIn a vector library using an HNSW index, a batch of documents has poor embeddings very small norms. With a small M parameter, they fail to establish enough connections to the main graph during construction. These vectors become islands: they exist in the database but cannot be reached by search traversal.\n\nError Manifestation\n\nWhen users query topics covered by these documents, the documents are missing from results even when highly relevant. Admins can see the records but cannot retrieve them via search.\n\nSolution\n\n1. Check graph connectivity during HNSW construction: force-connect isolated components or rebuild their embeddings\n2. Regularly inspect vector-norm distributions and normalize or re-encode outliers\n3. Increase HNSW's M and efConstruction parameters to improve graph density\n\nPrinciple\n\nHNSW is a graph-based approximate nearest-neighbor algorithm whose search reachability depends on graph connectivity. Poor embeddings or a small M create search blind spots.\n\n---\n\n Case 32: Vector Database & Indexing Errors — Embedding Quantization Precision Loss\n\nScenario\n\nTo save storage, float32 embeddings are quantized to int8, cutting space by 75%. Quality is usually unaffected, but a query-document pair with original similarity 0.71 just above the 0.7 threshold drops to 0.69 after quantization and is filtered out.\n\nError Manifestation\n\nThe same query-document pair retrieves in environment A unquantized but returns \"I don't know\" in environment B quantized, producing unpredictable behavior.\n\nSolution\n\n1. Analyze the similarity distribution before quantization; ensure boundary-case misclassification is acceptable\n2. Use adaptive quantization: lower precision in dense regions and higher precision in sparse regions\n3. Run retrieval-consistency tests after quantization and set acceptable recall-difference thresholds\n\nPrinciple\n\nQuantization trades precision for efficiency and introduces quantization error. Vector pairs near the similarity threshold are most vulnerable.\n\n---\n\n Case 33: Vector Database & Indexing Errors — Vector Dimensionality Mismatch Silent Failure\n\nScenario\n\nDuring a system upgrade the embedding model changes from 768 to 1,024 dimensions, but old data in the vector database is not re-indexed. New queries produce 1,024-dimensional vectors while the database expects 768. Because client validation is loose, vectors are silently truncated or padded.\n\nError Manifestation\n\nAll queries return empty or random results without errors. Operations staff spend hours discovering the dimension mismatch.\n\nSolution\n\n1. Store dimension metadata in the vector database and enforce strict dimension checks on insert/query, raising clear errors on mismatch\n2. Make re-indexing mandatory during model upgrades and bind index version to model version\n3. Add application-layer health checks using known queries to detect retrieval-quality anomalies\n\nPrinciple\n\nVector dimension is the identity of the embedding space. Dimension mismatch means vectors are not comparable, and inner-product or cosine-similarity scores are meaningless. Silent truncation/padding hides this fundamental error.\n\n---\n\n Case 34: Vector Database & Indexing Errors — Cosine Similarity Magnitude Bias\n\nScenario\n\nThe Agent uses cosine similarity to score query-document relevance. One document embedding has a large norm 10 because it contains many generic words; a high-quality specialized document has norm 1. The user's specialized query is more relevant to the second, but cosine similarity ignores magnitude and gives both similar scores.\n\nError Manifestation\n\nThe generic, longer document ranks higher, and the Agent cites generic content rather than precise technical detail.\n\nSolution\n\n1. Use dot product or Euclidean distance so magnitude affects the score\n2. L2-normalize embeddings before using cosine similarity to eliminate magnitude differences\n3. At the reranking stage add an independent document-quality score information density, source authority combined with similarity\n\nPrinciple\n\nCosine similarity normalizes away vector magnitude. Long documents tend to have larger magnitudes because more token vectors are summed, but that does not imply higher quality. Cosine similarity is limited when information density matters.\n\n---\n\n Case 35: Vector Database & Indexing Errors — Index Stale Deleted Documents Ghost\n\nScenario\n\nA user deletes an outdated policy document from the knowledge base, but vector-index deletion is asynchronous via a message queue. During the five minutes before the queue is consumed, the user makes a related query.\n\nError Manifestation\n\nThe Agent retrieves the deleted document and answers based on it. The user clicks the document link and gets a 404, questioning reliability. Five minutes later the same query no longer returns the document, creating inconsistent behavior.\n\nSolution\n\n1. Use soft deletion: mark the primary record deleted first and filter soft-deleted records during retrieval while the index lags\n2. Use vector-database transactions so vector-index deletion commits with primary-database deletion\n3. Add a grace period after deletion during which related queries show a \"content may be outdated\" notice\n\nPrinciple\n\nAsynchronous index updates improve performance but create temporary inconsistency. For deletions, this inconsistency manifests as ghost data.\n\n\n> Source: Agent Search",
       "content_html": null,
-      "summary": "This installment covers Agent memory error cases 26–30, including Short-term Memory / Context Errors.",
-      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/",
-      "date_published": "2026-06-26T00:00:00.000Z",
-      "date_modified": "2026-06-26T00:00:00.000Z",
+      "summary": "This installment covers Agent memory error cases 31–35, including Vector Database & Indexing Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/",
+      "date_published": "2026-06-27T00:00:00.000Z",
+      "date_modified": "2026-06-27T00:00:00.000Z",
       "language": "en",
       "tags": [
-        "Short-term Memory",
-        "Context",
+        "Vector Database",
+        "Indexing",
         "Agent Memory"
       ],
       "authors": [
@@ -2069,17 +2028,17 @@
         "holder": "Arlen",
         "license": "CC BY-NC-SA 4.0",
         "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/"
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/"
       },
       "citation_formats": {
-        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 26–30. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/",
-        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 26–30.\" 2026. Web. 2026-06-26.",
-        "gb": "Arlen. Agent Memory Errors Handbook: Cases 26–30[EB/OL]. 2026-06-26. https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/."
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 31–35. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 31–35.\" 2026. Web. 2026-06-27.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 31–35[EB/OL]. 2026-06-27. https://strongya.dev/en/posts/agent-memory-errors-cases-31-35/."
       },
       "entities": [],
       "_agent_meta": {
         "content_type": "article",
-        "wordCount": 861,
+        "wordCount": 806,
         "readingTime": 5
       }
     },
@@ -2122,6 +2081,47 @@
         "content_type": "article",
         "wordCount": 1566,
         "readingTime": 4
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-26-30.en.md",
+      "slug": "agent-memory-errors-cases-26-30",
+      "title": "Agent Memory Errors Handbook: Cases 26–30",
+      "content_text": " Agent Memory Errors Handbook: Cases 26–30\n\nThis installment is part of the Agent Memory Errors: 100 Cases Handbook series.\n\n Case 26: Short-term Memory / Context Errors — In Context Learning Example Contamination\n\nScenario\n\nThe Agent uses few-shot prompting with three fixed examples in the system prompt. In one conversation the user's input happens to resemble a format from an example e.g., a JSON schema. The LLM confuses the user input with the examples and treats it as part of a fourth example.\n\nError Manifestation\n\nThe Agent's output format is contaminated by the \"fourth example\" and starts mimicking the non-standard format in the user input instead of following the defined output spec.\n\nSolution\n\n1. Use explicit example separators such as === Example 1 === ... === End Example ===\n2. Isolate examples from user input with special tokens such as <|endofprompt|>\n3. Use dynamic example selection: pick the most relevant examples from a library rather than using fixed examples\n\nPrinciple\n\nThe strength of in-context learning is also its weakness: LLMs cannot strictly distinguish template examples from user data. Format contamination is a known risk of few-shot prompting.\n\n---\n\n Case 27: Short-term Memory / Context Errors — Conversation Branch Merged Without Resolution\n\nScenario\n\nThe user and Agent discuss whether remote work should be universal. The user first gives arguments supporting remote work Branch A, then arguments against it Branch B, and finally asks, \"What do you think?\" The Agent's context contains both branches but does not mark them as opposing assumptions.\n\nError Manifestation\n\nThe Agent replies with both \"Remote work indeed improves efficiency\" and \"But face-to-face collaboration is irreplaceable\" without clarifying that these are two different perspectives. The user finds the stance vague.\n\nSolution\n\n1. Use a conversation tree rather than linear context, tagging each point with its branch and assumption\n2. When merging branches, explicitly label \"Under assumption X\" and \"Under assumption Y,\" or ask which branch to discuss\n3. Use belief-state tracking: maintain support/oppose/pending labels for each proposition\n\nPrinciple\n\nReal conversations are non-linear and include hypotheticals and role-play. Linear context cannot represent branching structure, and merging branches creates logical conflicts. Conversation trees are a more precise model.\n\n---\n\n Case 28: Short-term Memory / Context Errors — Summarization Induced Fact Substitution\n\nScenario\n\nAfter a long conversation, the Agent compresses the context. The user originally said, \"I like PyTorch, but company projects require TensorFlow.\" For brevity, the summary becomes \"User develops with TensorFlow.\"\n\nError Manifestation\n\nLater, the Agent recommends TensorFlow tools and resources based on the summary, ignoring the user's actual preference for PyTorch. The user feels the Agent was not really listening.\n\nSolution\n\n1. Apply a fact-fidelity constraint: instruct the summarizer to compress wording without changing facts\n2. Use extractive summarization instead of abstractive summarization so key sentences remain verbatim\n3. Back-translate the summary into a longer text and check factual consistency with the original\n\nPrinciple\n\nAbstractive summarization may perform semantic approximation during compression. Even when the gist is preserved, small changes in specific facts—preferences, numbers, names—can bias later reasoning.\n\n---\n\n Case 29: Short-term Memory / Context Errors — Context Window Fragmentation Tool Calls\n\nScenario\n\nThe Agent uses a tool chain for complex tasks. Each tool call includes the tool definition JSON Schema, parameters, and results. In one data-analysis task the Agent calls ten tools; each call's schema and result consume 500 tokens, totaling 5,000 tokens. With the system prompt included, less than 1,000 tokens remain for the user's conversation.\n\nError Manifestation\n\nThe user's next input is truncated. The Agent sees only the first half of the question, misunderstands the intent, and gives a wrong analysis.\n\nSolution\n\n1. Compress tool-call history: keep only tool name, key parameters, and result summary; drop full schemas and redundant output\n2. Use a tool-memory cache: store frequently used results externally and keep only reference IDs in context\n3. Allocate an independent context budget for tool calls e.g., at most 30% and compress the oldest tool records first when exceeded\n\nPrinciple\n\nTool calls consume large amounts of context. Without management, tool history crowds out user content, producing the experience of the user being cut off mid-sentence.\n\n---\n\n Case 30: Short-term Memory / Context Errors — Temporal Marker Ambiguity Resolution\n\nScenario\n\nOn Monday the user says, \"Yesterday I went to the doctor.\" The Agent records \"User went to the doctor yesterday.\" On Wednesday the user asks, \"When was my last doctor visit?\" The Agent computes \"yesterday\" from the current context as Tuesday, but the user's \"yesterday\" meant Sunday.\n\nError Manifestation\n\nThe Agent answers, \"You went to the doctor on Tuesday.\" The user corrects, \"I went on Sunday.\" The Agent appears confused about time.\n\nSolution\n\n1. Normalize times when recording: convert relative expressions yesterday, next Wednesday to absolute timestamps\n2. Store both the original expression and the normalized timestamp; choose the appropriate expression when answering\n3. Set validity periods for time-sensitive records, e.g., automatically archive \"meeting tomorrow\" after the meeting passes\n\nPrinciple\n\nNatural-language time expressions are relative to speech time. Agents must anchor them to absolute time; otherwise temporal references drift as the session progresses.\n\n\n> Source: Agent Search",
+      "content_html": null,
+      "summary": "This installment covers Agent memory error cases 26–30, including Short-term Memory / Context Errors.",
+      "url": "https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/",
+      "date_published": "2026-06-26T00:00:00.000Z",
+      "date_modified": "2026-06-26T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Short-term Memory",
+        "Context",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). Agent Memory Errors Handbook: Cases 26–30. Retrieved from https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/",
+        "mla": "Arlen. \"Agent Memory Errors Handbook: Cases 26–30.\" 2026. Web. 2026-06-26.",
+        "gb": "Arlen. Agent Memory Errors Handbook: Cases 26–30[EB/OL]. 2026-06-26. https://strongya.dev/en/posts/agent-memory-errors-cases-26-30/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 861,
+        "readingTime": 5
       }
     },
     {
@@ -2287,46 +2287,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-11-15.md",
-      "slug": "agent-memory-errors-cases-11-15",
-      "title": "《Agent记忆错误的100个案例手册》第 11–15 案例",
-      "content_text": " 《Agent记忆错误的100个案例手册》第 11–15 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 11：长期记忆管理错误｜episodic-memory-duplicate-storage\n\n场景\n\n用户每次与Agent对话结束时，系统都会将本次对话摘要存入长期记忆。但用户经常反复询问同一问题（如\"我的服务器密码是多少\"），每次Agent回答后都生成一条新的记忆\"用户询问服务器密码，答案是XXX\"。6个月后，该主题下积累了47条几乎相同的记忆。\n\n错误表现\n\nAgent在回答相关问题时，检索到这47条记忆中的多条，由于摘要措辞略有不同，Agent在不同会话中给出了不同表述，甚至一次回答中引用了多个版本，显得自相矛盾。\n\n解决方案\n\n1. 存储新记忆前进行语义去重：计算新记忆与现有记忆的相似度，超过阈值则合并而非新建\n2. 对记忆设置\"最后更新\"时间戳和\"访问计数\"，合并时保留最新版本并累加计数\n3. 定期执行记忆压缩（Memory Compaction）：将同一主题的多个记忆聚类后生成统一摘要\n\n原理\n\n情景记忆（Episodic Memory）的持续积累会导致存储膨胀和冗余。人类记忆通过\"巩固\"（Consolidation）过程合并相似经验，Agent记忆系统也需要类似的机制来维持一致性。\n\n---\n\n 案例 12：长期记忆管理错误｜procedural-memory-overwrite-bugfix\n\n场景\n\n编程Agent的记忆系统中存储了\"如何修复Python的UnicodeDecodeError\"的程序性记忆（步骤序列）。某次用户遇到特定场景（读取CSV时编码错误），Agent生成了一个针对该场景的修复方案并存入记忆。后续另一个用户遇到不同场景的UnicodeDecodeError（读取JSON时），Agent生成了新方案并覆盖了旧记忆。\n\n错误表现\n\n第一个用户再次遇到CSV编码问题时，Agent给出了JSON场景的修复方案（使用json.loads的encoding参数），完全不适用，导致用户困惑。\n\n解决方案\n\n1. 程序性记忆采用\"条件-动作\"对的形式存储，明确记录每条记忆的适用条件/场景\n2. 更新记忆时进行条件匹配：只有当新方案的条件与旧方案一致或更通用时才覆盖，否则作为新条目存储\n3. 引入记忆版本控制：保留历史版本，允许根据条件选择最匹配的程序性记忆\n\n原理\n\n程序性记忆（Procedural Memory）存储的是\"如何做\"的知识，与具体场景高度相关。直接覆盖会导致场景-方案映射的丢失。条件化存储能确保不同场景下的程序性知识共存。\n\n---\n\n 案例 13：长期记忆管理错误｜semantic-memory-inheritance-conflict\n\n场景\n\n知识图谱Agent为实体建立语义记忆（Semantic Memory），采用面向对象的多继承模型。实体\"电动汽车\"同时继承自\"汽车\"（属性：需要加油）和\"电动设备\"（属性：需要充电）。当用户询问\"电动汽车需要加油吗\"时，Agent需要在这两个矛盾的父类属性中进行选择。\n\n错误表现\n\nAgent在不同查询中给出了不一致的回答，一次说\"需要加油\"（继承汽车），一次说\"不需要\"（继承电动设备），没有一致的判断标准。\n\n解决方案\n\n1. 为继承关系设置优先级（如子类 > 直接父类 > 间接父类），或采用C3线性化算法确定继承顺序\n2. 对冲突属性进行显式标注，在查询时触发\"属性冲突解决\"流程，要求用户提供更多上下文\n3. 使用基于概率的继承：根据实体与各类别的关联强度加权计算属性概率\n\n原理\n\n语义记忆中的继承冲突是经典的知识表示问题（Frame Problem）。缺乏冲突解决机制的系统会表现出非确定性行为，破坏用户信任。\n\n---\n\n 案例 14：长期记忆管理错误｜memory-access-pattern-hotspot-exhaustion\n\n场景\n\n社交媒体Agent为每个关注用户维护一条\"用户画像\"记忆。某大V用户有100万粉丝，所有粉丝在查询\"如何与XX互动\"时都会触发该大V用户画像的检索。该记忆成为热点，每秒被访问数千次，超过了向量数据库的读取配额。\n\n错误表现\n\n系统触发限流后，后续查询该记忆时返回超时或降级到空结果，Agent无法提供个性化建议，用户投诉服务不稳定。\n\n解决方案\n\n1. 对热点记忆实施多级缓存：L1（进程内存缓存）→ L2（Redis）→ L3（向量数据库）\n2. 对读取频率高的记忆进行副本分片（Sharding），分散读取压力\n3. 使用\"近似记忆\"策略：对热点用户画像定期生成静态摘要文件（如JSON），直接从对象存储读取\n\n原理\n\n任何存储系统都有访问瓶颈。长期记忆中高频访问的数据会集中压力在单点。多级缓存和读取分片是应对热点的标准架构模式。\n\n---\n\n 案例 15：长期记忆管理错误｜forgetting-curve-misalignment\n\n场景\n\nAgent使用艾宾浩斯遗忘曲线管理记忆：新记忆在1天后衰减20%，7天后衰减50%，30天后衰减80%。但在项目管理的场景中，用户创建了一个\"3个月后的产品发布计划\"记忆。按照默认遗忘曲线，该记忆在发布前就已经衰减到几乎不可检索。\n\n错误表现\n\n发布前一周用户询问\"我们的发布计划是什么\"，Agent无法从长期记忆中检索到该计划，只能返回\"我没有关于发布计划的信息\"，用户认为Agent\"记性差\"。\n\n解决方案\n\n1. 为记忆设置自定义衰减策略：根据记忆类型（待办、计划、事实）使用不同的遗忘曲线\n2. 引入\"重要性标记\"：用户或系统可标记记忆为\"重要\"，使其跳过衰减或延长保留周期\n3. 对时间敏感的记忆（如截止日期、会议安排）设置提醒机制，在触发时间点自动提升记忆权重\n\n原理\n\n统一的遗忘曲线无法适应不同业务场景的时间尺度。项目管理需要月度级记忆，聊天寒暄可能只需要小时级记忆。自适应遗忘策略才能匹配业务需求。\n\n\n> 来源：Agent Search",
-      "content_html": null,
-      "summary": "本辑收录 Agent 记忆错误案例 11–15，涵盖 长期记忆管理错误 等主题。",
-      "url": "https://strongya.dev/posts/agent-memory-errors-cases-11-15/",
-      "date_published": "2026-06-23T00:00:00.000Z",
-      "date_modified": "2026-06-23T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "Long-term Memory",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-11-15/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 11–15 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-11-15/",
-        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 11–15 案例.\" 2026. Web. 2026-06-23.",
-        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 11–15 案例[EB/OL]. 2026-06-23. https://strongya.dev/posts/agent-memory-errors-cases-11-15/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1703,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-11-15.en.md",
       "slug": "agent-memory-errors-cases-11-15",
       "title": "Agent Memory Errors Handbook: Cases 11–15",
@@ -2363,6 +2323,46 @@
       "_agent_meta": {
         "content_type": "article",
         "wordCount": 893,
+        "readingTime": 5
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-11-15.md",
+      "slug": "agent-memory-errors-cases-11-15",
+      "title": "《Agent记忆错误的100个案例手册》第 11–15 案例",
+      "content_text": " 《Agent记忆错误的100个案例手册》第 11–15 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 11：长期记忆管理错误｜episodic-memory-duplicate-storage\n\n场景\n\n用户每次与Agent对话结束时，系统都会将本次对话摘要存入长期记忆。但用户经常反复询问同一问题（如\"我的服务器密码是多少\"），每次Agent回答后都生成一条新的记忆\"用户询问服务器密码，答案是XXX\"。6个月后，该主题下积累了47条几乎相同的记忆。\n\n错误表现\n\nAgent在回答相关问题时，检索到这47条记忆中的多条，由于摘要措辞略有不同，Agent在不同会话中给出了不同表述，甚至一次回答中引用了多个版本，显得自相矛盾。\n\n解决方案\n\n1. 存储新记忆前进行语义去重：计算新记忆与现有记忆的相似度，超过阈值则合并而非新建\n2. 对记忆设置\"最后更新\"时间戳和\"访问计数\"，合并时保留最新版本并累加计数\n3. 定期执行记忆压缩（Memory Compaction）：将同一主题的多个记忆聚类后生成统一摘要\n\n原理\n\n情景记忆（Episodic Memory）的持续积累会导致存储膨胀和冗余。人类记忆通过\"巩固\"（Consolidation）过程合并相似经验，Agent记忆系统也需要类似的机制来维持一致性。\n\n---\n\n 案例 12：长期记忆管理错误｜procedural-memory-overwrite-bugfix\n\n场景\n\n编程Agent的记忆系统中存储了\"如何修复Python的UnicodeDecodeError\"的程序性记忆（步骤序列）。某次用户遇到特定场景（读取CSV时编码错误），Agent生成了一个针对该场景的修复方案并存入记忆。后续另一个用户遇到不同场景的UnicodeDecodeError（读取JSON时），Agent生成了新方案并覆盖了旧记忆。\n\n错误表现\n\n第一个用户再次遇到CSV编码问题时，Agent给出了JSON场景的修复方案（使用json.loads的encoding参数），完全不适用，导致用户困惑。\n\n解决方案\n\n1. 程序性记忆采用\"条件-动作\"对的形式存储，明确记录每条记忆的适用条件/场景\n2. 更新记忆时进行条件匹配：只有当新方案的条件与旧方案一致或更通用时才覆盖，否则作为新条目存储\n3. 引入记忆版本控制：保留历史版本，允许根据条件选择最匹配的程序性记忆\n\n原理\n\n程序性记忆（Procedural Memory）存储的是\"如何做\"的知识，与具体场景高度相关。直接覆盖会导致场景-方案映射的丢失。条件化存储能确保不同场景下的程序性知识共存。\n\n---\n\n 案例 13：长期记忆管理错误｜semantic-memory-inheritance-conflict\n\n场景\n\n知识图谱Agent为实体建立语义记忆（Semantic Memory），采用面向对象的多继承模型。实体\"电动汽车\"同时继承自\"汽车\"（属性：需要加油）和\"电动设备\"（属性：需要充电）。当用户询问\"电动汽车需要加油吗\"时，Agent需要在这两个矛盾的父类属性中进行选择。\n\n错误表现\n\nAgent在不同查询中给出了不一致的回答，一次说\"需要加油\"（继承汽车），一次说\"不需要\"（继承电动设备），没有一致的判断标准。\n\n解决方案\n\n1. 为继承关系设置优先级（如子类 > 直接父类 > 间接父类），或采用C3线性化算法确定继承顺序\n2. 对冲突属性进行显式标注，在查询时触发\"属性冲突解决\"流程，要求用户提供更多上下文\n3. 使用基于概率的继承：根据实体与各类别的关联强度加权计算属性概率\n\n原理\n\n语义记忆中的继承冲突是经典的知识表示问题（Frame Problem）。缺乏冲突解决机制的系统会表现出非确定性行为，破坏用户信任。\n\n---\n\n 案例 14：长期记忆管理错误｜memory-access-pattern-hotspot-exhaustion\n\n场景\n\n社交媒体Agent为每个关注用户维护一条\"用户画像\"记忆。某大V用户有100万粉丝，所有粉丝在查询\"如何与XX互动\"时都会触发该大V用户画像的检索。该记忆成为热点，每秒被访问数千次，超过了向量数据库的读取配额。\n\n错误表现\n\n系统触发限流后，后续查询该记忆时返回超时或降级到空结果，Agent无法提供个性化建议，用户投诉服务不稳定。\n\n解决方案\n\n1. 对热点记忆实施多级缓存：L1（进程内存缓存）→ L2（Redis）→ L3（向量数据库）\n2. 对读取频率高的记忆进行副本分片（Sharding），分散读取压力\n3. 使用\"近似记忆\"策略：对热点用户画像定期生成静态摘要文件（如JSON），直接从对象存储读取\n\n原理\n\n任何存储系统都有访问瓶颈。长期记忆中高频访问的数据会集中压力在单点。多级缓存和读取分片是应对热点的标准架构模式。\n\n---\n\n 案例 15：长期记忆管理错误｜forgetting-curve-misalignment\n\n场景\n\nAgent使用艾宾浩斯遗忘曲线管理记忆：新记忆在1天后衰减20%，7天后衰减50%，30天后衰减80%。但在项目管理的场景中，用户创建了一个\"3个月后的产品发布计划\"记忆。按照默认遗忘曲线，该记忆在发布前就已经衰减到几乎不可检索。\n\n错误表现\n\n发布前一周用户询问\"我们的发布计划是什么\"，Agent无法从长期记忆中检索到该计划，只能返回\"我没有关于发布计划的信息\"，用户认为Agent\"记性差\"。\n\n解决方案\n\n1. 为记忆设置自定义衰减策略：根据记忆类型（待办、计划、事实）使用不同的遗忘曲线\n2. 引入\"重要性标记\"：用户或系统可标记记忆为\"重要\"，使其跳过衰减或延长保留周期\n3. 对时间敏感的记忆（如截止日期、会议安排）设置提醒机制，在触发时间点自动提升记忆权重\n\n原理\n\n统一的遗忘曲线无法适应不同业务场景的时间尺度。项目管理需要月度级记忆，聊天寒暄可能只需要小时级记忆。自适应遗忘策略才能匹配业务需求。\n\n\n> 来源：Agent Search",
+      "content_html": null,
+      "summary": "本辑收录 Agent 记忆错误案例 11–15，涵盖 长期记忆管理错误 等主题。",
+      "url": "https://strongya.dev/posts/agent-memory-errors-cases-11-15/",
+      "date_published": "2026-06-23T00:00:00.000Z",
+      "date_modified": "2026-06-23T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "Long-term Memory",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-11-15/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 11–15 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-11-15/",
+        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 11–15 案例.\" 2026. Web. 2026-06-23.",
+        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 11–15 案例[EB/OL]. 2026-06-23. https://strongya.dev/posts/agent-memory-errors-cases-11-15/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1703,
         "readingTime": 5
       }
     },
@@ -2841,50 +2841,6 @@
       }
     },
     {
-      "id": "agent-architecture-fork.en.md",
-      "slug": "agent-architecture-fork",
-      "title": "AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds",
-      "content_text": " AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds\n\n> From LangGraph to Actor models, from \"stop and ask humans\" to \"keep running in async messages\"—the evolution path of industrial-grade Agents is more complex than it looks.\n\n---\n\n Introduction: Why Is Your Agent Stuck Between \"Toy\" and \"Production\"?\n\nIf you've built Agents with LangChain or CrewAI, you've probably encountered this scenario:\n\n> The Agent pauses halfway through execution, waiting for you to confirm a critical step. You go grab a coffee, come back, and it's still waiting. Meanwhile, another Agent task your colleague started is stuck in the scheduler queue because of the blocked task.\n\nThis is the epitome of first-generation Agent architecture in 2024-2025: it works, but when faced with concurrency, long-duration tasks, and human-AI collaboration, it starts to break.\n\nBy 2026, second-generation architecture Actor model + MCP + native memory is being discussed as the \"cure.\" But this article isn't saying \"generation one is outdated, generation two is invincible\"—rather, the two generations solve different problems, and each has blind spots.\n\n---\n\n Core Architecture Comparison: From \"Directed Graph\" to \"Asynchronous Network\"\n\n Generation One: Graph State Machines LangGraph / AutoGen v0.2\n\nThe core idea is to draw the Agent execution flow as a graph: nodes = function calls, edges = conditional branches. LangGraph's innovation is the State object—a typed data container passed between nodes, with automatic Checkpointing at key positions.\n\nWhen humans need to intervene HIL, the system pauses the entire graph execution and waits for human input. Simple and traceable, but the problems are:\n\n- Concurrency blocking: 100 Agents waiting for your confirmation simultaneously fill up the scheduler with suspended tasks, and new tasks can't get in\n- Frozen context: After pausing for 3 hours, the external world stock prices, databases has changed, but the Agent still reasons with the old snapshot\n- Changing workflow = changing graph: Business rules change, and you have to redraw nodes and edges and redeploy\n\n Generation Two: Actor Networks AutoGen Core / Distributed Agents\n\nEach Agent is an independent Actor: has its own state, its own message mailbox. When human intervention is needed, it doesn't pause the whole system—instead, it sends a message to a \"Human Review Actor\" and keeps doing other things. When the human replies, it comes back through the message queue.\n\nCore change: from \"global blocking\" to \"asynchronous messaging.\" In theory, 5000 Agents needing confirmation simultaneously can queue in mailboxes without blocking the whole system.\n\nThe MCP protocol open-sourced by Anthropic in late 2024 pushes this design to the standard layer: tools are no longer part of the Agent's code, but external services called through a unified protocol. Between the tool layer and Agent layer, you can insert security gateways, audit logs, and approval controls—every tool has independent permission checks.\n\nNative memory turns the previously external vector database RAG into the Agent's own \"memory layer\": each Actor's State contains its own long-term memory, which can be loaded, compressed, and forgotten on demand. Instead of searching similar documents from an external database, the Agent itself remembers what should be remembered.\n\n---\n\n Differences in Three Real-World Scenarios\n\n Scenario One: Cloud Operations Agent\n\nA cloud provider needs an Agent to monitor thousands of instances 7×24, auto-scale, rollback, and get SRE confirmation before critical operations.\n\n- Generation One: Every alert triggers HIL, all Agents hang waiting. SRE gets flooded with 300 notifications at 3 AM.\n- Generation Two: Each service is an independent Actor; when confirmation is needed, it sends a message to the review queue. SRE approves in batches in the morning, while Agents continue monitoring other instances. No blocking.\n\nBut there's an underestimated pitfall: debugging Actor models. With 300 independent Actors communicating asynchronously, logs scatter like a plate of spaghetti, and root cause localization is an order of magnitude harder than first-generation graph structures.\n\n Scenario Two: Investment Bank Compliance Review\n\nThe Agent compares transaction records, client agreements, and regulatory rules; suspicious transactions need compliance officers to qualify risks.\n\n- Generation One: The review workflow is drawn as a static graph; when the compliance officer intervenes, the whole case pauses. In a 4-week review cycle, Agent and compliance officer spend most of their time waiting for each other.\n- Generation Two: Multiple compliance officers can intervene asynchronously, with complete and traceable event logs. Theoretically, review cycles can compress from 4 weeks to 1.5-2 weeks.\n\nBut compliance's biggest enemy isn't efficiency, it's accountability. If the Agent autonomously makes certain judgments during the async process and turns out to be wrong, whose responsibility is it? Regulators may trust the synchronous \"stop and wait for human confirmation\" model more.\n\n Scenario Three: Diabetes Chronic Disease Follow-up\n\nThe Agent regularly collects patient data, alerts doctors when abnormal, and maintains consistent patient profiles across channels App / phone / offline.\n\n- Generation Two: One independent Actor per patient, with layered memory blood glucose → symptoms → risk profile. Theoretically consistent cross-channel experience and reduced doctor workload.\n- But the risk of native memory: If the Agent remembers incorrectly e.g., marks a patient as \"having hypoglycemia history\" when they don't, this error gets reinforced repeatedly and may even lead to wrong recommendations. Healthcare scenarios demand memory accuracy far beyond what current technology can stably guarantee.\n\n---\n\n Four Hard Problems Still Unsolved\n\nThe report passed cross-validation by 4 independent auditing Agents; none considered the following problems \"solved\":\n\n1. Asynchronous ordering: With 5 Actors communicating out of order, how to ensure causal logic doesn't collapse?\n2. Memory forgetting: Agent \"forgetting\" isn't deletion, but marking \"expired\"—but how to decide what to forget? What weights to retain? Humans themselves haven't figured this out.\n3. Policy conflicts: Organizational policy vs. project policy vs. personal policy—who overrides whom? Current mainstream approach is \"take the strictest,\" but the result may be business deadlock.\n4. Blurred human-machine boundary: As Agents get better, HIL shifts from \"machine asks when it doesn't know\" to \"machine isn't sure whether it should ask\"—human judgment ability may反而退化 instead.\n\n---\n\n Conclusion: Not an \"Upgrade,\" a \"Fork\"\n\nSecond-generation architecture Actor + MCP + native memory is not a replacement for the first generation, but another solution for different scenarios.\n\n| Scenario | Recommended Architecture | Reason |\n|------|---------|------|\n| Prototype / MVP | LangGraph / CrewAI | Fast, no need to think about architecture |\n| Single-process enterprise automation | LangGraph + MCP | Auditable, easy to debug |\n| High-concurrency 7×24 service | Actor model | Non-blocking, but extremely high debugging cost |\n| Finance / healthcare compliance | LangGraph + audit gateway | Auditability first; async HIL may not be accepted by regulators |\n| Most enterprises recommended | Hybrid: LangGraph orchestration + MCP tools + partial Actor subtasks | Gradual evolution, don't bet on one direction |\n\nA trend worth watching: in tech blogs and community discussions, second-generation architecture is packaged as an \"irreversible evolution\"—but this itself is over-optimistic. History is full of \"reverse evolution\" cases microservices reverting to monoliths, NoSQL reverting to SQL. If within 18 months native memory systems suffer large-scale \"memory contamination\" failures, or regulators explicitly reject async HIL, the momentum could reverse instantly.\n\n---\n\n Key Corrections From Audit Report, Cannot Be Ignored\n\n- LangGraph supported cyclic graphs from the beginning; it's not a pure DAG\n- AutoGen's Actor refactor appeared in v0.6+; there is no v0.4 version\n- Event sourcing provides eventual consistency, not strong consistency\n- The Actor model was invented in 1973, not designed to solve HIL problems\n- All quantitative data in cases concurrency 50→5000+, cycle 4→2 weeks are illustrative estimates, not independently verified, and should not be used as decision-making basis\n\n---\n\n One-Sentence Summary\n\n> In 2026, Agent architecture is not \"who eliminates whom\"—static graphs are irreplaceable in simple compliance scenarios, Actor models have advantages in high-concurrency scenarios, but both have their own debugging abyss and trust costs. When choosing architecture, first ask yourself: can you afford to spend three days searching async logs for bugs when something goes wrong? If not, LangGraph may be more honest.\n\n---\n\n References and Data Sources\n\n1. LangGraph Documentation — State Graph & Checkpointing 2024-2026\n2. AutoGen GitHub Releases — v0.6+ Core Architecture 2024-2025\n3. Model Context Protocol MCP Specification — Anthropic 2024-2025\n4. Mem0 Technical Documentation — Memory Layer for LLMs 2024\n5. Letta MemGPT Architecture — UC Berkeley / Letta Inc. 2023-2025\n6. Actor Model — Carl Hewitt 1973, applied to distributed systems\n7. Event Sourcing and CQRS Patterns — Martin Fowler 2005\n8. Industry practices — synthesized from cloud vendor technical blogs, financial sector architecture reviews, and healthcare AI platform documentation 2025-2026\n\n---\n\nData cutoff: 2026-06-14 | This report is based on ReAct 4-Agent cross-validation + 5-Pass final review, credibility rating: B",
-      "content_html": null,
-      "summary": "From LangGraph to Actor models, from 'stop and ask humans' to 'keep running in async messages'—the evolution path of industrial-grade Agents is more complex than it looks.",
-      "url": "https://strongya.dev/en/posts/agent-architecture-fork/",
-      "date_published": "2026-06-14T00:00:00.000Z",
-      "date_modified": "2026-06-14T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "Agent",
-        "Architecture",
-        "LangGraph",
-        "Actor Model",
-        "MCP",
-        "Human-in-the-Loop"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-architecture-fork/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds. Retrieved from https://strongya.dev/en/posts/agent-architecture-fork/",
-        "mla": "Arlen. \"AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds.\" 2026. Web. 2026-06-14.",
-        "gb": "Arlen. AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds[EB/OL]. 2026-06-14. https://strongya.dev/en/posts/agent-architecture-fork/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1440,
-        "readingTime": 9
-      }
-    },
-    {
       "id": "agent-architecture-fork.md",
       "slug": "agent-architecture-fork",
       "title": "AI Agent 架构正在分岔：不是简单升级，而是两个世界",
@@ -2926,6 +2882,50 @@
         "content_type": "article",
         "wordCount": 2124,
         "readingTime": 6
+      }
+    },
+    {
+      "id": "agent-architecture-fork.en.md",
+      "slug": "agent-architecture-fork",
+      "title": "AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds",
+      "content_text": " AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds\n\n> From LangGraph to Actor models, from \"stop and ask humans\" to \"keep running in async messages\"—the evolution path of industrial-grade Agents is more complex than it looks.\n\n---\n\n Introduction: Why Is Your Agent Stuck Between \"Toy\" and \"Production\"?\n\nIf you've built Agents with LangChain or CrewAI, you've probably encountered this scenario:\n\n> The Agent pauses halfway through execution, waiting for you to confirm a critical step. You go grab a coffee, come back, and it's still waiting. Meanwhile, another Agent task your colleague started is stuck in the scheduler queue because of the blocked task.\n\nThis is the epitome of first-generation Agent architecture in 2024-2025: it works, but when faced with concurrency, long-duration tasks, and human-AI collaboration, it starts to break.\n\nBy 2026, second-generation architecture Actor model + MCP + native memory is being discussed as the \"cure.\" But this article isn't saying \"generation one is outdated, generation two is invincible\"—rather, the two generations solve different problems, and each has blind spots.\n\n---\n\n Core Architecture Comparison: From \"Directed Graph\" to \"Asynchronous Network\"\n\n Generation One: Graph State Machines LangGraph / AutoGen v0.2\n\nThe core idea is to draw the Agent execution flow as a graph: nodes = function calls, edges = conditional branches. LangGraph's innovation is the State object—a typed data container passed between nodes, with automatic Checkpointing at key positions.\n\nWhen humans need to intervene HIL, the system pauses the entire graph execution and waits for human input. Simple and traceable, but the problems are:\n\n- Concurrency blocking: 100 Agents waiting for your confirmation simultaneously fill up the scheduler with suspended tasks, and new tasks can't get in\n- Frozen context: After pausing for 3 hours, the external world stock prices, databases has changed, but the Agent still reasons with the old snapshot\n- Changing workflow = changing graph: Business rules change, and you have to redraw nodes and edges and redeploy\n\n Generation Two: Actor Networks AutoGen Core / Distributed Agents\n\nEach Agent is an independent Actor: has its own state, its own message mailbox. When human intervention is needed, it doesn't pause the whole system—instead, it sends a message to a \"Human Review Actor\" and keeps doing other things. When the human replies, it comes back through the message queue.\n\nCore change: from \"global blocking\" to \"asynchronous messaging.\" In theory, 5000 Agents needing confirmation simultaneously can queue in mailboxes without blocking the whole system.\n\nThe MCP protocol open-sourced by Anthropic in late 2024 pushes this design to the standard layer: tools are no longer part of the Agent's code, but external services called through a unified protocol. Between the tool layer and Agent layer, you can insert security gateways, audit logs, and approval controls—every tool has independent permission checks.\n\nNative memory turns the previously external vector database RAG into the Agent's own \"memory layer\": each Actor's State contains its own long-term memory, which can be loaded, compressed, and forgotten on demand. Instead of searching similar documents from an external database, the Agent itself remembers what should be remembered.\n\n---\n\n Differences in Three Real-World Scenarios\n\n Scenario One: Cloud Operations Agent\n\nA cloud provider needs an Agent to monitor thousands of instances 7×24, auto-scale, rollback, and get SRE confirmation before critical operations.\n\n- Generation One: Every alert triggers HIL, all Agents hang waiting. SRE gets flooded with 300 notifications at 3 AM.\n- Generation Two: Each service is an independent Actor; when confirmation is needed, it sends a message to the review queue. SRE approves in batches in the morning, while Agents continue monitoring other instances. No blocking.\n\nBut there's an underestimated pitfall: debugging Actor models. With 300 independent Actors communicating asynchronously, logs scatter like a plate of spaghetti, and root cause localization is an order of magnitude harder than first-generation graph structures.\n\n Scenario Two: Investment Bank Compliance Review\n\nThe Agent compares transaction records, client agreements, and regulatory rules; suspicious transactions need compliance officers to qualify risks.\n\n- Generation One: The review workflow is drawn as a static graph; when the compliance officer intervenes, the whole case pauses. In a 4-week review cycle, Agent and compliance officer spend most of their time waiting for each other.\n- Generation Two: Multiple compliance officers can intervene asynchronously, with complete and traceable event logs. Theoretically, review cycles can compress from 4 weeks to 1.5-2 weeks.\n\nBut compliance's biggest enemy isn't efficiency, it's accountability. If the Agent autonomously makes certain judgments during the async process and turns out to be wrong, whose responsibility is it? Regulators may trust the synchronous \"stop and wait for human confirmation\" model more.\n\n Scenario Three: Diabetes Chronic Disease Follow-up\n\nThe Agent regularly collects patient data, alerts doctors when abnormal, and maintains consistent patient profiles across channels App / phone / offline.\n\n- Generation Two: One independent Actor per patient, with layered memory blood glucose → symptoms → risk profile. Theoretically consistent cross-channel experience and reduced doctor workload.\n- But the risk of native memory: If the Agent remembers incorrectly e.g., marks a patient as \"having hypoglycemia history\" when they don't, this error gets reinforced repeatedly and may even lead to wrong recommendations. Healthcare scenarios demand memory accuracy far beyond what current technology can stably guarantee.\n\n---\n\n Four Hard Problems Still Unsolved\n\nThe report passed cross-validation by 4 independent auditing Agents; none considered the following problems \"solved\":\n\n1. Asynchronous ordering: With 5 Actors communicating out of order, how to ensure causal logic doesn't collapse?\n2. Memory forgetting: Agent \"forgetting\" isn't deletion, but marking \"expired\"—but how to decide what to forget? What weights to retain? Humans themselves haven't figured this out.\n3. Policy conflicts: Organizational policy vs. project policy vs. personal policy—who overrides whom? Current mainstream approach is \"take the strictest,\" but the result may be business deadlock.\n4. Blurred human-machine boundary: As Agents get better, HIL shifts from \"machine asks when it doesn't know\" to \"machine isn't sure whether it should ask\"—human judgment ability may反而退化 instead.\n\n---\n\n Conclusion: Not an \"Upgrade,\" a \"Fork\"\n\nSecond-generation architecture Actor + MCP + native memory is not a replacement for the first generation, but another solution for different scenarios.\n\n| Scenario | Recommended Architecture | Reason |\n|------|---------|------|\n| Prototype / MVP | LangGraph / CrewAI | Fast, no need to think about architecture |\n| Single-process enterprise automation | LangGraph + MCP | Auditable, easy to debug |\n| High-concurrency 7×24 service | Actor model | Non-blocking, but extremely high debugging cost |\n| Finance / healthcare compliance | LangGraph + audit gateway | Auditability first; async HIL may not be accepted by regulators |\n| Most enterprises recommended | Hybrid: LangGraph orchestration + MCP tools + partial Actor subtasks | Gradual evolution, don't bet on one direction |\n\nA trend worth watching: in tech blogs and community discussions, second-generation architecture is packaged as an \"irreversible evolution\"—but this itself is over-optimistic. History is full of \"reverse evolution\" cases microservices reverting to monoliths, NoSQL reverting to SQL. If within 18 months native memory systems suffer large-scale \"memory contamination\" failures, or regulators explicitly reject async HIL, the momentum could reverse instantly.\n\n---\n\n Key Corrections From Audit Report, Cannot Be Ignored\n\n- LangGraph supported cyclic graphs from the beginning; it's not a pure DAG\n- AutoGen's Actor refactor appeared in v0.6+; there is no v0.4 version\n- Event sourcing provides eventual consistency, not strong consistency\n- The Actor model was invented in 1973, not designed to solve HIL problems\n- All quantitative data in cases concurrency 50→5000+, cycle 4→2 weeks are illustrative estimates, not independently verified, and should not be used as decision-making basis\n\n---\n\n One-Sentence Summary\n\n> In 2026, Agent architecture is not \"who eliminates whom\"—static graphs are irreplaceable in simple compliance scenarios, Actor models have advantages in high-concurrency scenarios, but both have their own debugging abyss and trust costs. When choosing architecture, first ask yourself: can you afford to spend three days searching async logs for bugs when something goes wrong? If not, LangGraph may be more honest.\n\n---\n\n References and Data Sources\n\n1. LangGraph Documentation — State Graph & Checkpointing 2024-2026\n2. AutoGen GitHub Releases — v0.6+ Core Architecture 2024-2025\n3. Model Context Protocol MCP Specification — Anthropic 2024-2025\n4. Mem0 Technical Documentation — Memory Layer for LLMs 2024\n5. Letta MemGPT Architecture — UC Berkeley / Letta Inc. 2023-2025\n6. Actor Model — Carl Hewitt 1973, applied to distributed systems\n7. Event Sourcing and CQRS Patterns — Martin Fowler 2005\n8. Industry practices — synthesized from cloud vendor technical blogs, financial sector architecture reviews, and healthcare AI platform documentation 2025-2026\n\n---\n\nData cutoff: 2026-06-14 | This report is based on ReAct 4-Agent cross-validation + 5-Pass final review, credibility rating: B",
+      "content_html": null,
+      "summary": "From LangGraph to Actor models, from 'stop and ask humans' to 'keep running in async messages'—the evolution path of industrial-grade Agents is more complex than it looks.",
+      "url": "https://strongya.dev/en/posts/agent-architecture-fork/",
+      "date_published": "2026-06-14T00:00:00.000Z",
+      "date_modified": "2026-06-14T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "Agent",
+        "Architecture",
+        "LangGraph",
+        "Actor Model",
+        "MCP",
+        "Human-in-the-Loop"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-architecture-fork/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds. Retrieved from https://strongya.dev/en/posts/agent-architecture-fork/",
+        "mla": "Arlen. \"AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds.\" 2026. Web. 2026-06-14.",
+        "gb": "Arlen. AI Agent Architecture Is Forking: Not an Upgrade, But Two Worlds[EB/OL]. 2026-06-14. https://strongya.dev/en/posts/agent-architecture-fork/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1440,
+        "readingTime": 9
       }
     },
     {
@@ -3819,59 +3819,6 @@
       }
     },
     {
-      "id": "ai-native-paradigm.md",
-      "slug": "ai-native-paradigm",
-      "title": "AI-Native 范式：从工具到智能体",
-      "content_text": " AI-Native 范式：从工具到智能体\n\n我们正处在一个历史性的转折点。AI不再仅仅是辅助工具，而是正在演变为自主运作的智能体。\n\n 范式转变的本质\n\n传统的软件设计遵循\"人类操作工具\"的模式。而AI-Native架构的核心在于：\n\n- 智能体优先：系统设计的核心单元是自主智能体\n- 语义理解：数据不再是被动存储，而是可被理解的语义网络\n- 自主决策：从被动响应到主动推理\n\n 从 API 到 Agent\n\n| 维度 | 传统 API | Agent 接口 |\n|------|----------|------------|\n| 调用方式 | 显式请求 | 意图理解 |\n| 返回格式 | 结构化数据 | 语义化响应 |\n| 状态管理 | 无状态 | 上下文感知 |\n| 错误处理 | 异常码 | 自主恢复 |\n\n 实践路径\n\n1. 结构化内容：所有数据自带元数据\n2. 自描述系统：API 能自我解释\n3. 语义关联：内容之间形成知识图谱\n\nAI-Native 不是技术的堆砌，而是思维方式的彻底革新。",
-      "content_html": null,
-      "summary": "探讨AI-Native时代的核心范式转变，从传统工具思维进化到智能体优先的架构设计。",
-      "url": "https://strongya.dev/posts/ai-native-paradigm/",
-      "date_published": "2026-06-03T00:00:00.000Z",
-      "date_modified": "2026-06-03T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "AI-Native",
-        "范式",
-        "智能体",
-        "架构"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/ai-native-paradigm/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). AI-Native 范式：从工具到智能体. Retrieved from https://strongya.dev/posts/ai-native-paradigm/",
-        "mla": "Arlen. \"AI-Native 范式：从工具到智能体.\" 2026. Web. 2026-06-03.",
-        "gb": "Arlen. AI-Native 范式：从工具到智能体[EB/OL]. 2026-06-03. https://strongya.dev/posts/ai-native-paradigm/."
-      },
-      "entities": [
-        {
-          "name": "OpenAI",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
-        },
-        {
-          "name": "GPT-4",
-          "type": "Product",
-          "wiki_url": "https://en.wikipedia.org/wiki/GPT-4"
-        }
-      ],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 270,
-        "readingTime": 2
-      }
-    },
-    {
       "id": "ai-native-paradigm.en.md",
       "slug": "ai-native-paradigm",
       "title": "The AI-Native Paradigm: From Tools to Agents",
@@ -3922,6 +3869,59 @@
         "content_type": "article",
         "wordCount": 157,
         "readingTime": 1
+      }
+    },
+    {
+      "id": "ai-native-paradigm.md",
+      "slug": "ai-native-paradigm",
+      "title": "AI-Native 范式：从工具到智能体",
+      "content_text": " AI-Native 范式：从工具到智能体\n\n我们正处在一个历史性的转折点。AI不再仅仅是辅助工具，而是正在演变为自主运作的智能体。\n\n 范式转变的本质\n\n传统的软件设计遵循\"人类操作工具\"的模式。而AI-Native架构的核心在于：\n\n- 智能体优先：系统设计的核心单元是自主智能体\n- 语义理解：数据不再是被动存储，而是可被理解的语义网络\n- 自主决策：从被动响应到主动推理\n\n 从 API 到 Agent\n\n| 维度 | 传统 API | Agent 接口 |\n|------|----------|------------|\n| 调用方式 | 显式请求 | 意图理解 |\n| 返回格式 | 结构化数据 | 语义化响应 |\n| 状态管理 | 无状态 | 上下文感知 |\n| 错误处理 | 异常码 | 自主恢复 |\n\n 实践路径\n\n1. 结构化内容：所有数据自带元数据\n2. 自描述系统：API 能自我解释\n3. 语义关联：内容之间形成知识图谱\n\nAI-Native 不是技术的堆砌，而是思维方式的彻底革新。",
+      "content_html": null,
+      "summary": "探讨AI-Native时代的核心范式转变，从传统工具思维进化到智能体优先的架构设计。",
+      "url": "https://strongya.dev/posts/ai-native-paradigm/",
+      "date_published": "2026-06-03T00:00:00.000Z",
+      "date_modified": "2026-06-03T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "AI-Native",
+        "范式",
+        "智能体",
+        "架构"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/ai-native-paradigm/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). AI-Native 范式：从工具到智能体. Retrieved from https://strongya.dev/posts/ai-native-paradigm/",
+        "mla": "Arlen. \"AI-Native 范式：从工具到智能体.\" 2026. Web. 2026-06-03.",
+        "gb": "Arlen. AI-Native 范式：从工具到智能体[EB/OL]. 2026-06-03. https://strongya.dev/posts/ai-native-paradigm/."
+      },
+      "entities": [
+        {
+          "name": "OpenAI",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
+        },
+        {
+          "name": "GPT-4",
+          "type": "Product",
+          "wiki_url": "https://en.wikipedia.org/wiki/GPT-4"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 270,
+        "readingTime": 2
       }
     }
   ]
