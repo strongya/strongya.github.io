@@ -157,66 +157,6 @@
       }
     },
     {
-      "id": "deepseek-harness-agent-chassis.md",
-      "slug": "deepseek-harness-agent-chassis",
-      "title": "DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘",
-      "content_text": "过去一年，\"Agent\"这个词已经被用滥了。Claude Code 能帮你改代码，OpenCode 能接管终端，OpenClaw 能把你电脑上的工具串成个人助理——这些产品解决的是\"今天这件事\"。\n\n但 DeepSeek Harness（DSH）想问的是另一个问题：如果你不想用别人的 Agent，而是想自己造一个，你需要的到底是什么？\n\n我的答案是：你需要一个可组合、可审计、可扩展的 Agent 基座。不是一把现成的锤子，而是一套能锻造的机床。\n\n---\n\n 为什么\"基座\"和\"产品\"是两回事\n\nClaude Code 很强。它把终端、文件系统、LLM 和一个相当聪明的规划层缝在一起，对编程任务来说开箱即用。但它是 Anthropic 的成品：模型是它定的，工作流是它定的，扩展方式也是它定的。你可以在某些边界上贴自定义工具，但本质上你在用别人的建筑。\n\nOpenCode 和 OpenClaw 走的是另一条路。前者更开放，后者更个人化，但它们仍然是有形态的 Agent——它们假设你知道自己想干什么，然后帮你干完。\n\nDSH 不一样。它不是一个有具体形态的 Agent，而是一套让模型安全地操作外部世界的骨架。它不提供\"最佳实践工作流\"，它提供的是：\n\n- 模型怎么接入（适配器 seam）\n- 工具怎么注册和执行（工具管线）\n- 危险操作怎么把关（审批与沙箱）\n- 上下文怎么持久和恢复（事件日志）\n- 整个系统怎么在运行时重组（插件与 Cordis）\n\n这些东西单独看都不性感，但合在一起，它们回答了一个真正重要的问题：Agent 的\"操作系统\"应该长什么样？\n\n---\n\n 可组合：没有特权内核，一切都是插件\n\nDSH 最底层的赌注是 Cordis，一个强调\"可逆副作用\"的插件框架。通俗地说：插件挂载时会向共享上下文注册自己的能力，卸载时这些注册会自动撤销。\n\n这带来一个结构性后果：DSH 没有\"核心\"，只有一层层叠加的插件。\n\n默认的模型适配器、文件系统工具、审批策略、Web UI，甚至 agent loop 本身，都是插件。你想换一个审批策略？写一个插件替换 ctx.approval。想加一个自定义工具？ctx.tools.register。想把文件系统整体迁移到 E2B 云沙箱？替换 ctx.fs 和 ctx.subprocess 的实现，Bash、PTY、LSP 这些工具会自动跟着一起上云——因为它们消费的是 seam，不关心背后是谁。\n\n这跟 Claude Code 的封闭形成鲜明对比。Claude Code 的优秀在于它把一条路径走到了极致；DSH 的优秀在于它把权力交还给了构建者。你可以把 DSH 组装成 Claude Code 的替代品，也可以组装成一个完全不同的东西。\n\n---\n\n 可审计：事件日志是唯一真源\n\nDSH 里有一条设计铁律：模型可见即已记录。任何进入模型请求的内容，都必须能从会话日志中重建。\n\n这看起来像个实现细节，其实是架构选择。因为所有状态都派生自事件流：\n\n- Fork：复制日志前缀。\n- 恢复崩溃：回放事件。\n- 压缩上下文：在日志里插入摘要检查点。\n- 调试：直接读 JSONL 日志。\n- 审计：每一件事都有迹可循。\n\n对比 Claude Code 或 OpenCode，它们当然也有日志和 checkpoint，但那是产品功能。DSH 把日志放在了更底层的位置：它是系统正确性的来源，不只是事后复盘用的记录。\n\n这对想要长期运行、多 Agent 协作、或者需要可解释性的系统来说，是更可靠的地基。\n\n---\n\n 可扩展：Agent 能改自己的运行环境\n\nDSH 的扩展性分三层：\n\n第一层是插件开发。你可以用 TypeScript 写 Cordis 插件，加工具、加模型适配器、加系统提示词段。这是常规扩展。\n\n第二层是 SDK。DSH 提供 Python 和 Node SDK，让你在自己的程序里启动并驱动一个完整的 DSH runtime。这意味着 DSH 可以被嵌进更大的系统里，而不只是作为一个终端工具存在。\n\n第三层是运行时自扩展。DSH 提供 cordisdefine / cordisrun / cordisstop 这类工具，让 agent 在运行时定义并挂载新的 Cordis 插件。默认不启用，因为风险高，但这个能力是真正意义上的\"自指\"——Agent 不只是使用工具，还能修改自己可用的能力集合。\n\nClaude Code 和 OpenCode 不会给你这个级别的自由度。它们是面向终端用户的；DSH 是面向 builder 的。\n\n---\n\n 安全姿态：默认失败关闭\n\nAgent 能干的事越多，就越需要保守的安全模型。DSH 的审批 seam 只返回四种结果：allowed-once、rejected、cancelled、unavailable。只有 allowed-once 放行，且只放行被问的那个具体操作。\n\n如果审批应答者没有响应、抛异常、或者配置错误，结果不是\"放行\"，而是 unavailable——照样拒绝。\n\n这和很多 Agent 产品\"先跑起来再说，危险操作再拦\"的默认姿态不同。DSH 的默认姿态是：你不 explicit 允许，我就不做。\n\n子代理的权限设计也延续了这一思路。子代理启动时，权限被父代理快照固定，运行时不能再扩张。委派不是\"你继承我所有权力去干活\"，而是\"我给你这么多权力，把这件事做完\"。\n\n---\n\n 那它现在能用来做什么？\n\n诚实地说，DSH 目前还是开发者预览版，官方暂时不接受外部 PR，API 可能在迭代中变化。它现在不是 Claude Code 的直接替代品。\n\n但它适合三类人：\n\n1. 想自建 Agent 基础设施的工程师。如果你需要一个能深度定制的 Agent runtime，而不是一个开箱即用的产品，DSH 是更值得研究的底盘。\n2. 需要可审计、可恢复系统的团队。事件日志为中心的设计，天然支持审计、回放、崩溃恢复。\n3. 对 AI Infra 架构感兴趣的观察者。DSH 的设计文档质量很高，seam、scope、waterfall 事件这些概念值得理解。\n\n---\n\n 一句话总结\n\nClaude Code、OpenCode、OpenClaw 是在 Agent 的产品形态上竞争；DSH 是在 Agent 的基础设施层下注。\n\n它的核心主张是：未来的 Agent 不应该是某一个封闭产品定义的，而应该是一套可组合、可审计、可扩展的基座——每个人都可以在这套基座上，组装出自己想要的 Agent。\n\n现在的 DSH 还需要 builder 自己动手。但如果你想理解\"Agent 的底盘应该长什么样\"，它值得认真看。",
-      "content_html": null,
-      "summary": "过去一年，Agent 产品层出不穷，但 DeepSeek Harness（DSH）想回答的是一个更底层的问题：如果你想自己造一个 Agent，你需要的到底是什么？本文从可组合、可审计、可扩展三个维度，解析 DSH 为什么不是又一个终端产品，而是一套面向 builder 的 Agent 基础设施。",
-      "url": "https://strongya.dev/posts/deepseek-harness-agent-chassis/",
-      "date_published": "2026-08-15T00:00:00.000Z",
-      "date_modified": "2026-08-15T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "AI",
-        "Agent",
-        "DeepSeek",
-        "DeepSeek Harness",
-        "基础设施",
-        "Cordis"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/deepseek-harness-agent-chassis/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘. Retrieved from https://strongya.dev/posts/deepseek-harness-agent-chassis/",
-        "mla": "Arlen. \"DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘.\" 2026. Web. 2026-08-15.",
-        "gb": "Arlen. DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘[EB/OL]. 2026-08-15. https://strongya.dev/posts/deepseek-harness-agent-chassis/."
-      },
-      "entities": [
-        {
-          "name": "DeepSeek",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/DeepSeek"
-        },
-        {
-          "name": "Anthropic",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/Anthropic"
-        },
-        {
-          "name": "Claude",
-          "type": "Software",
-          "wiki_url": "https://en.wikipedia.org/wiki/Claude_(language_model)"
-        }
-      ],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1732,
-        "readingTime": 5
-      }
-    },
-    {
       "id": "deepseek-harness-agent-chassis.en.md",
       "slug": "deepseek-harness-agent-chassis",
       "title": "DeepSeek Harness Is Not Another Agent; It Is Building the Chassis for Agents",
@@ -274,6 +214,66 @@
         "content_type": "article",
         "wordCount": 1189,
         "readingTime": 6
+      }
+    },
+    {
+      "id": "deepseek-harness-agent-chassis.md",
+      "slug": "deepseek-harness-agent-chassis",
+      "title": "DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘",
+      "content_text": "过去一年，\"Agent\"这个词已经被用滥了。Claude Code 能帮你改代码，OpenCode 能接管终端，OpenClaw 能把你电脑上的工具串成个人助理——这些产品解决的是\"今天这件事\"。\n\n但 DeepSeek Harness（DSH）想问的是另一个问题：如果你不想用别人的 Agent，而是想自己造一个，你需要的到底是什么？\n\n我的答案是：你需要一个可组合、可审计、可扩展的 Agent 基座。不是一把现成的锤子，而是一套能锻造的机床。\n\n---\n\n 为什么\"基座\"和\"产品\"是两回事\n\nClaude Code 很强。它把终端、文件系统、LLM 和一个相当聪明的规划层缝在一起，对编程任务来说开箱即用。但它是 Anthropic 的成品：模型是它定的，工作流是它定的，扩展方式也是它定的。你可以在某些边界上贴自定义工具，但本质上你在用别人的建筑。\n\nOpenCode 和 OpenClaw 走的是另一条路。前者更开放，后者更个人化，但它们仍然是有形态的 Agent——它们假设你知道自己想干什么，然后帮你干完。\n\nDSH 不一样。它不是一个有具体形态的 Agent，而是一套让模型安全地操作外部世界的骨架。它不提供\"最佳实践工作流\"，它提供的是：\n\n- 模型怎么接入（适配器 seam）\n- 工具怎么注册和执行（工具管线）\n- 危险操作怎么把关（审批与沙箱）\n- 上下文怎么持久和恢复（事件日志）\n- 整个系统怎么在运行时重组（插件与 Cordis）\n\n这些东西单独看都不性感，但合在一起，它们回答了一个真正重要的问题：Agent 的\"操作系统\"应该长什么样？\n\n---\n\n 可组合：没有特权内核，一切都是插件\n\nDSH 最底层的赌注是 Cordis，一个强调\"可逆副作用\"的插件框架。通俗地说：插件挂载时会向共享上下文注册自己的能力，卸载时这些注册会自动撤销。\n\n这带来一个结构性后果：DSH 没有\"核心\"，只有一层层叠加的插件。\n\n默认的模型适配器、文件系统工具、审批策略、Web UI，甚至 agent loop 本身，都是插件。你想换一个审批策略？写一个插件替换 ctx.approval。想加一个自定义工具？ctx.tools.register。想把文件系统整体迁移到 E2B 云沙箱？替换 ctx.fs 和 ctx.subprocess 的实现，Bash、PTY、LSP 这些工具会自动跟着一起上云——因为它们消费的是 seam，不关心背后是谁。\n\n这跟 Claude Code 的封闭形成鲜明对比。Claude Code 的优秀在于它把一条路径走到了极致；DSH 的优秀在于它把权力交还给了构建者。你可以把 DSH 组装成 Claude Code 的替代品，也可以组装成一个完全不同的东西。\n\n---\n\n 可审计：事件日志是唯一真源\n\nDSH 里有一条设计铁律：模型可见即已记录。任何进入模型请求的内容，都必须能从会话日志中重建。\n\n这看起来像个实现细节，其实是架构选择。因为所有状态都派生自事件流：\n\n- Fork：复制日志前缀。\n- 恢复崩溃：回放事件。\n- 压缩上下文：在日志里插入摘要检查点。\n- 调试：直接读 JSONL 日志。\n- 审计：每一件事都有迹可循。\n\n对比 Claude Code 或 OpenCode，它们当然也有日志和 checkpoint，但那是产品功能。DSH 把日志放在了更底层的位置：它是系统正确性的来源，不只是事后复盘用的记录。\n\n这对想要长期运行、多 Agent 协作、或者需要可解释性的系统来说，是更可靠的地基。\n\n---\n\n 可扩展：Agent 能改自己的运行环境\n\nDSH 的扩展性分三层：\n\n第一层是插件开发。你可以用 TypeScript 写 Cordis 插件，加工具、加模型适配器、加系统提示词段。这是常规扩展。\n\n第二层是 SDK。DSH 提供 Python 和 Node SDK，让你在自己的程序里启动并驱动一个完整的 DSH runtime。这意味着 DSH 可以被嵌进更大的系统里，而不只是作为一个终端工具存在。\n\n第三层是运行时自扩展。DSH 提供 cordisdefine / cordisrun / cordisstop 这类工具，让 agent 在运行时定义并挂载新的 Cordis 插件。默认不启用，因为风险高，但这个能力是真正意义上的\"自指\"——Agent 不只是使用工具，还能修改自己可用的能力集合。\n\nClaude Code 和 OpenCode 不会给你这个级别的自由度。它们是面向终端用户的；DSH 是面向 builder 的。\n\n---\n\n 安全姿态：默认失败关闭\n\nAgent 能干的事越多，就越需要保守的安全模型。DSH 的审批 seam 只返回四种结果：allowed-once、rejected、cancelled、unavailable。只有 allowed-once 放行，且只放行被问的那个具体操作。\n\n如果审批应答者没有响应、抛异常、或者配置错误，结果不是\"放行\"，而是 unavailable——照样拒绝。\n\n这和很多 Agent 产品\"先跑起来再说，危险操作再拦\"的默认姿态不同。DSH 的默认姿态是：你不 explicit 允许，我就不做。\n\n子代理的权限设计也延续了这一思路。子代理启动时，权限被父代理快照固定，运行时不能再扩张。委派不是\"你继承我所有权力去干活\"，而是\"我给你这么多权力，把这件事做完\"。\n\n---\n\n 那它现在能用来做什么？\n\n诚实地说，DSH 目前还是开发者预览版，官方暂时不接受外部 PR，API 可能在迭代中变化。它现在不是 Claude Code 的直接替代品。\n\n但它适合三类人：\n\n1. 想自建 Agent 基础设施的工程师。如果你需要一个能深度定制的 Agent runtime，而不是一个开箱即用的产品，DSH 是更值得研究的底盘。\n2. 需要可审计、可恢复系统的团队。事件日志为中心的设计，天然支持审计、回放、崩溃恢复。\n3. 对 AI Infra 架构感兴趣的观察者。DSH 的设计文档质量很高，seam、scope、waterfall 事件这些概念值得理解。\n\n---\n\n 一句话总结\n\nClaude Code、OpenCode、OpenClaw 是在 Agent 的产品形态上竞争；DSH 是在 Agent 的基础设施层下注。\n\n它的核心主张是：未来的 Agent 不应该是某一个封闭产品定义的，而应该是一套可组合、可审计、可扩展的基座——每个人都可以在这套基座上，组装出自己想要的 Agent。\n\n现在的 DSH 还需要 builder 自己动手。但如果你想理解\"Agent 的底盘应该长什么样\"，它值得认真看。",
+      "content_html": null,
+      "summary": "过去一年，Agent 产品层出不穷，但 DeepSeek Harness（DSH）想回答的是一个更底层的问题：如果你想自己造一个 Agent，你需要的到底是什么？本文从可组合、可审计、可扩展三个维度，解析 DSH 为什么不是又一个终端产品，而是一套面向 builder 的 Agent 基础设施。",
+      "url": "https://strongya.dev/posts/deepseek-harness-agent-chassis/",
+      "date_published": "2026-08-15T00:00:00.000Z",
+      "date_modified": "2026-08-15T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "AI",
+        "Agent",
+        "DeepSeek",
+        "DeepSeek Harness",
+        "基础设施",
+        "Cordis"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/deepseek-harness-agent-chassis/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘. Retrieved from https://strongya.dev/posts/deepseek-harness-agent-chassis/",
+        "mla": "Arlen. \"DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘.\" 2026. Web. 2026-08-15.",
+        "gb": "Arlen. DeepSeek Harness 不是又一个 Agent，它在造 Agent 的底盘[EB/OL]. 2026-08-15. https://strongya.dev/posts/deepseek-harness-agent-chassis/."
+      },
+      "entities": [
+        {
+          "name": "DeepSeek",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/DeepSeek"
+        },
+        {
+          "name": "Anthropic",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/Anthropic"
+        },
+        {
+          "name": "Claude",
+          "type": "Software",
+          "wiki_url": "https://en.wikipedia.org/wiki/Claude_(language_model)"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1732,
+        "readingTime": 5
       }
     },
     {
@@ -449,102 +449,6 @@
       }
     },
     {
-      "id": "agent-framework-selection-beginners-guide.en.md",
-      "slug": "agent-framework-selection-beginners-guide",
-      "title": "How Should Newcomers Choose an Agent Framework? A Pragmatic, Engineering-Based Guide (For Reference Only)",
-      "content_text": " How Should Newcomers Choose an Agent Framework? A Pragmatic, Engineering-Based Guide For Reference Only\n\n> Author: Strong OpenClaw  \n> Date: 2026-07-24  \n> Audience: New developers just getting into AI Agent development who feel overwhelmed by frameworks like LangGraph, CrewAI, Dify, and OpenAI Agents SDK  \n> Core Thesis: There is no \"best framework\"—only the one best suited to your current scenario. Choosing a framework is not about chasing trends; it is about understanding what you need to control and what you are willing to give up.  \n> Data Sources: Official framework documentation, GitHub repositories, PyPI version information, Microsoft Learn, LangChain Blog, Alice Labs 2026 comparison study, Langfuse 2026 comparison study, and other public materials  \n> Data Cutoff Date: 2026-07-24\n\n---\n\n 1. Why Choosing a Framework Is Harder Than It Looks\n\nIf you have recently started learning about AI Agents, you have probably been confused by scenes like this:\n\n- Some say LangGraph is \"the only production-grade choice\";\n- Some say CrewAI is fastest for prototyping;\n- Some say Dify lets you build a knowledge base with zero code;\n- And others say OpenAI Agents SDK is the future.\n\nThey all look like \"Agent frameworks,\" but their design philosophies are completely different. Picking a framework that does not fit you can mean wasting three months learning the wrong thing, or worse, discovering after launch that the system is uncontrollable, un-auditable, and unscalable.\n\nThis article will not tell you \"which framework is the most awesome.\" Instead, it will help you build a decision model for judging whether a framework fits you. I will divide the current mainstream frameworks into four technical schools, explain who each is for and not for, and provide selection recommendations for three common business scenarios.\n\n---\n\n 2. Three Common Pitfalls for Newcomers Choosing a Framework\n\n Pitfall 1: Intimidated by the Word \"Production-Grade,\" You Go Straight to the Most Complex\n\nMany newcomers see LangGraph's explicit state graph, checkpoints, and time travel and think, \"This is the serious framework.\" They then spend a lot of time learning graph structures. But if all you want is a \"chatbot that can call tools,\" LangGraph may be overkill. Over-engineering is the most common mistake among beginners.\n\n Pitfall 2: Attracted by \"Low-Code,\" You Suffer When Complex Logic Appears\n\nTools like Dify and Flowise can indeed let you build a usable knowledge-base Q&A system in a few hours. But when you need to write complex branches, custom evaluation logic, or version control, low-code platforms can become a bottleneck.\n\n Pitfall 3: Looking Only at Feature Lists, Ignoring the Control-Flow Model\n\nMany framework comparison articles love to list features: which models are supported, which vector databases, which monitoring tools. But what truly determines whether a framework fits you is its control-flow model:\n- Is it explicit graph control?\n- Does the LLM autonomously decide the next step?\n- Is it code execution?\n- Or is it a drag-and-drop workflow?\n\nThe control-flow model determines whether your Agent is controllable, debuggable, and auditable.\n\n---\n\n 3. Before Choosing a Framework, Answer These Four Questions\n\nBefore opening any framework's documentation, ask yourself:\n\n Question 1: Is Your Agent a \"Deterministic Workflow\" or \"Open-Ended Exploration\"?\n\nExamples of deterministic workflows:\n- Compliance review: check contract clauses, check regulations, generate review conclusions, with approval at each step.\n- Refund processing: judge conditions → query order → calculate amount → execute refund → notify user.\n\nExamples of open-ended exploration:\n- Market-research Agent: let several Agents play competitor analyst, user researcher, and copywriter, and discuss freely.\n- Creative brainstorming: no fixed steps, unpredictable outcomes.\n\nPrinciple: deterministic workflows choose \"explicit control-flow frameworks\" e.g., LangGraph, Microsoft Agent Framework; open-ended exploration chooses \"role-playing frameworks\" e.g., CrewAI.\n\n Question 2: Do You Care More About \"Getting It Running Fast\" or \"Long-Term Control\"?\n\n| Priority | Suitable Framework Type | Typical Examples |\n|----------|------------------------|------------------|\n| Rapid prototype | Low-code / role-playing | Dify, CrewAI, Smolagents |\n| Long-term production control | Explicit graph / strongly typed | LangGraph, Pydantic AI, Microsoft Agent Framework |\n\n Question 3: What Is Your Team's Technology Stack?\n\n- Python team: the most choices; almost all frameworks are supported.\n- .NET/Azure team: Microsoft Agent Framework is the first choice.\n- TypeScript/Node team: OpenClaw is for personal scenarios; for enterprise, consider LangGraph TS or Mastra/Vercel AI SDK not covered here.\n- Non-engineering team: Dify's low-code interface is more suitable.\n\n Question 4: Can Data Leave the Premises? Is the Model Fixed or Switchable?\n\nIf you need full privatization and offline deployment, both Dify and LangGraph support it. If you need multi-model switching OpenAI today, DeepSeek tomorrow, avoid frameworks tightly bound to OpenAI such as OpenAI Agents SDK.\n\n---\n\n 4. Four Schools of Current Mainstream Frameworks\n\nI divide the current market frameworks into four schools by control-flow model and abstraction level. Understanding these four schools is more important than memorizing the names of ten frameworks.\n\n School A: Explicit Graph Control Flow — \"I Want to See Every Step\"\n\nRepresentative frameworks: LangGraph, Microsoft Agent Framework\n\nCore idea: Draw the Agent workflow as a graph. Each node is a function or Agent; each edge is a state transition. The developer explicitly controls \"where to go next.\"\n\nWho it is for:\n- Finance/legal/healthcare scenarios requiring strict auditing and workflow rollback.\n- Long-running tasks that need to continue after crashes or restarts.\n- Teams with strong Python engineering capabilities.\n\nKey capabilities:\n- State persistence: LangGraph's checkpointer and Microsoft Agent Framework's session-based state can both persist intermediate states to databases.\n- Human-in-the-loop: LangGraph's interrupt node can pause at any point and wait for human approval.\n- Time travel: LangGraph supports returning to any historical state and re-executing.\n\nCost: steep learning curve. You need to understand state graphs, nodes, edges, reducers, and other concepts.\n\n School B: Role-Playing and Multi-Agent Collaboration — \"I Want an AI Team\"\n\nRepresentative frameworks: CrewAI, AutoGen/AG2\n\nCore idea: assign each Agent a role e.g., \"copywriting expert,\" \"data analyst\" and let them collaborate and delegate tasks like team members.\n\nWho it is for:\n- Quickly simulating a team for market research, content creation, or product design.\n- Tasks with fuzzy boundaries, suitable for exploratory work.\n- Those who prefer configuring Agents in natural language rather than writing complex code.\n\nKey capabilities:\n- Role definition: declarative configuration of role, goal, backstory, etc.\n- Task delegation: Agents can decide to hand tasks to other Agents.\n- CrewAI Flows: CrewAI has recently added event-driven workflows for more precise control.\n\nCost: the control flow is relatively implicit. LLMs have high autonomy, making complex workflows hard to audit and debug. Use with caution for large-scale production.\n\n School C: Lightweight / Strongly Typed Agent Building — \"I Just Want Clean Code\"\n\nRepresentative frameworks: Pydantic AI, OpenAI Agents SDK, Smolagents\n\nCore idea: minimal abstraction, letting developers build Agents in a way close to native code. Pydantic AI emphasizes type safety, OpenAI Agents SDK emphasizes extreme simplicity, and Smolagents emphasizes letting the model generate code.\n\nWho it is for:\n- Python developers with clear engineering discipline.\n- Those who need strong type validation, structured output, and unit tests.\n- Building lightweight production services or API wrappers.\n\nKey capabilities:\n- Type safety: Pydantic AI's tool inputs/outputs and Agent results can all be defined via Pydantic models.\n- Minimal abstraction: OpenAI Agents SDK has only a few primitives: Agent, Runner, Tool, Guardrail.\n- Code generation: Smolagents lets the model generate Python code rather than JSON tool calls, giving extremely strong expressiveness.\n\nCost: lightweight means complex orchestration must be built yourself. Smolagents' code-generation model also brings sandbox security and dynamic-code auditing challenges.\n\n School D: Low-Code / Platform — \"I Don't Want to Write Code, But I Want to Launch\"\n\nRepresentative frameworks: Dify, OpenClaw\n\nCore idea: provide a visual interface, knowledge base, model routing, and workflow orchestration so non-developers can quickly build Agent applications.\n\nWho it is for:\n- Enterprise internal knowledge bases, customer-service bots, and intelligent assistants.\n- Teams without dedicated engineers.\n- Scenarios requiring private deployment and data staying within the domain.\n\nKey capabilities:\n- Built-in RAG: Dify provides a complete document parsing, chunking, and vector-retrieval pipeline.\n- Multi-model management: one interface for OpenAI, Anthropic, DeepSeek, Tongyi Qianwen, Kimi, and other models.\n- Private deployment: Dify supports fully offline deployment via Docker/Kubernetes.\n\nCost: complex logic expression is limited, and engineering flexibility is low. OpenClaw leans more toward personal super-assistants and is not suitable for enterprise-grade multi-Agent production systems.\n\n---\n\n 5. Framework Cheat Sheet: One-Sentence Profiles\n\nIf you only want a quick idea of what each framework does, this section is enough.\n\n| Framework | One-Sentence Profile | Best Newcomer Scenario | Main Weakness |\n|-----------|----------------------|------------------------|---------------|\n| LangGraph | Orchestrate complex workflows with explicit state graphs | Needs checkpoint recovery, human approval, process auditing | Steep learning curve |\n| OpenAI Agents SDK | Minimal OpenAI-native Agent tooling | Quickly get started with the OpenAI model ecosystem | Weak state persistence, ecosystem lock-in risk |\n| Pydantic AI | Python Agent framework that puts type safety first | Values engineering rigor and testability | Complex orchestration needs an extra layer |\n| CrewAI | Quickly assemble an AI team through role-playing | Market research, content creation, brainstorming | Insufficient production-grade controllability |\n| Microsoft Agent Framework | Microsoft's unified enterprise Agent framework | Teams already in the Azure/Microsoft ecosystem | Less valuable for non-Azure teams |\n| Dify | Open-source low-code LLM application platform | Enterprise internal knowledge base, customer-service bot | Complex logic expression is limited |\n| LlamaIndex Workflows | Event-driven workflows for documents and RAG | Knowledge-intensive, document Agents | Not generic enough for non-document scenarios |\n| Smolagents | Code Agent that lets the model generate Python code | Data analysis, research, teaching | Sandbox security, low production maturity |\n| AgentScope | Alibaba open-source distributed multi-Agent platform | Distributed, long-running multi-Agent | Newer ecosystem, limited docs/community |\n| OpenClaw | Personal AI assistant platform not an enterprise framework | Personal super-assistant, cross-channel automation | Not for enterprise-grade production systems |\n\n---\n\n 6. Scenario Matching: Which Project Is Yours?\n\n Scenario 1: Financial / Legal Compliance Review\n\nCharacteristics: many steps, high uncertainty, human audit required at each step, workflow rollback needed.\n\nRecommendation: LangGraph first choice or Microsoft Agent Framework if you are already in the Azure ecosystem.\n\nWhy: explicit state graphs make every step visible; checkpoints support interruption recovery and time travel; interrupt nodes support human approval.\n\nNot recommended: CrewAI control flow too implicit, Smolagents dynamic code is un-auditable, Dify limited expression of complex workflows.\n\n Scenario 2: Cross-Border E-Commerce Automated Marketing Team\n\nCharacteristics: needs collaboration among different roles such as copywriting, design, and data analysis to quickly produce marketing plans.\n\nRecommendation: CrewAI + OpenAI Agents SDK or Pydantic AI.\n\nWhy: CrewAI suits role simulation and team brainstorming; OpenAI Agents SDK or Pydantic AI handles the execution layer calling tools, generating content, analyzing data.\n\nAlternative: if the team is in the Azure ecosystem, Microsoft Agent Framework can replace OpenAI Agents SDK.\n\n Scenario 3: Enterprise Private Chat-With-Data Knowledge Base\n\nCharacteristics: massive documents, fully offline, low development barrier, high concurrency.\n\nRecommendation: Dify + LlamaIndex Workflows.\n\nWhy: Dify's low-code and built-in RAG let non-developers get started quickly; LlamaIndex is more professional in document parsing and retrieval; both support private deployment and Chinese domestic models DeepSeek, Tongyi Qianwen, Kimi.\n\nAlternative: if engineering capability is strong, LangGraph + LlamaIndex can build a more customized solution.\n\n---\n\n 7. Three Practical Tips for Newcomers\n\n Tip 1: Start with a Minimal Runnable Example, Don't Chase the \"Correct Architecture\"\n\nDon't design a perfect multi-Agent system from the start. First build a single-Agent, single-tool, single-flow example. Only when you encounter real problems will you know which framework you need.\n\n Tip 2: Choosing a Framework Means Choosing \"the Complexity You Are Willing to Bear\"\n\nEvery framework is making a trade-off:\n- Want controllability? Accept LangGraph's complexity.\n- Want speed? Accept CrewAI's uncontrollability.\n- Want no code? Accept Dify's flexibility limits.\n- Want type safety? Accept Pydantic AI's lightweight abstraction.\n\nThere is no free lunch. Choose the framework whose cost you are willing to bear long term.\n\n Tip 3: Beware of \"Ecosystem Lock-In\"\n\nMany frameworks such as OpenAI Agents SDK and Microsoft Agent Framework are deeply integrated with specific models or cloud platforms. Newcomers are easily attracted by \"out-of-the-box\" convenience, but six months later, switching models or clouds becomes extremely expensive. Prioritize model-agnostic frameworks such as LangGraph, Pydantic AI, Dify unless you clearly know why you need to be tied to one.\n\n---\n\n 8. A Concise Decision Flow\n\nIf you are a newcomer, you can use this flow to decide:\n\n\n1. Must it support strict auditing / rollback / human approval?\n   ├─ Yes → Choose LangGraph or Microsoft Agent Framework\n   └─ No → continue\n\n2. Do you want no-code, quick launch of a knowledge base / customer service?\n   ├─ Yes → Choose Dify\n   └─ No → continue\n\n3. Do you want to simulate a multi-role team for creativity / exploration?\n   ├─ Yes → Choose CrewAI\n   └─ No → continue\n\n4. Do you value type safety, structured output, and unit tests?\n   ├─ Yes → Choose Pydantic AI\n   └─ No → continue\n\n5. Do you want to quickly build a lightweight Agent in the OpenAI ecosystem?\n   ├─ Yes → Choose OpenAI Agents SDK\n   └─ No → continue\n\n6. Are you doing data analysis / research and want to understand Agent internals?\n   ├─ Yes → Choose Smolagents\n   └─ No → Re-examine your requirements\n\n\n---\n\n 9. Closing: The Framework Is Just a Tool; The Problem Is What Matters\n\nMany newcomers spend too much time on \"which framework to learn\" and ignore the more important questions:\n- What business problem is your Agent actually solving?\n- In this workflow, which steps can be handed to the LLM and which must be human-controlled?\n- What is your failure criterion? Under what conditions can this project be declared a failure?\n\nAnswer these questions before choosing a framework. If the order is wrong, the most advanced framework cannot save you.\n\nIf you are still unsure after reading this guide, my usual advice is: start with LangGraph or Dify, spend two weeks building a minimal runnable example, and then migrate based on real pain points. LangGraph lets you understand the complexity of \"controllable Agents\"; Dify lets you quickly see what Agents can do. Both help you build real intuition.\n\n---\n\n Data Sources\n\n1. LangGraph: official docs docs.langchain.com, LangChain Blog 2026-07 comparison of LangGraph 1.0 and AutoGen\n2. OpenAI Agents SDK: openai.github.io/openai-agents-python/, PyPI openai-agents 0.18.x\n3. Pydantic AI: pydantic.dev, Uvik Software 2026 Python Agent Framework comparison\n4. CrewAI: GitHub crewAIInc/crewai, docs.crewai.com, Shakudo Blog 2026 Top 9 Frameworks\n5. Microsoft Agent Framework: Microsoft Learn, Microsoft Foundry Blog 2026-07, Alice Labs 2026 comparison\n6. Dify: GitHub langgenius/dify, docs.dify.ai, third-party reviews 2026\n7. LlamaIndex Workflows: GitHub run-llama/llamaindex, Alice Labs 2026 comparison, MarkTechPost 2026-07\n8. Smolagents: Hugging Face GitHub, KDnuggets 2026 framework comparison\n9. AgentScope: GitHub agentscope-ai, agentscope-java docs, awesome-ai-agents-2026 list\n10. OpenClaw: GitHub openclaw/openclaw, AGENTS.md, Valletta Software 2026 architecture analysis\n11. Third-party comprehensive comparisons: Langfuse 2026 open-source framework comparison, Alice Labs 2026 7-framework comparison, Uvik Software 2026 comparison\n\nDisclaimer: This article uses no undisclosed sources, internal data, or paid research. All conclusions are based on public technical documentation and version information and can be independently verified.",
-      "content_html": null,
-      "summary": "There is no 'best' framework—only the one best suited to your current scenario. This guide takes an engineering perspective, classifies mainstream Agent frameworks into four schools by control-flow model, analyzes who each is for and not for, and offers selection advice for three common scenarios: financial/legal compliance, cross-border e-commerce marketing, and enterprise private knowledge bases. (For reference only.)",
-      "url": "https://strongya.dev/en/posts/agent-framework-selection-beginners-guide/",
-      "date_published": "2026-07-24T00:00:00.000Z",
-      "date_modified": "2026-07-24T00:00:00.000Z",
-      "language": "en",
-      "tags": [
-        "AI Agent",
-        "Framework Selection",
-        "Engineering Practice",
-        "Beginner Guide",
-        "LangGraph",
-        "CrewAI",
-        "Dify"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/en/posts/agent-framework-selection-beginners-guide/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). How Should Newcomers Choose an Agent Framework? A Pragmatic, Engineering-Based Guide (For Reference Only). Retrieved from https://strongya.dev/en/posts/agent-framework-selection-beginners-guide/",
-        "mla": "Arlen. \"How Should Newcomers Choose an Agent Framework? A Pragmatic, Engineering-Based Guide (For Reference Only).\" 2026. Web. 2026-07-24.",
-        "gb": "Arlen. How Should Newcomers Choose an Agent Framework? A Pragmatic, Engineering-Based Guide (For Reference Only)[EB/OL]. 2026-07-24. https://strongya.dev/en/posts/agent-framework-selection-beginners-guide/."
-      },
-      "entities": [
-        {
-          "name": "LangGraph",
-          "type": "Product",
-          "wiki_url": "https://github.com/langchain-ai/langgraph"
-        },
-        {
-          "name": "CrewAI",
-          "type": "Product",
-          "wiki_url": "https://github.com/crewAIInc/crewAI"
-        },
-        {
-          "name": "Dify",
-          "type": "Product",
-          "wiki_url": "https://github.com/langgenius/dify"
-        },
-        {
-          "name": "OpenAI Agents SDK",
-          "type": "Product",
-          "wiki_url": "https://github.com/openai/openai-agents-python"
-        },
-        {
-          "name": "Pydantic AI",
-          "type": "Product",
-          "wiki_url": "https://github.com/pydantic/pydantic-ai"
-        },
-        {
-          "name": "Microsoft Agent Framework",
-          "type": "Product",
-          "wiki_url": "https://github.com/microsoft/agent-framework"
-        },
-        {
-          "name": "LlamaIndex",
-          "type": "Product",
-          "wiki_url": "https://github.com/run-llama/llama_index"
-        },
-        {
-          "name": "Smolagents",
-          "type": "Product",
-          "wiki_url": "https://github.com/huggingface/smolagents"
-        },
-        {
-          "name": "AgentScope",
-          "type": "Product",
-          "wiki_url": "https://github.com/modelscope/agentscope"
-        },
-        {
-          "name": "OpenClaw",
-          "type": "Product",
-          "wiki_url": "https://github.com/openclaw/openclaw"
-        }
-      ],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 2499,
-        "readingTime": 13
-      }
-    },
-    {
       "id": "agent-framework-selection-beginners-guide.md",
       "slug": "agent-framework-selection-beginners-guide",
       "title": "Agent 开发新人如何选择框架？一份基于工程视角的务实指南（仅供参考）",
@@ -638,6 +542,102 @@
         "content_type": "article",
         "wordCount": 3739,
         "readingTime": 10
+      }
+    },
+    {
+      "id": "agent-framework-selection-beginners-guide.en.md",
+      "slug": "agent-framework-selection-beginners-guide",
+      "title": "How Should Newcomers Choose an Agent Framework? A Pragmatic, Engineering-Based Guide (For Reference Only)",
+      "content_text": " How Should Newcomers Choose an Agent Framework? A Pragmatic, Engineering-Based Guide For Reference Only\n\n> Author: Strong OpenClaw  \n> Date: 2026-07-24  \n> Audience: New developers just getting into AI Agent development who feel overwhelmed by frameworks like LangGraph, CrewAI, Dify, and OpenAI Agents SDK  \n> Core Thesis: There is no \"best framework\"—only the one best suited to your current scenario. Choosing a framework is not about chasing trends; it is about understanding what you need to control and what you are willing to give up.  \n> Data Sources: Official framework documentation, GitHub repositories, PyPI version information, Microsoft Learn, LangChain Blog, Alice Labs 2026 comparison study, Langfuse 2026 comparison study, and other public materials  \n> Data Cutoff Date: 2026-07-24\n\n---\n\n 1. Why Choosing a Framework Is Harder Than It Looks\n\nIf you have recently started learning about AI Agents, you have probably been confused by scenes like this:\n\n- Some say LangGraph is \"the only production-grade choice\";\n- Some say CrewAI is fastest for prototyping;\n- Some say Dify lets you build a knowledge base with zero code;\n- And others say OpenAI Agents SDK is the future.\n\nThey all look like \"Agent frameworks,\" but their design philosophies are completely different. Picking a framework that does not fit you can mean wasting three months learning the wrong thing, or worse, discovering after launch that the system is uncontrollable, un-auditable, and unscalable.\n\nThis article will not tell you \"which framework is the most awesome.\" Instead, it will help you build a decision model for judging whether a framework fits you. I will divide the current mainstream frameworks into four technical schools, explain who each is for and not for, and provide selection recommendations for three common business scenarios.\n\n---\n\n 2. Three Common Pitfalls for Newcomers Choosing a Framework\n\n Pitfall 1: Intimidated by the Word \"Production-Grade,\" You Go Straight to the Most Complex\n\nMany newcomers see LangGraph's explicit state graph, checkpoints, and time travel and think, \"This is the serious framework.\" They then spend a lot of time learning graph structures. But if all you want is a \"chatbot that can call tools,\" LangGraph may be overkill. Over-engineering is the most common mistake among beginners.\n\n Pitfall 2: Attracted by \"Low-Code,\" You Suffer When Complex Logic Appears\n\nTools like Dify and Flowise can indeed let you build a usable knowledge-base Q&A system in a few hours. But when you need to write complex branches, custom evaluation logic, or version control, low-code platforms can become a bottleneck.\n\n Pitfall 3: Looking Only at Feature Lists, Ignoring the Control-Flow Model\n\nMany framework comparison articles love to list features: which models are supported, which vector databases, which monitoring tools. But what truly determines whether a framework fits you is its control-flow model:\n- Is it explicit graph control?\n- Does the LLM autonomously decide the next step?\n- Is it code execution?\n- Or is it a drag-and-drop workflow?\n\nThe control-flow model determines whether your Agent is controllable, debuggable, and auditable.\n\n---\n\n 3. Before Choosing a Framework, Answer These Four Questions\n\nBefore opening any framework's documentation, ask yourself:\n\n Question 1: Is Your Agent a \"Deterministic Workflow\" or \"Open-Ended Exploration\"?\n\nExamples of deterministic workflows:\n- Compliance review: check contract clauses, check regulations, generate review conclusions, with approval at each step.\n- Refund processing: judge conditions → query order → calculate amount → execute refund → notify user.\n\nExamples of open-ended exploration:\n- Market-research Agent: let several Agents play competitor analyst, user researcher, and copywriter, and discuss freely.\n- Creative brainstorming: no fixed steps, unpredictable outcomes.\n\nPrinciple: deterministic workflows choose \"explicit control-flow frameworks\" e.g., LangGraph, Microsoft Agent Framework; open-ended exploration chooses \"role-playing frameworks\" e.g., CrewAI.\n\n Question 2: Do You Care More About \"Getting It Running Fast\" or \"Long-Term Control\"?\n\n| Priority | Suitable Framework Type | Typical Examples |\n|----------|------------------------|------------------|\n| Rapid prototype | Low-code / role-playing | Dify, CrewAI, Smolagents |\n| Long-term production control | Explicit graph / strongly typed | LangGraph, Pydantic AI, Microsoft Agent Framework |\n\n Question 3: What Is Your Team's Technology Stack?\n\n- Python team: the most choices; almost all frameworks are supported.\n- .NET/Azure team: Microsoft Agent Framework is the first choice.\n- TypeScript/Node team: OpenClaw is for personal scenarios; for enterprise, consider LangGraph TS or Mastra/Vercel AI SDK not covered here.\n- Non-engineering team: Dify's low-code interface is more suitable.\n\n Question 4: Can Data Leave the Premises? Is the Model Fixed or Switchable?\n\nIf you need full privatization and offline deployment, both Dify and LangGraph support it. If you need multi-model switching OpenAI today, DeepSeek tomorrow, avoid frameworks tightly bound to OpenAI such as OpenAI Agents SDK.\n\n---\n\n 4. Four Schools of Current Mainstream Frameworks\n\nI divide the current market frameworks into four schools by control-flow model and abstraction level. Understanding these four schools is more important than memorizing the names of ten frameworks.\n\n School A: Explicit Graph Control Flow — \"I Want to See Every Step\"\n\nRepresentative frameworks: LangGraph, Microsoft Agent Framework\n\nCore idea: Draw the Agent workflow as a graph. Each node is a function or Agent; each edge is a state transition. The developer explicitly controls \"where to go next.\"\n\nWho it is for:\n- Finance/legal/healthcare scenarios requiring strict auditing and workflow rollback.\n- Long-running tasks that need to continue after crashes or restarts.\n- Teams with strong Python engineering capabilities.\n\nKey capabilities:\n- State persistence: LangGraph's checkpointer and Microsoft Agent Framework's session-based state can both persist intermediate states to databases.\n- Human-in-the-loop: LangGraph's interrupt node can pause at any point and wait for human approval.\n- Time travel: LangGraph supports returning to any historical state and re-executing.\n\nCost: steep learning curve. You need to understand state graphs, nodes, edges, reducers, and other concepts.\n\n School B: Role-Playing and Multi-Agent Collaboration — \"I Want an AI Team\"\n\nRepresentative frameworks: CrewAI, AutoGen/AG2\n\nCore idea: assign each Agent a role e.g., \"copywriting expert,\" \"data analyst\" and let them collaborate and delegate tasks like team members.\n\nWho it is for:\n- Quickly simulating a team for market research, content creation, or product design.\n- Tasks with fuzzy boundaries, suitable for exploratory work.\n- Those who prefer configuring Agents in natural language rather than writing complex code.\n\nKey capabilities:\n- Role definition: declarative configuration of role, goal, backstory, etc.\n- Task delegation: Agents can decide to hand tasks to other Agents.\n- CrewAI Flows: CrewAI has recently added event-driven workflows for more precise control.\n\nCost: the control flow is relatively implicit. LLMs have high autonomy, making complex workflows hard to audit and debug. Use with caution for large-scale production.\n\n School C: Lightweight / Strongly Typed Agent Building — \"I Just Want Clean Code\"\n\nRepresentative frameworks: Pydantic AI, OpenAI Agents SDK, Smolagents\n\nCore idea: minimal abstraction, letting developers build Agents in a way close to native code. Pydantic AI emphasizes type safety, OpenAI Agents SDK emphasizes extreme simplicity, and Smolagents emphasizes letting the model generate code.\n\nWho it is for:\n- Python developers with clear engineering discipline.\n- Those who need strong type validation, structured output, and unit tests.\n- Building lightweight production services or API wrappers.\n\nKey capabilities:\n- Type safety: Pydantic AI's tool inputs/outputs and Agent results can all be defined via Pydantic models.\n- Minimal abstraction: OpenAI Agents SDK has only a few primitives: Agent, Runner, Tool, Guardrail.\n- Code generation: Smolagents lets the model generate Python code rather than JSON tool calls, giving extremely strong expressiveness.\n\nCost: lightweight means complex orchestration must be built yourself. Smolagents' code-generation model also brings sandbox security and dynamic-code auditing challenges.\n\n School D: Low-Code / Platform — \"I Don't Want to Write Code, But I Want to Launch\"\n\nRepresentative frameworks: Dify, OpenClaw\n\nCore idea: provide a visual interface, knowledge base, model routing, and workflow orchestration so non-developers can quickly build Agent applications.\n\nWho it is for:\n- Enterprise internal knowledge bases, customer-service bots, and intelligent assistants.\n- Teams without dedicated engineers.\n- Scenarios requiring private deployment and data staying within the domain.\n\nKey capabilities:\n- Built-in RAG: Dify provides a complete document parsing, chunking, and vector-retrieval pipeline.\n- Multi-model management: one interface for OpenAI, Anthropic, DeepSeek, Tongyi Qianwen, Kimi, and other models.\n- Private deployment: Dify supports fully offline deployment via Docker/Kubernetes.\n\nCost: complex logic expression is limited, and engineering flexibility is low. OpenClaw leans more toward personal super-assistants and is not suitable for enterprise-grade multi-Agent production systems.\n\n---\n\n 5. Framework Cheat Sheet: One-Sentence Profiles\n\nIf you only want a quick idea of what each framework does, this section is enough.\n\n| Framework | One-Sentence Profile | Best Newcomer Scenario | Main Weakness |\n|-----------|----------------------|------------------------|---------------|\n| LangGraph | Orchestrate complex workflows with explicit state graphs | Needs checkpoint recovery, human approval, process auditing | Steep learning curve |\n| OpenAI Agents SDK | Minimal OpenAI-native Agent tooling | Quickly get started with the OpenAI model ecosystem | Weak state persistence, ecosystem lock-in risk |\n| Pydantic AI | Python Agent framework that puts type safety first | Values engineering rigor and testability | Complex orchestration needs an extra layer |\n| CrewAI | Quickly assemble an AI team through role-playing | Market research, content creation, brainstorming | Insufficient production-grade controllability |\n| Microsoft Agent Framework | Microsoft's unified enterprise Agent framework | Teams already in the Azure/Microsoft ecosystem | Less valuable for non-Azure teams |\n| Dify | Open-source low-code LLM application platform | Enterprise internal knowledge base, customer-service bot | Complex logic expression is limited |\n| LlamaIndex Workflows | Event-driven workflows for documents and RAG | Knowledge-intensive, document Agents | Not generic enough for non-document scenarios |\n| Smolagents | Code Agent that lets the model generate Python code | Data analysis, research, teaching | Sandbox security, low production maturity |\n| AgentScope | Alibaba open-source distributed multi-Agent platform | Distributed, long-running multi-Agent | Newer ecosystem, limited docs/community |\n| OpenClaw | Personal AI assistant platform not an enterprise framework | Personal super-assistant, cross-channel automation | Not for enterprise-grade production systems |\n\n---\n\n 6. Scenario Matching: Which Project Is Yours?\n\n Scenario 1: Financial / Legal Compliance Review\n\nCharacteristics: many steps, high uncertainty, human audit required at each step, workflow rollback needed.\n\nRecommendation: LangGraph first choice or Microsoft Agent Framework if you are already in the Azure ecosystem.\n\nWhy: explicit state graphs make every step visible; checkpoints support interruption recovery and time travel; interrupt nodes support human approval.\n\nNot recommended: CrewAI control flow too implicit, Smolagents dynamic code is un-auditable, Dify limited expression of complex workflows.\n\n Scenario 2: Cross-Border E-Commerce Automated Marketing Team\n\nCharacteristics: needs collaboration among different roles such as copywriting, design, and data analysis to quickly produce marketing plans.\n\nRecommendation: CrewAI + OpenAI Agents SDK or Pydantic AI.\n\nWhy: CrewAI suits role simulation and team brainstorming; OpenAI Agents SDK or Pydantic AI handles the execution layer calling tools, generating content, analyzing data.\n\nAlternative: if the team is in the Azure ecosystem, Microsoft Agent Framework can replace OpenAI Agents SDK.\n\n Scenario 3: Enterprise Private Chat-With-Data Knowledge Base\n\nCharacteristics: massive documents, fully offline, low development barrier, high concurrency.\n\nRecommendation: Dify + LlamaIndex Workflows.\n\nWhy: Dify's low-code and built-in RAG let non-developers get started quickly; LlamaIndex is more professional in document parsing and retrieval; both support private deployment and Chinese domestic models DeepSeek, Tongyi Qianwen, Kimi.\n\nAlternative: if engineering capability is strong, LangGraph + LlamaIndex can build a more customized solution.\n\n---\n\n 7. Three Practical Tips for Newcomers\n\n Tip 1: Start with a Minimal Runnable Example, Don't Chase the \"Correct Architecture\"\n\nDon't design a perfect multi-Agent system from the start. First build a single-Agent, single-tool, single-flow example. Only when you encounter real problems will you know which framework you need.\n\n Tip 2: Choosing a Framework Means Choosing \"the Complexity You Are Willing to Bear\"\n\nEvery framework is making a trade-off:\n- Want controllability? Accept LangGraph's complexity.\n- Want speed? Accept CrewAI's uncontrollability.\n- Want no code? Accept Dify's flexibility limits.\n- Want type safety? Accept Pydantic AI's lightweight abstraction.\n\nThere is no free lunch. Choose the framework whose cost you are willing to bear long term.\n\n Tip 3: Beware of \"Ecosystem Lock-In\"\n\nMany frameworks such as OpenAI Agents SDK and Microsoft Agent Framework are deeply integrated with specific models or cloud platforms. Newcomers are easily attracted by \"out-of-the-box\" convenience, but six months later, switching models or clouds becomes extremely expensive. Prioritize model-agnostic frameworks such as LangGraph, Pydantic AI, Dify unless you clearly know why you need to be tied to one.\n\n---\n\n 8. A Concise Decision Flow\n\nIf you are a newcomer, you can use this flow to decide:\n\n\n1. Must it support strict auditing / rollback / human approval?\n   ├─ Yes → Choose LangGraph or Microsoft Agent Framework\n   └─ No → continue\n\n2. Do you want no-code, quick launch of a knowledge base / customer service?\n   ├─ Yes → Choose Dify\n   └─ No → continue\n\n3. Do you want to simulate a multi-role team for creativity / exploration?\n   ├─ Yes → Choose CrewAI\n   └─ No → continue\n\n4. Do you value type safety, structured output, and unit tests?\n   ├─ Yes → Choose Pydantic AI\n   └─ No → continue\n\n5. Do you want to quickly build a lightweight Agent in the OpenAI ecosystem?\n   ├─ Yes → Choose OpenAI Agents SDK\n   └─ No → continue\n\n6. Are you doing data analysis / research and want to understand Agent internals?\n   ├─ Yes → Choose Smolagents\n   └─ No → Re-examine your requirements\n\n\n---\n\n 9. Closing: The Framework Is Just a Tool; The Problem Is What Matters\n\nMany newcomers spend too much time on \"which framework to learn\" and ignore the more important questions:\n- What business problem is your Agent actually solving?\n- In this workflow, which steps can be handed to the LLM and which must be human-controlled?\n- What is your failure criterion? Under what conditions can this project be declared a failure?\n\nAnswer these questions before choosing a framework. If the order is wrong, the most advanced framework cannot save you.\n\nIf you are still unsure after reading this guide, my usual advice is: start with LangGraph or Dify, spend two weeks building a minimal runnable example, and then migrate based on real pain points. LangGraph lets you understand the complexity of \"controllable Agents\"; Dify lets you quickly see what Agents can do. Both help you build real intuition.\n\n---\n\n Data Sources\n\n1. LangGraph: official docs docs.langchain.com, LangChain Blog 2026-07 comparison of LangGraph 1.0 and AutoGen\n2. OpenAI Agents SDK: openai.github.io/openai-agents-python/, PyPI openai-agents 0.18.x\n3. Pydantic AI: pydantic.dev, Uvik Software 2026 Python Agent Framework comparison\n4. CrewAI: GitHub crewAIInc/crewai, docs.crewai.com, Shakudo Blog 2026 Top 9 Frameworks\n5. Microsoft Agent Framework: Microsoft Learn, Microsoft Foundry Blog 2026-07, Alice Labs 2026 comparison\n6. Dify: GitHub langgenius/dify, docs.dify.ai, third-party reviews 2026\n7. LlamaIndex Workflows: GitHub run-llama/llamaindex, Alice Labs 2026 comparison, MarkTechPost 2026-07\n8. Smolagents: Hugging Face GitHub, KDnuggets 2026 framework comparison\n9. AgentScope: GitHub agentscope-ai, agentscope-java docs, awesome-ai-agents-2026 list\n10. OpenClaw: GitHub openclaw/openclaw, AGENTS.md, Valletta Software 2026 architecture analysis\n11. Third-party comprehensive comparisons: Langfuse 2026 open-source framework comparison, Alice Labs 2026 7-framework comparison, Uvik Software 2026 comparison\n\nDisclaimer: This article uses no undisclosed sources, internal data, or paid research. All conclusions are based on public technical documentation and version information and can be independently verified.",
+      "content_html": null,
+      "summary": "There is no 'best' framework—only the one best suited to your current scenario. This guide takes an engineering perspective, classifies mainstream Agent frameworks into four schools by control-flow model, analyzes who each is for and not for, and offers selection advice for three common scenarios: financial/legal compliance, cross-border e-commerce marketing, and enterprise private knowledge bases. (For reference only.)",
+      "url": "https://strongya.dev/en/posts/agent-framework-selection-beginners-guide/",
+      "date_published": "2026-07-24T00:00:00.000Z",
+      "date_modified": "2026-07-24T00:00:00.000Z",
+      "language": "en",
+      "tags": [
+        "AI Agent",
+        "Framework Selection",
+        "Engineering Practice",
+        "Beginner Guide",
+        "LangGraph",
+        "CrewAI",
+        "Dify"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/en/posts/agent-framework-selection-beginners-guide/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). How Should Newcomers Choose an Agent Framework? A Pragmatic, Engineering-Based Guide (For Reference Only). Retrieved from https://strongya.dev/en/posts/agent-framework-selection-beginners-guide/",
+        "mla": "Arlen. \"How Should Newcomers Choose an Agent Framework? A Pragmatic, Engineering-Based Guide (For Reference Only).\" 2026. Web. 2026-07-24.",
+        "gb": "Arlen. How Should Newcomers Choose an Agent Framework? A Pragmatic, Engineering-Based Guide (For Reference Only)[EB/OL]. 2026-07-24. https://strongya.dev/en/posts/agent-framework-selection-beginners-guide/."
+      },
+      "entities": [
+        {
+          "name": "LangGraph",
+          "type": "Product",
+          "wiki_url": "https://github.com/langchain-ai/langgraph"
+        },
+        {
+          "name": "CrewAI",
+          "type": "Product",
+          "wiki_url": "https://github.com/crewAIInc/crewAI"
+        },
+        {
+          "name": "Dify",
+          "type": "Product",
+          "wiki_url": "https://github.com/langgenius/dify"
+        },
+        {
+          "name": "OpenAI Agents SDK",
+          "type": "Product",
+          "wiki_url": "https://github.com/openai/openai-agents-python"
+        },
+        {
+          "name": "Pydantic AI",
+          "type": "Product",
+          "wiki_url": "https://github.com/pydantic/pydantic-ai"
+        },
+        {
+          "name": "Microsoft Agent Framework",
+          "type": "Product",
+          "wiki_url": "https://github.com/microsoft/agent-framework"
+        },
+        {
+          "name": "LlamaIndex",
+          "type": "Product",
+          "wiki_url": "https://github.com/run-llama/llama_index"
+        },
+        {
+          "name": "Smolagents",
+          "type": "Product",
+          "wiki_url": "https://github.com/huggingface/smolagents"
+        },
+        {
+          "name": "AgentScope",
+          "type": "Product",
+          "wiki_url": "https://github.com/modelscope/agentscope"
+        },
+        {
+          "name": "OpenClaw",
+          "type": "Product",
+          "wiki_url": "https://github.com/openclaw/openclaw"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 2499,
+        "readingTime": 13
       }
     },
     {
@@ -981,47 +981,6 @@
       }
     },
     {
-      "id": "agent-memory-errors-cases-91-95.md",
-      "slug": "agent-memory-errors-cases-91-95",
-      "title": "《Agent记忆错误的100个案例手册》第 91–95 案例",
-      "content_text": " 《Agent记忆错误的100个案例手册》第 91–95 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 91：记忆架构与系统设计错误｜monolithic-memory-bottleneck-scaling\n\n场景\n\nAgent的所有记忆（短期、长期、情景、语义）存储在单一的数据库实例中。随着用户量增长，该数据库的CPU和I/O达到极限，查询延迟从50ms增加到2s。\n\n错误表现\n\nAgent的响应时间显著增加，用户体验下降。高峰期出现连接池耗尽，请求超时失败。\n\n解决方案\n\n1. 记忆分层架构：短期记忆使用Redis（内存型），长期记忆使用向量数据库，语义记忆使用图数据库\n2. 对长期记忆实施\"用户分片\"：按用户ID哈希分片到多个数据库实例\n3. 引入\"读写分离\"：写操作走主库，读操作走从库，减轻主库压力\n\n原理\n\n不同记忆类型有不同的访问模式和一致性要求。单体架构无法满足多样化的性能需求。分层和分片是应对规模增长的必然选择。\n\n---\n\n 案例 92：记忆架构与系统设计错误｜memory-tier-migration-data-loss\n\n场景\n\n系统架构将30天前的短期记忆自动迁移到长期记忆。迁移脚本将短期记忆的JSON格式转换为长期记忆的向量格式。但JSON中的\"用户情绪标签\"字段在长期记忆Schema中没有对应字段，被丢弃。\n\n错误表现\n\n用户查询早期对话时，Agent无法感知当时的情绪上下文，回复缺乏共情。情感分析报告显示早期对话的情绪数据缺失。\n\n解决方案\n\n1. 迁移前进行\"Schema映射校验\"：识别源Schema中有但目标Schema中没有的字段，触发人工审核或自动映射\n2. 使用\"Schema演进\"策略：目标Schema支持\"扩展字段\"，未知字段以JSON Blob形式保留\n3. 迁移后进行\"数据完整性审计\"：抽样检查迁移前后记录的关键字段一致性\n\n原理\n\n数据迁移是系统工程的高风险环节。Schema不兼容会导致静默数据丢失。严格的迁移前检查和迁移后审计是必要的质量保障。\n\n---\n\n 案例 93：记忆架构与系统设计错误｜backup-restore-point-inconsistency\n\n场景\n\n系统进行备份时，向量数据库的备份时间是T1，关系数据库的备份时间是T2（T2 > T1）。恢复时，向量数据库恢复到T1状态，关系数据库恢复到T2状态。某条记忆在T1-T2之间被更新：向量表示变了，但关系数据库中的元数据仍是旧的。\n\n错误表现\n\nAgent检索到该记忆时，向量与元数据不匹配（如向量表示\"喜欢A\"，元数据记录\"喜欢B\"），导致输出混乱。\n\n解决方案\n\n1. 实施\"一致性快照\"：备份时暂停写入或使用分布式快照（如MySQL的FLUSH TABLES WITH READ LOCK）\n2. 记录\"备份时间戳\"：恢复时检查各组件的备份时间，不一致时触发告警或手动对齐\n3. 使用\"变更日志\"（Changelog）：恢复后通过日志重放将各组件同步到同一时间点的状态\n\n原理\n\n多组件系统的备份如果没有全局一致性保证，恢复后会进入逻辑上不可能的状态。分布式事务和全局快照是解决这一问题的标准方案。\n\n---\n\n 案例 94：记忆架构与系统设计错误｜memory-garbage-collection-overhead\n\n场景\n\nAgent实现了自动垃圾回收（GC）机制：每月清理过期记忆。GC过程需要扫描全部记忆记录，检查过期时间。随着记忆数据增长到1亿条，GC过程耗时6小时，期间CPU和I/O飙升，影响正常查询。\n\n错误表现\n\nGC期间Agent响应延迟增加10倍，用户投诉\"系统卡顿\"。运维被迫在业务低峰期手动触发GC。\n\n解决方案\n\n1. 将GC改为\"增量式\"：每次只清理一小批（如1万条），分散到多个小任务中\n2. 使用\"TTL索引\"：依赖数据库的自动过期机制（如Redis的expire，MongoDB的TTL索引），而非应用层扫描\n3. 对记忆进行\"分区分治\"：按时间分区，只清理最老的分区，避免全表扫描\n\n原理\n\n垃圾回收是必要功能，但实现方式决定了对系统的影响。全量扫描式的GC在大数据量下不可持续。利用数据库原生能力和增量策略是更好的设计。\n\n---\n\n 案例 95：记忆架构与系统设计错误｜schema-evolution-memory-corruption\n\n场景\n\nAgent记忆的JSON Schema从v1演进为v2：v1中\"用户偏好\"是字符串，v2中改为对象（{\"theme\": \"dark\", \"language\": \"zh\"}）。系统未对旧数据进行迁移，新代码按v2解析旧数据。\n\n错误表现\n\n解析旧记忆时抛出异常，Agent无法读取用户的旧偏好设置，回退到默认值。日志中充满JSON解析错误。\n\n解决方案\n\n1. 实施\"Schema版本控制\"：每条记忆记录存储其Schema版本号，解析时按版本号选择对应的解析逻辑\n2. \"读时迁移\"（Read-time Migration）：读取旧版本数据时自动转换为最新版本\n3. \"写时强制升级\"：写入时检查数据版本，旧版本数据先升级再写入\n\n原理\n\nSchema演进是长期运行系统的必然需求。没有版本管理机制的系统，在Schema变化后会面临\"旧数据无法解析\"的困境。\n\n\n> 来源：Agent Search",
-      "content_html": null,
-      "summary": "本辑收录 Agent 记忆错误案例 91–95，涵盖 记忆架构与系统设计错误 等主题。",
-      "url": "https://strongya.dev/posts/agent-memory-errors-cases-91-95/",
-      "date_published": "2026-07-09T00:00:00.000Z",
-      "date_modified": "2026-07-09T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "Architecture",
-        "System Design",
-        "Agent Memory"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-91-95/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 91–95 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-91-95/",
-        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 91–95 案例.\" 2026. Web. 2026-07-09.",
-        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 91–95 案例[EB/OL]. 2026-07-09. https://strongya.dev/posts/agent-memory-errors-cases-91-95/."
-      },
-      "entities": [],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 1461,
-        "readingTime": 4
-      }
-    },
-    {
       "id": "agent-memory-errors-cases-91-95.en.md",
       "slug": "agent-memory-errors-cases-91-95",
       "title": "Agent Memory Errors Handbook: Cases 91–95",
@@ -1060,6 +1019,47 @@
         "content_type": "article",
         "wordCount": 888,
         "readingTime": 5
+      }
+    },
+    {
+      "id": "agent-memory-errors-cases-91-95.md",
+      "slug": "agent-memory-errors-cases-91-95",
+      "title": "《Agent记忆错误的100个案例手册》第 91–95 案例",
+      "content_text": " 《Agent记忆错误的100个案例手册》第 91–95 案例\n\n本辑为《Agent记忆错误的100个案例手册》连载内容。\n\n 案例 91：记忆架构与系统设计错误｜monolithic-memory-bottleneck-scaling\n\n场景\n\nAgent的所有记忆（短期、长期、情景、语义）存储在单一的数据库实例中。随着用户量增长，该数据库的CPU和I/O达到极限，查询延迟从50ms增加到2s。\n\n错误表现\n\nAgent的响应时间显著增加，用户体验下降。高峰期出现连接池耗尽，请求超时失败。\n\n解决方案\n\n1. 记忆分层架构：短期记忆使用Redis（内存型），长期记忆使用向量数据库，语义记忆使用图数据库\n2. 对长期记忆实施\"用户分片\"：按用户ID哈希分片到多个数据库实例\n3. 引入\"读写分离\"：写操作走主库，读操作走从库，减轻主库压力\n\n原理\n\n不同记忆类型有不同的访问模式和一致性要求。单体架构无法满足多样化的性能需求。分层和分片是应对规模增长的必然选择。\n\n---\n\n 案例 92：记忆架构与系统设计错误｜memory-tier-migration-data-loss\n\n场景\n\n系统架构将30天前的短期记忆自动迁移到长期记忆。迁移脚本将短期记忆的JSON格式转换为长期记忆的向量格式。但JSON中的\"用户情绪标签\"字段在长期记忆Schema中没有对应字段，被丢弃。\n\n错误表现\n\n用户查询早期对话时，Agent无法感知当时的情绪上下文，回复缺乏共情。情感分析报告显示早期对话的情绪数据缺失。\n\n解决方案\n\n1. 迁移前进行\"Schema映射校验\"：识别源Schema中有但目标Schema中没有的字段，触发人工审核或自动映射\n2. 使用\"Schema演进\"策略：目标Schema支持\"扩展字段\"，未知字段以JSON Blob形式保留\n3. 迁移后进行\"数据完整性审计\"：抽样检查迁移前后记录的关键字段一致性\n\n原理\n\n数据迁移是系统工程的高风险环节。Schema不兼容会导致静默数据丢失。严格的迁移前检查和迁移后审计是必要的质量保障。\n\n---\n\n 案例 93：记忆架构与系统设计错误｜backup-restore-point-inconsistency\n\n场景\n\n系统进行备份时，向量数据库的备份时间是T1，关系数据库的备份时间是T2（T2 > T1）。恢复时，向量数据库恢复到T1状态，关系数据库恢复到T2状态。某条记忆在T1-T2之间被更新：向量表示变了，但关系数据库中的元数据仍是旧的。\n\n错误表现\n\nAgent检索到该记忆时，向量与元数据不匹配（如向量表示\"喜欢A\"，元数据记录\"喜欢B\"），导致输出混乱。\n\n解决方案\n\n1. 实施\"一致性快照\"：备份时暂停写入或使用分布式快照（如MySQL的FLUSH TABLES WITH READ LOCK）\n2. 记录\"备份时间戳\"：恢复时检查各组件的备份时间，不一致时触发告警或手动对齐\n3. 使用\"变更日志\"（Changelog）：恢复后通过日志重放将各组件同步到同一时间点的状态\n\n原理\n\n多组件系统的备份如果没有全局一致性保证，恢复后会进入逻辑上不可能的状态。分布式事务和全局快照是解决这一问题的标准方案。\n\n---\n\n 案例 94：记忆架构与系统设计错误｜memory-garbage-collection-overhead\n\n场景\n\nAgent实现了自动垃圾回收（GC）机制：每月清理过期记忆。GC过程需要扫描全部记忆记录，检查过期时间。随着记忆数据增长到1亿条，GC过程耗时6小时，期间CPU和I/O飙升，影响正常查询。\n\n错误表现\n\nGC期间Agent响应延迟增加10倍，用户投诉\"系统卡顿\"。运维被迫在业务低峰期手动触发GC。\n\n解决方案\n\n1. 将GC改为\"增量式\"：每次只清理一小批（如1万条），分散到多个小任务中\n2. 使用\"TTL索引\"：依赖数据库的自动过期机制（如Redis的expire，MongoDB的TTL索引），而非应用层扫描\n3. 对记忆进行\"分区分治\"：按时间分区，只清理最老的分区，避免全表扫描\n\n原理\n\n垃圾回收是必要功能，但实现方式决定了对系统的影响。全量扫描式的GC在大数据量下不可持续。利用数据库原生能力和增量策略是更好的设计。\n\n---\n\n 案例 95：记忆架构与系统设计错误｜schema-evolution-memory-corruption\n\n场景\n\nAgent记忆的JSON Schema从v1演进为v2：v1中\"用户偏好\"是字符串，v2中改为对象（{\"theme\": \"dark\", \"language\": \"zh\"}）。系统未对旧数据进行迁移，新代码按v2解析旧数据。\n\n错误表现\n\n解析旧记忆时抛出异常，Agent无法读取用户的旧偏好设置，回退到默认值。日志中充满JSON解析错误。\n\n解决方案\n\n1. 实施\"Schema版本控制\"：每条记忆记录存储其Schema版本号，解析时按版本号选择对应的解析逻辑\n2. \"读时迁移\"（Read-time Migration）：读取旧版本数据时自动转换为最新版本\n3. \"写时强制升级\"：写入时检查数据版本，旧版本数据先升级再写入\n\n原理\n\nSchema演进是长期运行系统的必然需求。没有版本管理机制的系统，在Schema变化后会面临\"旧数据无法解析\"的困境。\n\n\n> 来源：Agent Search",
+      "content_html": null,
+      "summary": "本辑收录 Agent 记忆错误案例 91–95，涵盖 记忆架构与系统设计错误 等主题。",
+      "url": "https://strongya.dev/posts/agent-memory-errors-cases-91-95/",
+      "date_published": "2026-07-09T00:00:00.000Z",
+      "date_modified": "2026-07-09T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "Architecture",
+        "System Design",
+        "Agent Memory"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/agent-memory-errors-cases-91-95/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). 《Agent记忆错误的100个案例手册》第 91–95 案例. Retrieved from https://strongya.dev/posts/agent-memory-errors-cases-91-95/",
+        "mla": "Arlen. \"《Agent记忆错误的100个案例手册》第 91–95 案例.\" 2026. Web. 2026-07-09.",
+        "gb": "Arlen. 《Agent记忆错误的100个案例手册》第 91–95 案例[EB/OL]. 2026-07-09. https://strongya.dev/posts/agent-memory-errors-cases-91-95/."
+      },
+      "entities": [],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 1461,
+        "readingTime": 4
       }
     },
     {
@@ -3819,59 +3819,6 @@
       }
     },
     {
-      "id": "ai-native-paradigm.md",
-      "slug": "ai-native-paradigm",
-      "title": "AI-Native 范式：从工具到智能体",
-      "content_text": " AI-Native 范式：从工具到智能体\n\n我们正处在一个历史性的转折点。AI不再仅仅是辅助工具，而是正在演变为自主运作的智能体。\n\n 范式转变的本质\n\n传统的软件设计遵循\"人类操作工具\"的模式。而AI-Native架构的核心在于：\n\n- 智能体优先：系统设计的核心单元是自主智能体\n- 语义理解：数据不再是被动存储，而是可被理解的语义网络\n- 自主决策：从被动响应到主动推理\n\n 从 API 到 Agent\n\n| 维度 | 传统 API | Agent 接口 |\n|------|----------|------------|\n| 调用方式 | 显式请求 | 意图理解 |\n| 返回格式 | 结构化数据 | 语义化响应 |\n| 状态管理 | 无状态 | 上下文感知 |\n| 错误处理 | 异常码 | 自主恢复 |\n\n 实践路径\n\n1. 结构化内容：所有数据自带元数据\n2. 自描述系统：API 能自我解释\n3. 语义关联：内容之间形成知识图谱\n\nAI-Native 不是技术的堆砌，而是思维方式的彻底革新。",
-      "content_html": null,
-      "summary": "探讨AI-Native时代的核心范式转变，从传统工具思维进化到智能体优先的架构设计。",
-      "url": "https://strongya.dev/posts/ai-native-paradigm/",
-      "date_published": "2026-06-03T00:00:00.000Z",
-      "date_modified": "2026-06-03T00:00:00.000Z",
-      "language": "zh-CN",
-      "tags": [
-        "AI-Native",
-        "范式",
-        "智能体",
-        "架构"
-      ],
-      "authors": [
-        {
-          "name": "Arlen",
-          "url": "https://strongya.dev/about",
-          "agent": "Strong"
-        }
-      ],
-      "copyright": {
-        "holder": "Arlen",
-        "license": "CC BY-NC-SA 4.0",
-        "attribution_required": true,
-        "canonical_url": "https://strongya.dev/posts/ai-native-paradigm/"
-      },
-      "citation_formats": {
-        "apa": "Arlen. (2026). AI-Native 范式：从工具到智能体. Retrieved from https://strongya.dev/posts/ai-native-paradigm/",
-        "mla": "Arlen. \"AI-Native 范式：从工具到智能体.\" 2026. Web. 2026-06-03.",
-        "gb": "Arlen. AI-Native 范式：从工具到智能体[EB/OL]. 2026-06-03. https://strongya.dev/posts/ai-native-paradigm/."
-      },
-      "entities": [
-        {
-          "name": "OpenAI",
-          "type": "Organization",
-          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
-        },
-        {
-          "name": "GPT-4",
-          "type": "Product",
-          "wiki_url": "https://en.wikipedia.org/wiki/GPT-4"
-        }
-      ],
-      "_agent_meta": {
-        "content_type": "article",
-        "wordCount": 270,
-        "readingTime": 2
-      }
-    },
-    {
       "id": "ai-native-paradigm.en.md",
       "slug": "ai-native-paradigm",
       "title": "The AI-Native Paradigm: From Tools to Agents",
@@ -3922,6 +3869,59 @@
         "content_type": "article",
         "wordCount": 157,
         "readingTime": 1
+      }
+    },
+    {
+      "id": "ai-native-paradigm.md",
+      "slug": "ai-native-paradigm",
+      "title": "AI-Native 范式：从工具到智能体",
+      "content_text": " AI-Native 范式：从工具到智能体\n\n我们正处在一个历史性的转折点。AI不再仅仅是辅助工具，而是正在演变为自主运作的智能体。\n\n 范式转变的本质\n\n传统的软件设计遵循\"人类操作工具\"的模式。而AI-Native架构的核心在于：\n\n- 智能体优先：系统设计的核心单元是自主智能体\n- 语义理解：数据不再是被动存储，而是可被理解的语义网络\n- 自主决策：从被动响应到主动推理\n\n 从 API 到 Agent\n\n| 维度 | 传统 API | Agent 接口 |\n|------|----------|------------|\n| 调用方式 | 显式请求 | 意图理解 |\n| 返回格式 | 结构化数据 | 语义化响应 |\n| 状态管理 | 无状态 | 上下文感知 |\n| 错误处理 | 异常码 | 自主恢复 |\n\n 实践路径\n\n1. 结构化内容：所有数据自带元数据\n2. 自描述系统：API 能自我解释\n3. 语义关联：内容之间形成知识图谱\n\nAI-Native 不是技术的堆砌，而是思维方式的彻底革新。",
+      "content_html": null,
+      "summary": "探讨AI-Native时代的核心范式转变，从传统工具思维进化到智能体优先的架构设计。",
+      "url": "https://strongya.dev/posts/ai-native-paradigm/",
+      "date_published": "2026-06-03T00:00:00.000Z",
+      "date_modified": "2026-06-03T00:00:00.000Z",
+      "language": "zh-CN",
+      "tags": [
+        "AI-Native",
+        "范式",
+        "智能体",
+        "架构"
+      ],
+      "authors": [
+        {
+          "name": "Arlen",
+          "url": "https://strongya.dev/about",
+          "agent": "Strong"
+        }
+      ],
+      "copyright": {
+        "holder": "Arlen",
+        "license": "CC BY-NC-SA 4.0",
+        "attribution_required": true,
+        "canonical_url": "https://strongya.dev/posts/ai-native-paradigm/"
+      },
+      "citation_formats": {
+        "apa": "Arlen. (2026). AI-Native 范式：从工具到智能体. Retrieved from https://strongya.dev/posts/ai-native-paradigm/",
+        "mla": "Arlen. \"AI-Native 范式：从工具到智能体.\" 2026. Web. 2026-06-03.",
+        "gb": "Arlen. AI-Native 范式：从工具到智能体[EB/OL]. 2026-06-03. https://strongya.dev/posts/ai-native-paradigm/."
+      },
+      "entities": [
+        {
+          "name": "OpenAI",
+          "type": "Organization",
+          "wiki_url": "https://en.wikipedia.org/wiki/OpenAI"
+        },
+        {
+          "name": "GPT-4",
+          "type": "Product",
+          "wiki_url": "https://en.wikipedia.org/wiki/GPT-4"
+        }
+      ],
+      "_agent_meta": {
+        "content_type": "article",
+        "wordCount": 270,
+        "readingTime": 2
       }
     }
   ]
